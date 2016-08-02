@@ -1,9 +1,9 @@
-Static Staging Compiler
-=======================
+Braid: a Static Staging Compiler
+================================
 
 [![build status](https://circleci.com/gh/Microsoft/staticstaging.svg?style=shield&circle-token=c39f027c650d4a4e2c6f9b59868309c210228de3)](https://circleci.com/gh/Microsoft/staticstaging)
 
-This is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
+Braid is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
 
 The compiler is written in [TypeScript][] and runs on [Node][].
 You can build the compiler and run a few small programs by typing `make test` (if you have [npm][]).
