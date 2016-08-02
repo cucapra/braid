@@ -1,4 +1,4 @@
-title: Static Staging
+title: Braid
 heading base: 2
 script: docs.js
 embed: 0
@@ -412,7 +412,7 @@ There's a lot going on even in this small example. The next two sections will in
 
 &lang-gl; gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
 
-[preamble]: https://github.com/Microsoft/staticstaging/blob/master/dingus/gl_preamble.ss
+[preamble]: https://github.com/sampsyo/braid/blob/master/dingus/gl_preamble.ss
 
 * `teapot`, `bunny`, and `snowden`: `Mesh`. Sample object assets.
 * `mesh_positions`: `Mesh -> Float3 Array`. Get the vertex positions from a mesh. Under the hood, a `Float3 Array` is implemented as a WebGL buffer.

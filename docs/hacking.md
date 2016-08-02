@@ -1,4 +1,4 @@
-title: Static Staging Compiler Implementation
+title: Braid Compiler Implementation
 [INCLUDE="docs.mdk"]
 
 [TITLE]
@@ -61,7 +61,7 @@ This section gives more overview on how the pieces go together. The latter secti
 
 The *driver* in [`driver.ts`][driver] orchestrates the whole process, so it's useful as a way into the whole system.
 
-[driver]: https://github.com/Microsoft/staticstaging/blob/master/src/driver.ts
+[driver]: https://github.com/sampsyo/braid/blob/master/src/driver.ts
 
 ## Parser
 
@@ -70,8 +70,8 @@ The [grammar][] produces an AST as a JSON data structure, which is specified in 
 
 All the other IRs in the compiler are based on variants of this JSON AST, and the major components all dispatch on the tags to recursively process the tree.
 
-[ast]: https://github.com/Microsoft/staticstaging/blob/master/src/ast.ts
-[grammar]: https://github.com/Microsoft/staticstaging/blob/master/src/grammar.pegjs
+[ast]: https://github.com/sampsyo/braid/blob/master/src/ast.ts
+[grammar]: https://github.com/sampsyo/braid/blob/master/src/grammar.pegjs
 [peg]: https://en.wikipedia.org/wiki/Parsing_expression_grammar
 [peg.js]: http://pegjs.org/
 [dingus]: https://sampsyo.github.io/staticstaging/dingus/
@@ -84,8 +84,8 @@ This lets us build tables that decorate the AST with extra information.
 The [type checker][check] runs next.
 It works as a type *elaborator:* it produces a table mapping node IDs to `TypeEnv` structures that capture the entire type information at every point.
 
-[elaborate]: https://github.com/Microsoft/staticstaging/blob/master/src/type_elaborate.ts
-[check]: https://github.com/Microsoft/staticstaging/blob/master/src/type_check.ts
+[elaborate]: https://github.com/sampsyo/braid/blob/master/src/type_elaborate.ts
+[check]: https://github.com/sampsyo/braid/blob/master/src/type_check.ts
 
 ## Desugaring
 
@@ -97,7 +97,7 @@ Two features in the language are implemented as [syntactic sugar][sugar]:
 
 Both desugaring steps require type information, so they use the results from type elaboration.
 
-[sugar]: https://github.com/Microsoft/staticstaging/blob/master/src/sugar.ts
+[sugar]: https://github.com/sampsyo/braid/blob/master/src/sugar.ts
 
 ## Semantic Analysis and IR
 
@@ -110,8 +110,8 @@ Here are a few of the most interesting pieces of the IR:
 - The *pre-splicing* optimization described in the table produces a set of `Variant` objects for each quote with snippet escapes. The backends use these specific, pre-composed variants instead of the original `Prog`s.
 
 [lambda lifting]: https://en.wikipedia.org/wiki/Lambda_lifting
-[compile]: https://github.com/Microsoft/staticstaging/blob/master/src/compile/compile.ts
-[ir]: https://github.com/Microsoft/staticstaging/blob/master/src/compile/ir.ts
+[compile]: https://github.com/sampsyo/braid/blob/master/src/compile/compile.ts
+[ir]: https://github.com/sampsyo/braid/blob/master/src/compile/ir.ts
 
 ## Backends
 
@@ -123,11 +123,11 @@ There's also a [`gl.ts`][gl] source file with common logic shared by the GLSL ba
 The most important bit here is the `Glue` object, which keeps track of a bunch of metadata for values that are communicated between shader stages.
 For example, `Glue` records the OpenGL name of the parameter to use for communication and a flag indicating whether the value is an attribute (i.e., an array).
 
-[js]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/js.ts
-[glsl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/glsl.ts
-[webgl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/webgl.ts
-[emitter]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/emitter.ts
-[gl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/gl.ts
+[js]: https://github.com/sampsyo/braid/blob/master/src/backends/js.ts
+[glsl]: https://github.com/sampsyo/braid/blob/master/src/backends/glsl.ts
+[webgl]: https://github.com/sampsyo/braid/blob/master/src/backends/webgl.ts
+[emitter]: https://github.com/sampsyo/braid/blob/master/src/backends/emitter.ts
+[gl]: https://github.com/sampsyo/braid/blob/master/src/backends/gl.ts
 
 # Scope Lifting
 
@@ -378,7 +378,7 @@ See [`gl.ts`][gl] for the type declarations and aliases.
 
 To define attributes, the compiler uses a limited form of polymorphic type constructors. For the gory details, see `ConstructorType` and `InstanceType` from [`type.ts`][type].
 
-[type]: https://github.com/Microsoft/staticstaging/blob/master/src/type.ts
+[type]: https://github.com/sampsyo/braid/blob/master/src/type.ts
 
 These type constructors let you declare values of type `T Array` where `T` is some other type.
 For the moment, user code can't construct and destruct these types---doing so would require something like full Hindley--Millner type inference.
