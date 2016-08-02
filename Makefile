@@ -116,21 +116,11 @@ site: dingus docs home
 	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
 	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
 
-DEPLOY_BRANCH := gh-pages
+RSYNCARGS := --compress --recursive --checksum --itemize-changes \
+	--delete -e ssh
+DEST := dh:domains/adriansampson.net/braid
 deploy: site
-	git symbolic-ref HEAD refs/heads/$(DEPLOY_BRANCH)
-
-	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
-	git --work-tree $(DEPLOY_DIR) add --all
-	if git --work-tree $(DEPLOY_DIR) diff-index --quiet HEAD -- ; then \
-	  echo "no changes" ; \
-	else \
-	  git --work-tree $(DEPLOY_DIR) commit -m "deploy [ci skip]" ; \
-	  git push origin $(DEPLOY_BRANCH) ; \
-	fi
-
-	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
-	git reset --mixed
+	rsync $(RSYNCARGS) _site/ $(DEST)
 
 home:
 	make -C site
