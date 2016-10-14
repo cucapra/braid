@@ -5,7 +5,7 @@ abstract: |
     But today, you have to choose between pre-packaged engines like Unity and low-level, nitty-gritty APIs like OpenGL and Direct3D.
     If you want to control the GPU directly with shaders, you're in for a steep learning curve.
 
-    *Static staging* is a new programming language concept from [Microsoft Research][msr] that makes it easy to program across the CPU--GPU boundary. The [Static Staging Compiler][ssc] is an open-source prototype compiler that generates [WebGL][] and [GLSL][] code from a single program with *staging annotations*.
+    *Static staging* is a new programming language concept from [Microsoft Research][msr] that makes it easy to program across the CPU--GPU boundary. [Braid][ssc] is a new language and an open-source prototype compiler that generates [WebGL][] and [GLSL][] code from a single program with *staging annotations*.
 
     [msr]: http://research.microsoft.com
     [ssc]: https://github.com/sampsyo/braid
@@ -13,10 +13,10 @@ abstract: |
     [glsl]: https://www.opengl.org/documentation/glsl/
 epilogue: |
     There's a lot more to programming with static stages!
-    Next, you might be interested in reading the full [SSC documentation][docs].
+    Next, you might be interested in reading the full [Braid documentation][docs].
     We're working on expanding this tutorial, so check back soon.
 
-    [docs]: http://microsoft.github.io/staticstaging/docs/
+    [docs]: http://adriansampson.net/braid/docs/
 ---
 This tutorial will show you how to write some simple graphics programs using the [Static Staging Compiler][ssc].
 Try editing any of the examples to see the result immediately.
