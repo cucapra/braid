@@ -136,9 +136,11 @@ export function pretty(tree: ast.SyntaxNode): string {
 }
 
 /**
- * Pretty-print an AST , and parenthesize it conditionally.
+ * Pretty-print an AST, and parenthesize it conditionally.
  */
-function pretty_paren(tree: ast.SyntaxNode, pred: (t: ast.SyntaxNode) => boolean): string {
+function pretty_paren(tree: ast.SyntaxNode,
+                      pred: (t: ast.SyntaxNode) => boolean): string
+{
   let out = pretty(tree);
   if (pred(tree)) {
     return "(" + out + ")";
@@ -158,9 +160,9 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   visit_fun(tree: ast.FunTypeNode, param: void): string {
     let params = "";
     for (let param of tree.params) {
-      params += pretty_type_ast(param) + " ";
+      params += pretty_type_paren(param) + " ";
     }
-    return "-> " + pretty_type_ast(tree.ret);
+    return params + "-> " + pretty_type_ast(tree.ret);
   },
 
   visit_code(tree: ast.CodeTypeNode, param: void): string {
@@ -175,7 +177,7 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   },
 
   visit_instance(tree: ast.InstanceTypeNode, param: void): string {
-    return pretty_type_ast(tree.arg) + " " + tree.name;
+    return pretty_type_paren(tree.arg) + " " + tree.name;
   },
 }
 
@@ -184,4 +186,17 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
  */
 function pretty_type_ast(tree: ast.TypeNode) {
   return type_ast_visit(pretty_type_ast_rules, tree, null);
+}
+
+
+/**
+ * Pretty-print a type AST with parentheses.
+ */
+function pretty_type_paren(tree: ast.TypeNode) {
+  let out = pretty_type_ast(tree);
+  if (tree.tag === "type_fun" || tree.tag === "type_instance") {
+    return "(" + out + ")";
+  } else {
+    return out;
+  }
 }
