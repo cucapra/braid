@@ -83,7 +83,7 @@ let Pretty: ASTVisit<void, string> = {
   visit_fun(tree: ast.FunNode, _: void): string {
     let params = "";
     for (let param of tree.params) {
-      params += param.name + ":" + pretty_type_ast(param.type) + " ";
+      params += param.name + ":" + pretty_type_paren(param.type) + " ";
     }
     return "fun " + params + "-> " + pretty_paren(tree.body, nonterm);
   },
