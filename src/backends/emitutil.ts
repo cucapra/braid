@@ -85,7 +85,6 @@ export function indent(s: string, first=false, spaces=2): string {
 export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
     pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
-  let e1 = pred(seq.lhs);
   let out = "";
   if (pred(seq.lhs)) {
     out += emit(emitter, seq.lhs);
