@@ -243,11 +243,11 @@ Aside from giving you scope-spanning, open code can also be compiled more effici
 
 Check out the JavaScript code generated from the sphere example above. Unlike previous examples that used splicing, the code here has no magical `__SPLICE_N__` tokens and no runtime `splice` calls. There is no run-time code generation at all. Instead, the two choices for completing the program have been *inlined*. To decide how the quote should behave, the program just chooses between the two complete program variants stored in two different JavaScript strings (called `q10_25` and `q10_31` as of this writing).
 
-In fact, unlike ordinary splicing, you can use open-code splicing with `f<...>` function-backed quotes. Look at the code generated for this version of our example:
+In fact, unlike ordinary splicing, you can use open-code splicing with `js<...>` function-backed quotes. Look at the code generated for this version of our example:
 
     var pi = 3.14;
     def sphere(d: Float, volume: Int)
-      f<
+      js<
         var r = d / 2.0;
         pi * r * r * $[
           if volume
@@ -387,7 +387,7 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
     var indices = mesh_indices(mesh);
     var size = mesh_size(mesh);
 
-    render f<
+    render js<
       # Bind the shader program.
       vertex glsl<
         # Compute the final position of the model's vertex. The `projection`
