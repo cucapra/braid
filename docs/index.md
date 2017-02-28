@@ -490,3 +490,14 @@ If you keep playing with &proj;, you'll quickly notice that this is a research p
 
 [normalize]: https://www.opengl.org/sdk/docs/man/html/normalize.xhtml
 [Date.now]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
+
+Here are some other features we're working on:
+
+- Compiling to native code for interoperation with C and C++ codebases.
+- Support for other shader kinds aside from just vertex and fragment shaders.
+- Using the GPU for GP-GPU computation in addition to real-time graphics.
+
+Some minor usability issues in the current prototype:
+
+- The [interactive viewer library](https://github.com/hughsk/canvas-orbit-camera) that we use currently doesn't work with touch on mobile devices.
+- The asset loader should only load the assets needed for the current program.
