@@ -148,9 +148,9 @@ You'll get a type error if the annotations don't match:
     var c = <5>;
     !< 2 + !< 8 * 2[c] > >
 
-The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in $[ e ]_2$.)
+The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote.
 
-At first glance, it might look like `[e]n` or `%[e]n` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
+At first glance, it might look like `n[e]` or `%n[e]` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
 
 Take another look at the splicing example above. It uses a form like `< ... < 2[e] > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
 
