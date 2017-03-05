@@ -23,7 +23,7 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
       // Look up the type and stage of a variable.
       if (env.anns[0] === SHADER_ANNOTATION) {  // Shader stage.
         let [t, pos] = stack_lookup(env.stack, tree.ident);
-        if (t !== undefined && pos > 0) {
+        if (t !== undefined && pos! > 0) {
           return [_unwrap_array(t), env];
         }
       }

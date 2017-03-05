@@ -115,7 +115,7 @@ function _desugar_macros(type_table: TypeTable,
 
         // Wrap the call in an escape (unless it's the current level).
         let out: ast.SyntaxNode = call;
-        if (index > 0) {
+        if (index! > 0) {
           out = {
             tag: "escape",
             kind: has_snippets ? "snippet" : "splice",

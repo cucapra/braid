@@ -146,7 +146,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
-  let shfl_render: { proc: any, env: any } = null;
+  let shfl_render: { proc: any, env: any } | null = null;
 
   // This function requests to render the next frame. In performance
   // measurement mode, we ask to run as quickly as possible. In ordinary mode,

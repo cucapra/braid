@@ -80,7 +80,7 @@ function _check(config: Config): Gen<TypeCheck> {
 }
 
 export function frontend(config: Config, source: string,
-    filename: string,
+    filename: string | null,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
   // Parse.
