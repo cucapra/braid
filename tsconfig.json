@@ -1,9 +1,13 @@
 {
     "compilerOptions": {
         "noImplicitAny": true,
+        "strictNullChecks": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+
         "allowJs": true,
         "outDir": "build",
-        "strictNullChecks": true,
+
         "lib": ["dom", "es5", "es2015.promise"]
     },
     "files": [
