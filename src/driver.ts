@@ -1,4 +1,4 @@
-import { SyntaxNode } from './ast';
+import { SyntaxNode, RootNode, ExpressionNode } from './ast';
 import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
 import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
 import { desugar_cross_stage, desugar_macros } from './sugar';
@@ -77,6 +77,45 @@ function _check(config: Config): Gen<TypeCheck> {
     check = compose(glsl.type_mixin, check);
   }
   return check;
+}
+
+export function frontend_multiple(config: Config, sources: string[],
+    filenames: string[],
+    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
+{
+  if (sources.length != filenames.length) { throw 'Sources and Filenames must have same length'; }
+
+  let emptyExpressionNodeArray: ExpressionNode[] = [];
+  let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
+
+  for (var i = 0; i < sources.length; i++) {
+    let source: string = sources[i];
+    let filename: string = filenames[i];
+
+    // Parse.
+    let tree: SyntaxNode;
+    try {
+      tree = parser.parse(source);
+    } catch (e) {
+      if (e instanceof parser.SyntaxError) {
+        let loc = e.location.start;
+        let err = 'parse error at ';
+        if (filename) {
+          err += filename + ':';
+        }
+        err += loc.line + ',' + loc.column + ': ' + e.message;
+        config.error(err);
+        return;
+      } else {
+        throw e;
+      }
+    }
+    config.log(tree);
+
+    root.children.push(tree); // TODO check this is not modifying in place
+  }
+
+  // TODO rest of frontend for rootnode
 }
 
 export function frontend(config: Config, source: string,

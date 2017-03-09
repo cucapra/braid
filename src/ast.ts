@@ -35,6 +35,14 @@ export interface SyntaxNode {
 }
 
 /**
+ * A root AST node that acts as a parent for joining several source ASTs together
+ */
+ export interface RootNode extends SyntaxNode {
+   tag: "root";
+   children: ExpressionNode[];
+ }
+
+/**
  * An AST node that's an expression. This is almost everything---just not
  * parameters and types.
  */
