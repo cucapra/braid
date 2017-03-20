@@ -84,7 +84,7 @@ export default function (config: CodeMirror.EditorConfiguration, pconfig: any):
         stream.skipToEnd();
         return "comment";
       }
-      return null;
+      return "";
     },
 
     /*

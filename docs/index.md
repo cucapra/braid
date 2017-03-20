@@ -148,9 +148,9 @@ You'll get a type error if the annotations don't match:
     var c = <5>;
     !< 2 + !< 8 * 2[c] > >
 
-The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in $[ e ]_2$.)
+The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote.
 
-At first glance, it might look like `[e]n` or `%[e]n` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
+At first glance, it might look like `n[e]` or `%n[e]` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
 
 Take another look at the splicing example above. It uses a form like `< ... < 2[e] > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
 
@@ -170,7 +170,7 @@ which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5
 Splicing is the basis of &lang;'s metaprogramming tools.
 This section describes extensions beyond the basic splices we've already seen that make metaprogramming more powerful.
 
-## Snippets
+## Open Code
 
 So far, each quote has had its own independent scope. No two quotes get to share the same set of local variables, and that includes quotes nested inside escapes. It's important to prohibit programs like this, for example:
 
@@ -206,7 +206,7 @@ But for metaprogramming, scopes that span multiple quotes can be important. Say,
 
 You need to share the value of `r` between the outer quote and the first inner quote (to compute the volume as $\frac{4}{3} \pi r^3$).
 
-To make this work, &lang; supports special kinds of escape and quote that can preserve scopes. They're called *snippets*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
+To make this work, &lang; supports special kinds of escape and quote that can preserve scopes. They're called *open code* quotes, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
 
     var pi = 3.14;
     def sphere(d: Float, volume: Int)
@@ -222,11 +222,11 @@ To make this work, &lang; supports special kinds of escape and quote that can pr
 
 When a quote is marked with a `$`, it inherits its scope from the nearest containing escape---if it is also marked with a `$`. (Syntax mnemonic: `$` is for \$plicing \$nippets.)
 
-Snippets' scope sharing is in tension with the self-contained, reusable nature of garden-variety quotes. In fact, confusing self-contained programs partial snippets causes lots of problems in [other work on multi-stage programming][mint]. Since snippets can contain variables referenced elsewhere, it would be meaningless to run them independently or to splice them anywhere other than their one true intended splicing point.
+Open code's scope sharing is in tension with the self-contained, reusable nature of garden-variety quotes. In fact, confusing self-contained programs with partial pieces of code causes lots of problems in [other work on multi-stage programming][mint]. Since open code can contain variables referenced elsewhere, it would be meaningless to run them independently or to splice them anywhere other than their one true intended splicing point.
 
 [mint]: http://www.cs.rice.edu/~mgricken/research/mint/download/techreport.pdf
 
-&lang; uses a simple strategy to make sure that a snippet can only be spliced into its intended destination. The language gives a special, one-off type to snippets that identifies their splice points. This sneaky program, for example:
+&lang; uses a simple strategy to make sure that an open code value can only be spliced into its intended destination. The language gives a special, one-off type to open code values that identifies their splice points. This sneaky program, for example:
 
     var c = <0>;
     <
@@ -235,19 +235,19 @@ Snippets' scope sharing is in tension with the self-contained, reusable nature o
     >;
     !c
 
-tries to squirrel away a snippet that refers to a variable from the outer quote. &lang; will helpfully complain that the `$<x>` expression has a special type that can't be assigned into a variable with type `<Int>`. That special type has only one purpose: to be spliced into one specific point in one specific program.
+tries to squirrel away an open code value that refers to a variable from the outer quote. &lang; will helpfully complain that the `$<x>` expression has a special type that can't be assigned into a variable with type `<Int>`. That special type has only one purpose: to be spliced into one specific point in one specific program.
 
 ## Pre-Splicing
 
-Aside from giving you scope-spanning, snippets can also be compiled more efficiently. The key factor is the same property that lets them span scopes: they can be spliced into exactly one other program point.
+Aside from giving you scope-spanning, open code can also be compiled more efficiently. The key factor is the same property that lets them span scopes: they can be spliced into exactly one other program point.
 
 Check out the JavaScript code generated from the sphere example above. Unlike previous examples that used splicing, the code here has no magical `__SPLICE_N__` tokens and no runtime `splice` calls. There is no run-time code generation at all. Instead, the two choices for completing the program have been *inlined*. To decide how the quote should behave, the program just chooses between the two complete program variants stored in two different JavaScript strings (called `q10_25` and `q10_31` as of this writing).
 
-In fact, unlike ordinary splicing, you can use snippet splicing with `f<...>` function-backed quotes. Look at the code generated for this version of our example:
+In fact, unlike ordinary splicing, you can use open-code splicing with `js<...>` function-backed quotes. Look at the code generated for this version of our example:
 
     var pi = 3.14;
     def sphere(d: Float, volume: Int)
-      f<
+      js<
         var r = d / 2.0;
         pi * r * r * $[
           if volume
@@ -259,7 +259,7 @@ In fact, unlike ordinary splicing, you can use snippet splicing with `f<...>` fu
 
 There are two specialized variants of the function for the quote. There's no code in string literals and no `eval` monkey business in sight.
 
-Pre-splicing is important because it lets you use staging to express *compile-time* metaprogramming in the same way that you can write *run-time* metaprogramming. Snippets and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
+Pre-splicing is important because it lets you use staging to express *compile-time* metaprogramming in the same way that you can write *run-time* metaprogramming. Open code and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
 
 On the command line, you can optionally disable the presplicing optimization. Use the `-P` flag (with the ordinary `-c` flag to use the compiler) to see the effect.
 
@@ -300,23 +300,23 @@ is syntactic sugar for this:
 Intuitively, you can think of the `@` symbol as saying, "Escape out to where the macro was defined, invoke it with my arguments as unevaluated code, and then splice its result back in here."
 In other words, macros are just functions that run at an earlier stage.
 
-### Snippets and Macros
+### Open Code and Macros
 
-Snippet splicing composes with macros.
+Open-code splicing composes with macros.
 Together, they enforce *macro hygeine*, letting you safely use variables from the scope surrounding the macro invocation.
 
 To make this work, &lang; uses the types on the parameters to the macro function.
-Decorate your function's argument types with a `$` to indicate that the argument should be a snippet:
+Decorate your function's argument types with a `$` to indicate that the argument should be an open-code quote:
 
     def left(lhs: $<Int>, rhs: $<Int>)
       lhs;
     < var x = 1; var y = 2; @left x y >
 
-When the macro function has a snippet parameter type, the corresponding argument quote behaves like a snippet quote. So the `@left x y` invocation above desugars to:
+When the macro function has an open-code parameter type, the corresponding argument quote behaves like an open-code quote. So the `@left x y` invocation above desugars to:
 
     $[ left $<x> $<y> ]
 
-Snippet escapes are powerful because they can use variables from the surrounding scope, but they come with corresponding limitations: most importantly, you can't run (`!`) them.
+Open-code escapes are powerful because they can use variables from the surrounding scope, but they come with corresponding limitations: most importantly, you can't run (`!`) them.
 
 
 # Code Generation
@@ -387,7 +387,7 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
     var indices = mesh_indices(mesh);
     var size = mesh_size(mesh);
 
-    render f<
+    render js<
       # Bind the shader program.
       vertex glsl<
         # Compute the final position of the model's vertex. The `projection`
@@ -481,16 +481,23 @@ If you keep playing with &proj;, you'll quickly notice that this is a research p
 
 - Parse errors are frequently useless: they'll point you toward a seemingly irrelevant part of the code. In &lang-gl; mode, the line number also reflects the (hidden) preamble code.
 - Type errors are often vague and don't have source position information.
-- Missing control flow constructs: `if`, `while`, and `for`.
+- Missing control flow constructs: we have `if` and `while` but not `for`.
 - Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes without re-binding.
 - The set of exposed WebGL and GLSL features is small and ad hoc. We should expand our coverage of the built-ins.
-    - Relatedly, your code mostly gets to play in a "sandbox" currently. You can't load arbitrary models. You also can't yet use textures, which we should really be able to support.
+    - Relatedly, your code mostly gets to play in a "sandbox" currently. You can't load arbitrary models or texture graphics.
 - These intrinsics are not currently "world-specific." For example, you won't get a type error when trying to use [the GLSL function `normalize`][normalize] in host code or the [JavaScript function `Date.now`][Date.now] in shader code---things will just break silently.
 - Functions defined in shader code are not supported. You should also be able to share functions defined at the host stage inside shaders; this is also not implemented.
 
 [normalize]: https://www.opengl.org/sdk/docs/man/html/normalize.xhtml
 [Date.now]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
 
-The major missing features, which I'm working on now, are:
+Here are some other features we're working on:
 
-- We need constructs for compile-time metaprogramming of later stages.
+- Compiling to native code for interoperation with C and C++ codebases.
+- Support for other shader kinds aside from just vertex and fragment shaders.
+- Using the GPU for GP-GPU computation in addition to real-time graphics.
+
+Some minor usability issues in the current prototype:
+
+- The [interactive viewer library](https://github.com/hughsk/canvas-orbit-camera) that we use currently doesn't work with touch on mobile devices.
+- The asset loader should only load the assets needed for the current program.

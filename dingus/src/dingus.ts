@@ -29,8 +29,8 @@ function ssc_run(code: string, mode: string)
   : [string, ast.SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
-  let error: string = null;
-  let type: string = null;
+  let error: string | null = null;
+  let type: string | null = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
     generate: false,
@@ -58,10 +58,10 @@ function ssc_run(code: string, mode: string)
   }
 
   // Run the driver.
-  let res: string = null;
-  let jscode: string = null;
-  let ast: ast.SyntaxNode = null;
-  let glcode: string = null;
+  let res: string | null = null;
+  let jscode: string | null = null;
+  let ast: ast.SyntaxNode | null = null;
+  let glcode: string | null = null;
   driver.frontend(config, code, null, function (tree, types) {
     ast = tree;
 
@@ -86,10 +86,10 @@ function ssc_run(code: string, mode: string)
     }
   });
 
-  return [error, ast, type, jscode, res, glcode];
+  return [error!, ast!, type!, jscode!, res!, glcode!];
 }
 
-function show(text: string, el: HTMLElement) {
+function show(text: string | null, el: HTMLElement) {
   if (text) {
     el.textContent = text;
     el.style.display = 'block';
@@ -111,7 +111,7 @@ function decode_hash(s: string): { [key: string]: string } {
   return out;
 }
 
-function encode_hash(obj: { [key: string]: string }): string {
+function encode_hash(obj: { [key: string]: string | null | undefined }): string {
   let parts: string[] = [];
   for (let key in obj) {
     let value = obj[key];
@@ -159,7 +159,6 @@ let DEFAULT: Config = {
   history: true,
   lineNumbers: true,
   scrollbars: true,
-  fpsCallback: null,
   perfMode: false,
   assets: true,
 };
@@ -181,7 +180,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let imagedlbtn = <HTMLElement> base.querySelector('.imagedl');
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
-  let codemirror: CodeMirror.Editor;
+  let codemirror: CodeMirror.Editor | undefined;
   if (codebox) {
     codemirror = CodeMirror.fromTextArea(codebox, {
       lineNumbers: !!config.lineNumbers,
@@ -233,9 +232,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let draw_tree: (tree_data: any) => void;
   let update_gl: (code?: string, dl?: boolean) => void;
 
-  let last_mode: string = null;
+  let last_mode: string | null = null;
   let custom_preamble = "";
-  function run_code(navigate = true, mode: string = null, code: string = null) {
+  function run_code(navigate = true, mode: string | null = null, code: string | null = null) {
     if (code === null) {
       code = get_code();
     }
@@ -254,7 +253,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
     if (code !== "") {
       let [err, tree, typ, compiled, res, glcode] =
-        ssc_run(custom_preamble + code, mode);
+        ssc_run(custom_preamble + code, mode!);
 
       if (errbox) {
         show(err, errbox);
@@ -346,8 +345,8 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       }
 
       if (navigate && config.history) {
-        let hash = encode_hash({code: code, mode: mode});
-        history.replaceState(null, null, hash);
+        let hash = encode_hash({code: code, mode: mode!});
+        history.replaceState(null, "", hash);
       }
 
     } else {
@@ -368,7 +367,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       }
 
       if (navigate && config.history) {
-        history.replaceState(null, null, '#');
+        history.replaceState(null, "", '#');
       }
     }
   }
@@ -378,8 +377,8 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
     // Handle examples.
     let example_name: string = values['example'];
-    let code: string = null;
-    let mode: string = null;
+    let code: string | null = null;
+    let mode: string | null = null;
     if (example_name) {
       for (let example of EXAMPLES) {
         if (example['name'] === example_name) {
@@ -412,16 +411,16 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   }
 
   // Execute code by linking to it (pushing onto the history).
-  function link_to_code(code: string, mode: string = null) {
+  function link_to_code(code: string, mode: string | null = null) {
     let hash = encode_hash({code: code, mode: mode});
-    history.pushState(null, null, hash);
+    history.pushState(null, "", hash);
     handle_hash();
   }
 
   // Similarly, link to an example with a shorter name.
   function link_to_example(name: string) {
     let hash = encode_hash({example: name});
-    history.pushState(null, null, hash);
+    history.pushState(null, "", hash);
     handle_hash();
   }
 
@@ -469,7 +468,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   }
 
   return {
-    run(code: string, mode: string = null) {
+    run(code: string, mode: string | null = null) {
       set_code(code);
       run_code(true, mode, code);
     },
@@ -484,7 +483,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
      * Redraw components in the dingus to adapt to screen size changes, etc.
      */
     redraw() {
-      codemirror.refresh();
+      if (codemirror) {
+        codemirror.refresh();
+      }
       if (update_gl) {
         update_gl();
       }

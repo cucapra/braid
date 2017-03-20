@@ -6,6 +6,7 @@
         "typings": true,
         "node_modules": true
 	},
-	"editor.wrappingColumn": 80,
+	"editor.wordWrap": "bounded",
+	"editor.wordWrapColumn": 80,
     "editor.tabSize": 2
 }
