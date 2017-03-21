@@ -3,6 +3,7 @@ import { merge } from './util';
 
 // An interface that can handle each expression AST node type.
 export interface ASTVisit<P, R> {
+  visit_root(tree: ast.RootNode, param: P): R;
   visit_literal(tree: ast.LiteralNode, param: P): R;
   visit_seq(tree: ast.SeqNode, param: P): R;
   visit_let(tree: ast.LetNode, param: P): R;
@@ -28,6 +29,8 @@ export interface ASTVisit<P, R> {
 export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
                                 tree: ast.SyntaxNode, param: P): R {
   switch (tree.tag) {
+    case "root":
+      return visitor.visit_root(<ast.RootNode> tree, param);
     case "literal":
       return visitor.visit_literal(<ast.LiteralNode> tree, param);
     case "seq":
@@ -73,6 +76,7 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
 // An interface that can handle *some* AST node types.
 // It's a shame this has to be copied n' pasted.
 interface PartialASTVisit<P, R> {
+  visit_root? (tree: ast.RootNode, param: P): R;
   visit_literal? (tree: ast.LiteralNode, param: P): R;
   visit_seq? (tree: ast.SeqNode, param: P): R;
   visit_let? (tree: ast.LetNode, param: P): R;
@@ -93,7 +97,7 @@ interface PartialASTVisit<P, R> {
   visit_param? (tree: ast.ParamNode, param: P): R;
 }
 
-let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "unary",
+let AST_TYPES = ["root", "literal", "seq", "let", "assign", "lookup", "unary",
                  "binary", "quote", "escape", "run", "fun", "call", "extern",
                  "persist", "param", "if", "while", "macro", "macrocall"];
 
@@ -129,6 +133,16 @@ export function compose_visit <P, R> (
 export type ASTTranslate = (tree: ast.SyntaxNode) => ast.SyntaxNode;
 export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.SyntaxNode> {
   return {
+    visit_root(tree: ast.RootNode, param: void): ast.SyntaxNode {
+      let child_trees: ast.SyntaxNode[] = [];
+      for (let child of tree.children) {
+        child_trees.push(fself(child));
+      }
+      return merge(tree, {
+        children: child_trees,
+      });
+    },
+
     visit_literal(tree: ast.LiteralNode, param: void): ast.SyntaxNode {
       return merge(tree);
     },
@@ -276,6 +290,14 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
 export type ASTFold <T> = (tree:ast.SyntaxNode, p: T) => T;
 export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
   return {
+    visit_root(tree: ast.RootNode, p: T): T {
+      let p1 = p;
+      for (let child of tree.children) {
+        p1 = fself(child, p1);
+      }
+      return p1;
+    },
+
     visit_literal(tree: ast.LiteralNode, p: T): T {
       return p;
     },

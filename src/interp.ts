@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | string | boolean | Code | Fun | Extern;
+type Value = number | string | boolean | Code | Fun | Extern | null;
 
 interface Env {
   [key: string]: Value;
@@ -79,6 +79,18 @@ interface State {
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
 let Interp: ASTVisit<State, [Value, State]> = {
+  visit_root(tree: ast.RootNode, state: State): [Value, State] {
+    let v: Value = null;
+    let s: State = state;
+    for (let child of tree.children) {
+      [v, s] = interp(child, s);
+    }
+    if (v === null) {
+      throw 'Error: Empty Root node';
+    }
+    return [v, s];
+  },
+
   visit_literal(tree: ast.LiteralNode, state: State): [Value, State] {
     return [tree.value, state];
   },
@@ -406,6 +418,19 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   // The rest of the cases are boring: just copy the input tree and recurse
   // while threading through the stage and environment parameters.
   // TODO Use the Translate machinery from the desugaring step.
+  visit_root(tree: ast.RootNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let t:ast.SyntaxNode = tree;
+    let s:State = state;
+    let p:Pers = pers;
+    let trees:ast.SyntaxNode[] = [];
+    for (let child of tree.children) {
+      [t, s, p] = quote_interp(child, stage, s, p);
+      trees.push(t);
+    }
+    return [merge(tree, {children:trees}), s, p];
+  },
 
   visit_literal(tree: ast.LiteralNode,
       [stage, state, pers]: [number, State, Pers]):

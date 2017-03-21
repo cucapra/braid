@@ -175,6 +175,14 @@ export function pretty_value(v: any): string {
 // The core recursive compiler rules.
 
 export let compile_rules = {
+  visit_root(tree: ast.RootNode, emitter: Emitter): string {
+    let p:string = "";
+    for (let child of tree.children) {
+      p += emit(emitter, child);
+    }
+    return p;
+  },
+
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     if (tree.type === "string") {
       return JSON.stringify(tree.value);

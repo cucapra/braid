@@ -13,6 +13,15 @@ function nonterm(tree: ast.SyntaxNode) {
 }
 
 let Pretty: ASTVisit<void, string> = {
+  visit_root(tree: ast.RootNode, _: void): string {
+    let s = "root ";
+    for (let child of tree.children) {
+      s += pretty_paren(child, t => true); // Parenthesize always
+    }
+
+    return s;
+  },
+
   visit_literal(tree: ast.LiteralNode, _: void): string {
     if (tree.type === "string") {
       return JSON.stringify(tree.value);

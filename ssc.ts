@@ -80,7 +80,7 @@ function run(filename: string, source: string, webgl: boolean,
     };
 
     // Run the driver.
-    driver.frontend(config, source, filename, function (tree, types) {
+    driver.frontend_multiple(config, [source], [filename], function (tree, types) {
       if (compile) {
         // Compiler.
         driver.compile(config, tree, types, function (code) {

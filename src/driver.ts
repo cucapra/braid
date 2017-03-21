@@ -115,7 +115,22 @@ export function frontend_multiple(config: Config, sources: string[],
     root.children.push(tree); // TODO check this is not modifying in place
   }
 
-  // TODO rest of frontend for rootnode
+  // Check and elaborate types.
+  let elaborated: SyntaxNode;
+  let type_table: TypeTable;
+  try {
+    [elaborated, type_table] =
+      elaborate(root, _intrinsics(config), _types(config),
+          _check(config));
+    let [type, _] = type_table[elaborated.id!];
+    config.typed(pretty_type(type));
+  } catch (e) {
+    config.error(e);
+    return;
+  }
+  config.log('type table', type_table);
+
+  checked(elaborated, type_table);
 }
 
 export function frontend(config: Config, source: string,
