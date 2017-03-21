@@ -112,7 +112,7 @@ export function frontend_multiple(config: Config, sources: string[],
     }
     config.log(tree);
 
-    root.children.push(tree); // TODO check this is not modifying in place
+    root.children.push(tree);
   }
 
   // Check and elaborate types.
@@ -133,6 +133,7 @@ export function frontend_multiple(config: Config, sources: string[],
   checked(elaborated, type_table);
 }
 
+// TODO: probably delete this and rename frontend_multiple to frontend
 export function frontend(config: Config, source: string,
     filename: string,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
