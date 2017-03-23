@@ -6,7 +6,8 @@
   "private": true,
 
   "dependencies": {
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "llvmc": "cucapra/node-llvmc"
   },
   "devDependencies": {
     "madoko": "^1.0.0-rc4",
