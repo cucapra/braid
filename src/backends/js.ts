@@ -202,10 +202,11 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
-    if (tree.op === '~') {
-      return '!' + paren(p);
+    let op = tree.op;
+    if (op === '~') {
+      op = '!';
     }
-    return tree.op + paren(p);
+    return op + paren(p);
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
