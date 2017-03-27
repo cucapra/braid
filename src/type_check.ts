@@ -117,12 +117,12 @@ export type TypeCheck = (tree: ast.SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
 export let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     visit_root(tree: ast.RootNode, env: TypeEnv): [Type, TypeEnv] {
-      let t:Type = ANY; // TODO is this the best?
+      let t:Type | null = null;
       let e:TypeEnv = env;
       for (let child of tree.children) {
         [t,e] = check(child, e);
       }
-      if (t === ANY) {
+      if (t === null) {
         throw "Error: Empty Root node";
       }
       return [t, e];

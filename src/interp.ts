@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | string | boolean | Code | Fun | Extern | null;
+type Value = number | string | boolean | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -80,7 +80,7 @@ interface State {
 // different set of rules.
 let Interp: ASTVisit<State, [Value, State]> = {
   visit_root(tree: ast.RootNode, state: State): [Value, State] {
-    let v: Value = null;
+    let v: Value | null = null;
     let s: State = state;
     for (let child of tree.children) {
       [v, s] = interp(child, s);
