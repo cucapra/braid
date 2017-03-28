@@ -30,7 +30,7 @@ export function assign <T, U> (target: T, ...sources: U[]): T & U {
 
 // A bit of a hack that abuses prototypes to create overlay. Return a copy of
 // the argument where changing the new object won't affect the original.
-export function overlay<T>(base: T): T {
+export function overlay<T extends Object>(base: T): T {
   return <T> Object.create(base);
 }
 
