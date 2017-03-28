@@ -2,6 +2,7 @@ import * as ast from '../ast';
 import { Emitter, emit } from './emitter';
 import { varsym } from './emitutil';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
+import { INT, FLOAT } from '../type';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 
 interface LLVMEmitter extends Emitter {
@@ -16,7 +17,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 		else if (tree.type === "float") 
 			return llvm.ConstFloat.create(<number>tree.value, llvm.Type.double());
 		else if (tree.type === "string") 
-			return llvm.ConstString.create(<string>tree.value, true); // Null terminate? In Context?
+			return llvm.ConstString.create(<string>tree.value, true); // TODO: Null terminate? In Context?
 		else 
 			throw "Unrecognized Type";
 	},
@@ -43,7 +44,46 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 	},
 
 	visit_binary(tree: ast.BinaryNode, emitter: LLVMEmitter): llvm.Value {
-		throw "not implemented";
+		let v1: llvm.Value; // = emit(emitter, tree.lhs);
+		let v2: llvm.Value; // = emit(emitter, tree.rhs);
+		
+		let [lType, _1] = emitter.ir.type_table[tree.lhs.id!];
+		let [rType, _2] = emitter.ir.type_table[tree.rhs.id!];
+
+		if (lType === INT && rType === INT) {
+			switch (tree.op) {
+				case "+": {
+					return emitter.builder.add(v1, v2, "addtmp");
+				}
+				case "*": {
+					return emitter.builder.mul(v1, v2, "multmp");
+				}
+				default: {
+					throw "Unknown bin op";
+				}
+			}
+		} else if (lType === FLOAT && rType === FLOAT) {
+			switch (tree.op) {
+				case "+": {
+					return emitter.builder.addf(v1, v2, "addtmp");
+				}
+				case "*": {
+					return emitter.builder.mulf(v1, v2, "multmp");
+				}
+				default: {
+					throw "Unknown bin op";
+				}
+			}
+		} else if (lType === FLOAT && rType === INT) {
+			// TODO
+			throw "Not implemented yet"
+		}
+		else if (lType === INT && rType === FLOAT) {
+			// TODO
+			throw "Not implemented yet"
+		} else {
+			throw "Incompatible Operands";
+		}
 	},
 
 	visit_quote(tree: ast.QuoteNode, emitter: LLVMEmitter): llvm.Value {
