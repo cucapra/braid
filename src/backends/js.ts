@@ -632,7 +632,7 @@ export function emit_prog_variant(emitter: Emitter, variant: Variant,
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: compile,
     emit_proc: emit_proc,
     emit_prog: emit_prog,
     emit_prog_variant: emit_prog_variant,

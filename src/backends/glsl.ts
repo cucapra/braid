@@ -250,7 +250,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   let ir = parent_emitter.ir;
   let emitter: Emitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: compile,
     emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
     emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
     emit_prog_variant:

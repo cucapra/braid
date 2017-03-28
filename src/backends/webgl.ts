@@ -362,7 +362,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog,
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: compile,
     emit_proc: js.emit_proc,
 
     emit_prog(emitter: Emitter, prog: Prog) {

@@ -25,7 +25,7 @@ export interface Emitter {
   /**
    * The core code-emission function for expressions.
    */
-  compile: (tree: SyntaxNode, emitter: Emitter) => string;
+  emit_expr: (tree: SyntaxNode, emitter: Emitter) => string;
 
   /**
    * Compile a Proc (lifted function).
@@ -126,5 +126,5 @@ export function emit_scope(emitter: Emitter, scope: number) {
  * Generate code for an expression.
  */
 export function emit(emitter: Emitter, tree: SyntaxNode) {
-  return emitter.compile(tree, emitter);
+  return emitter.emit_expr(tree, emitter);
 }
