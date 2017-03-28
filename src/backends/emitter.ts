@@ -2,9 +2,6 @@ import { SyntaxNode } from '../ast';
 import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
 import { assign } from '../util';
 
-// A type for core code-generation functions.
-export type Compile = (tree: SyntaxNode, emitter: Emitter) => string;
-
 /**
  * A structure containing everything needed to generate code.
  */
@@ -17,7 +14,7 @@ export interface Emitter {
   /**
    * The core code-emission function for expressions.
    */
-  compile: Compile;
+  compile: (tree: SyntaxNode, emitter: Emitter) => string;
 
   /**
    * Compile a Proc (lifted function).
