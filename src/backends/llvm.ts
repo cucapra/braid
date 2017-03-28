@@ -7,8 +7,29 @@ import * as llvm from '../../node_modules/llvmc/src/wrapped';
 
 interface LLVMEmitter extends Emitter {
 	builder: llvm.Builder;
-	namedValues: {[id:string] : llvm.AllocaInst};
+	namedValues: {[id:string] : llvm.Value};
 }
+
+///////////////////////////////////////////////////////////////////
+// Begin Emit Functions
+///////////////////////////////////////////////////////////////////
+
+function emit_assign(emitter: Emitter, tree: ast.AssignNode, get_varsym=varsym): string {
+	let defid = emitter.ir.defuse[tree.id!];
+	let extern = emitter.ir.externs[defid];
+	if (extern !== undefined) {
+		// Extern assignment.
+		return extern + " = " + paren(emit(emitter, tree.expr));
+	} else {
+		// Ordinary variable assignment.
+		let jsvar = get_varsym(defid);
+		return jsvar + " = " + paren(emit(emitter, tree.expr));
+	}
+}
+
+///////////////////////////////////////////////////////////////////
+// End Emit Functions
+///////////////////////////////////////////////////////////////////
 
 let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 	visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
@@ -28,6 +49,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 
 	visit_let(tree: ast.LetNode, emitter: LLVMEmitter): llvm.Value {
 		let jsvar = varsym(tree.id!);
+		let val: llvm.Value; // = emit(emitter, tree.expr)
 		throw "not implemented";
 	},
 
@@ -40,7 +62,16 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 	},
 
 	visit_unary(tree: ast.UnaryNode, emitter: LLVMEmitter): llvm.Value {
-		throw "not implemented";
+		let val: llvm.Value; // = emit(emitter, tree.expr)
+		let [type, _] = emitter.ir.type_table[tree.expr.id!];
+
+		if (type === INT) {
+
+		} else if (type === FLOAT) {
+
+		} else {
+			throw "Incompatible Operand"
+		}
 	},
 
 	visit_binary(tree: ast.BinaryNode, emitter: LLVMEmitter): llvm.Value {
