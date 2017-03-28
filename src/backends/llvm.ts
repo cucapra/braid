@@ -8,11 +8,19 @@ import * as llvm from '../../node_modules/llvmc/src/wrapped';
 /**
  * Like `emitter.Emitter`, but for generating LLVM code instead of strings.
  */
-interface LLVMEmitter extends Emitter {
+interface LLVMEmitter {
   /**
    * The LLVM IRBuilder object used to generate code.
    */
   builder: llvm.Builder;
+
+  // These are copies of `emitter.Emitter`'s `emit_` functions, except for
+  // generating LLVM IR constructs.
+  emit_expr: (tree: SyntaxNode, emitter: Emitter) => llvm.Value;
+  emit_proc: (emitter: Emitter, proc: Proc) => llvm.Value;
+  emit_prog: (emitter: Emitter, prog: Prog) => llvm.Value;
+  emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) =>
+    llvm.Value;
 
   namedValues: {[id:string] : llvm.Value};
 }
