@@ -2,7 +2,7 @@ import * as ast from '../ast';
 import { Emitter, emit } from './emitter';
 import { varsym } from './emitutil';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
-import { INT, FLOAT } from '../type';
+import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 
 interface LLVMEmitter extends Emitter {
@@ -11,24 +11,71 @@ interface LLVMEmitter extends Emitter {
 }
 
 ///////////////////////////////////////////////////////////////////
-// Begin Emit Functions
+// Begin Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
+function _is_fun_type(type: Type): boolean {
+	if (type instanceof FunType) {
+		return true;
+	} else if (type instanceof OverloadedType) {
+		return _is_fun_type(type.types[0]);
+	} else {
+		return false;
+	}
+}
 
-function emit_assign(emitter: Emitter, tree: ast.AssignNode, get_varsym=varsym): string {
+function emit_extern(name: string, type: Type): llvm.Value {
+	if (_is_fun_type(type)) {
+		// The extern is a function. Wrap it in the clothing of our closure
+		// format (with no environment).
+		// TODO
+		throw "Not implemented yet";
+	} else {
+		// An ordinary value. Just look it up by name.
+		// TODO
+		throw "Not implemented yet";
+	}
+}
+
+function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=varsym): llvm.Value {
 	let defid = emitter.ir.defuse[tree.id!];
 	let extern = emitter.ir.externs[defid];
+	
 	if (extern !== undefined) {
 		// Extern assignment.
-		return extern + " = " + paren(emit(emitter, tree.expr));
+		// TODO
+		throw "not implemented yet";
 	} else {
 		// Ordinary variable assignment.
 		let jsvar = get_varsym(defid);
-		return jsvar + " = " + paren(emit(emitter, tree.expr));
+		let val: llvm.Value; // = emit(emitter, tree.expr)
+		// TODO
+	}
+}
+
+function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Type) => llvm.Value, tree: ast.LookupNode, get_varsym=varsym): llvm.Value {
+	let defid = emitter.ir.defuse[tree.id!];
+	let name = emitter.ir.externs[defid];
+	
+	if (name !== undefined) {
+		// extern
+		let [type, _] = emitter.ir.type_table[tree.id!];
+		return emit_extern(name, type);
+	} else {
+		// An ordinary variable lookup
+		let id = get_varsym(defid);
+		
+		// look up the pointer
+		if (!emitter.namedValues.hasOwnProperty(id))
+			throw "Unknown variable name";
+		let ptr: llvm.Value = emitter.namedValues[id];
+
+		// load value
+		return emitter.builder.buildLoad(ptr, id);
 	}
 }
 
 ///////////////////////////////////////////////////////////////////
-// End Emit Functions
+// End Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
 
 let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
@@ -58,7 +105,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 	},
 
 	visit_lookup(tree: ast.LookupNode, emitter: LLVMEmitter): llvm.Value {
-		throw "not implemented";
+		return emit_lookup(emitter, emit_extern, tree);
 	},
 
 	visit_unary(tree: ast.UnaryNode, emitter: LLVMEmitter): llvm.Value {
@@ -66,9 +113,15 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 		let [type, _] = emitter.ir.type_table[tree.expr.id!];
 
 		if (type === INT) {
-
+			if (tree.op === "-")
+				return emitter.builder.neg(val, "negtmp");
+			else
+				throw "Unknown unary op"
 		} else if (type === FLOAT) {
-
+			if (tree.op === "-")
+				return emitter.builder.negf(val, "negtmp");
+			else
+				throw "Unknown unary op"
 		} else {
 			throw "Incompatible Operand"
 		}
@@ -158,7 +211,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 	}
 };
 
-export function compile(tree: ast.SyntaxNode, emitter: LLVMEmitter): string {
+export function compile(tree: ast.SyntaxNode, emitter: LLVMEmitter): llvm.Value {
 	return ast_visit(compile_rules, tree, emitter);
 }
 
