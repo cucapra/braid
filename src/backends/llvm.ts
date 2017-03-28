@@ -5,8 +5,15 @@ import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 
+/**
+ * Like `emitter.Emitter`, but for generating LLVM code instead of strings.
+ */
 interface LLVMEmitter extends Emitter {
+  /**
+   * The LLVM IRBuilder object used to generate code.
+   */
   builder: llvm.Builder;
+
   namedValues: {[id:string] : llvm.Value};
 }
 
