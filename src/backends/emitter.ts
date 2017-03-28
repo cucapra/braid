@@ -48,7 +48,9 @@ export interface Emitter {
   variant: Variant | null;
 }
 
-// Compile the main function.
+/**
+ * Compile the main function.
+ */
 export function emit_main(emitter: Emitter) {
   return emitter.emit_proc(emitter, emitter.ir.main);
 }
