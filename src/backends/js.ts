@@ -287,9 +287,6 @@ export let compile_rules = {
   },
 };
 
-function compile(tree: ast.SyntaxNode, emitter: Emitter) {
-  return ast_visit(compile_rules, tree, emitter);
-}
 
 
 // Code value emission for quote and function nodes.
@@ -632,7 +629,8 @@ export function emit_prog_variant(emitter: Emitter, variant: Variant,
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    emit_expr: compile,
+    emit_expr: (tree: ast.SyntaxNode, emitter: Emitter) =>
+      ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
     emit_prog: emit_prog,
     emit_prog_variant: emit_prog_variant,

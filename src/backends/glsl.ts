@@ -238,10 +238,6 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 };
 
-export function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
-  return ast_visit(compile_rules, tree, emitter);
-}
-
 
 // Emitting the surrounding machinery for communicating between stages.
 
@@ -250,7 +246,8 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   let ir = parent_emitter.ir;
   let emitter: Emitter = {
     ir: ir,
-    emit_expr: compile,
+    emit_expr: (tree: ast.SyntaxNode, emitter: Emitter) =>
+      ast_visit(compile_rules, tree, emitter),
     emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
     emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
     emit_prog_variant:
