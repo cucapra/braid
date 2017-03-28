@@ -226,15 +226,13 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   }
 };
 
-export function compile(tree: ast.SyntaxNode, emitter: LLVMEmitter): llvm.Value {
-  return ast_visit(compile_rules, tree, emitter);
-}
 
 // Compile the IR to a complete JavaScript program.
 export function codegen(ir: CompilerIR): string {
   let emitter: LLVMEmitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) =>
+      ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
     emit_prog: emit_prog,
     emit_prog_variant: emit_prog_variant,
