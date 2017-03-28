@@ -1,12 +1,20 @@
+/**
+ * The base infrastructure for compiler backends. There is an Emitter
+ * structure that collects together the entry points and state of a backend,
+ * and several utility functions that help invoke those entry points.
+ */
+
 import { SyntaxNode } from '../ast';
 import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
 import { assign } from '../util';
 
-// A type for core code-generation functions.
-export type Compile = (tree: SyntaxNode, emitter: Emitter) => string;
-
 /**
- * A structure containing everything needed to generate code.
+ * A structure specifying a code-generation backend and its state.
+ *
+ * An Emitter contains the current program being generated along with the
+ * functions that produce code a for a certain backend. For the most part,
+ * clients do not invoke the `emit_` functions on Emitter directly; they
+ * instead use the wrapper utilities defined elsewhere in this module.
  */
 export interface Emitter {
   /**
@@ -17,7 +25,7 @@ export interface Emitter {
   /**
    * The core code-emission function for expressions.
    */
-  compile: Compile;
+  emit_expr: (tree: SyntaxNode, emitter: Emitter) => string;
 
   /**
    * Compile a Proc (lifted function).
@@ -118,5 +126,5 @@ export function emit_scope(emitter: Emitter, scope: number) {
  * Generate code for an expression.
  */
 export function emit(emitter: Emitter, tree: SyntaxNode) {
-  return emitter.compile(tree, emitter);
+  return emitter.emit_expr(tree, emitter);
 }

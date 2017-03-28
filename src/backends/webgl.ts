@@ -327,10 +327,6 @@ let compile_rules: ASTVisit<Emitter, string> =
     },
   });
 
-function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
-  return ast_visit(compile_rules, tree, emitter);
-};
-
 function emit_glsl_prog(emitter: Emitter, prog: Prog,
                         variant: Variant | null): string {
   let out = "";
@@ -362,7 +358,8 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog,
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: (tree: ast.SyntaxNode, emitter: Emitter) =>
+      ast_visit(compile_rules, tree, emitter),
     emit_proc: js.emit_proc,
 
     emit_prog(emitter: Emitter, prog: Prog) {
