@@ -4,11 +4,14 @@ import { varsym, is_fun_type } from './emitutil';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
+import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
 
 /**
  * Like `emitter.Emitter`, but for generating LLVM code instead of strings.
  */
 interface LLVMEmitter {
+  ir: CompilerIR;
+
   /**
    * The LLVM IRBuilder object used to generate code.
    */

@@ -52,7 +52,8 @@ function check_output(filename: string, source: string, result: string):
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
-    generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
+    generate: boolean, log: (...msg: any[]) => void, presplice: boolean,
+    native: boolean)
 {
   let success = true;
 
@@ -61,6 +62,7 @@ function run(filename: string, source: string, webgl: boolean,
     // Configure the driver.
     let config: driver.Config = {
       webgl: webgl,
+      native: native,
       generate: generate,
 
       log: log,
@@ -129,7 +131,7 @@ function run(filename: string, source: string, webgl: boolean,
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P'],
+    boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P', 'n'],
   });
 
   // The flags: -v, -c, and -x.
@@ -140,6 +142,7 @@ function main() {
   let test: boolean = args['t'];
   let generate: boolean = args['g'];
   let no_presplice: boolean = args['P'];
+  let native: boolean = args['n'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
@@ -151,6 +154,7 @@ function main() {
     console.error("  -t: test mode (check for expected output)");
     console.error("  -g: dump generated code");
     console.error("  -P: do not use the presplicing optimization");
+    console.error("  -n: use native (LLVM) backend");
     process.exit(1);
   }
 
@@ -191,7 +195,7 @@ function main() {
     return new Promise(function (resolve, reject) {
       let then = function (source: string) {
         success = run(fn, source, webgl, compile, execute, test,
-            generate, log, !no_presplice) && success;
+            generate, log, !no_presplice, native) && success;
         resolve();
       };
       if (fn === STDIN_FILENAME) {
