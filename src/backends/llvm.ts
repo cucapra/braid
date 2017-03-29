@@ -57,11 +57,11 @@ function emit_extern(name: string, type: Type): llvm.Value {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     // TODO
-    throw "Not implemented yet";
+    return undefined;
   } else {
     // An ordinary value. Just look it up by name.
     // TODO
-    throw "Not implemented yet";
+    return undefined;
   }
 }
 
@@ -79,9 +79,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     throw "not implemented yet";
   } else {
     // Ordinary variable assignment.
-    let jsvar = get_varsym(defid);
-    let val: llvm.Value; // = emit(emitter, tree.expr)
-    // TODO
+    return assignment_helper(emitter, tree, get_varsym);
   }
 }
 
@@ -119,7 +117,7 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
 /**
  * Create an alloca with the provided name in the entry block of the provided function
  */
-function createEntryBlockAlloca(func: llvm.Function, type: llvm.Type, name: string): llvm.Value {
+function create_entry_block_alloca(func: llvm.Function, type: llvm.Type, name: string): llvm.Value {
   // create builder and position after func's first instruction
   let builder: llvm.Builder = llvm.Builder.create();
   let bb: llvm.BasicBlock = func.getEntryBlock();
@@ -130,6 +128,26 @@ function createEntryBlockAlloca(func: llvm.Function, type: llvm.Type, name: stri
   return builder.buildAlloca(type, name);
 }
 
+/**
+ * Perform ordinary variable assignment
+ */
+function assignment_helper(emitter: LLVMEmitter, tree: ast.LetNode|ast.AssignNode, get_varsym=varsym): llvm.Value {
+  let jsvar: string = varsym(tree.id!);
+  let val: llvm.Value = emit(emitter, tree.expr)
+    
+  // get pointer to stack location
+  if (!emitter.namedValues.hasOwnProperty(jsvar))
+    throw "Unknown variable";
+  let ptr: llvm.Value = emitter.namedValues[jsvar];
+
+  // store new value and return this value
+  emitter.builder.buildStore(val, ptr);
+  return val;
+}
+
+/**
+ * Core recursive compile rules
+ */
 let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
     if (tree.type === "int")
@@ -147,21 +165,11 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_let(tree: ast.LetNode, emitter: LLVMEmitter): llvm.Value {
-    let jsvar: string = varsym(tree.id!);
-    let val: llvm.Value = emit(emitter, tree.expr)
-    
-    // get pointer to stack location
-    if (!emitter.namedValues.hasOwnProperty(jsvar))
-      throw "Unknown variable";
-    let ptr: llvm.Value = emitter.namedValues[jsvar];
-
-    // store new value and return this value
-    emitter.builder.buildStore(val, ptr);
-    return val;
+    return assignment_helper(emitter, tree);
   },
 
   visit_assign(tree: ast.AssignNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    return emit_assign(emitter, tree);
   },
 
   visit_lookup(tree: ast.LookupNode, emitter: LLVMEmitter): llvm.Value {
