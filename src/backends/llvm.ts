@@ -1,9 +1,12 @@
 import * as ast from '../ast';
-import { Emitter, emit } from './emitter';
-import { varsym } from './emitutil';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
+import { Proc, Prog, Variant, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
+
+///////////////////////////////////////////////////////////////////
+// Begin Emit Functions & Redundant Funcs
+///////////////////////////////////////////////////////////////////
 
 /**
  * Like `emitter.Emitter`, but for generating LLVM code instead of strings.
@@ -14,20 +17,31 @@ interface LLVMEmitter {
    */
   builder: llvm.Builder;
 
+  /**
+   * Map from id's to Alloca ptr's
+   */
+  namedValues: {[id:string] : llvm.Value};
+
+  /**
+   * Program we are compiling
+   */
+  ir: CompilerIR;
+
   // These are copies of `emitter.Emitter`'s `emit_` functions, except for
   // generating LLVM IR constructs.
-  emit_expr: (tree: SyntaxNode, emitter: Emitter) => llvm.Value;
-  emit_proc: (emitter: Emitter, proc: Proc) => llvm.Value;
-  emit_prog: (emitter: Emitter, prog: Prog) => llvm.Value;
-  emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) =>
+  emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => llvm.Value;
+  emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
+  emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
+  emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) =>
     llvm.Value;
-
-  namedValues: {[id:string] : llvm.Value};
 }
 
-///////////////////////////////////////////////////////////////////
-// Begin Emit Functions & Redundant Funcs
-///////////////////////////////////////////////////////////////////
+// Copy of emitutils.ts function
+function varsym(defid: number) {
+  return 'v' + defid;
+}
+
+// Copy of js.ts function
 function _is_fun_type(type: Type): boolean {
   if (type instanceof FunType) {
     return true;
@@ -89,6 +103,11 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
   }
 }
 
+// copy of emitter function
+function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
+  return emitter.emit_expr(tree, emitter);
+}
+
 ///////////////////////////////////////////////////////////////////
 // End Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
@@ -110,8 +129,8 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_let(tree: ast.LetNode, emitter: LLVMEmitter): llvm.Value {
-    let jsvar = varsym(tree.id!);
-    let val: llvm.Value; // = emit(emitter, tree.expr)
+    let jsvar: string = varsym(tree.id!);
+    let val: llvm.Value = emit(emitter, tree.expr)
     throw "not implemented";
   },
 
@@ -124,7 +143,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_unary(tree: ast.UnaryNode, emitter: LLVMEmitter): llvm.Value {
-    let val: llvm.Value; // = emit(emitter, tree.expr)
+    let val: llvm.Value = emit(emitter, tree.expr)
     let [type, _] = emitter.ir.type_table[tree.expr.id!];
 
     if (type === INT) {
@@ -143,8 +162,8 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: LLVMEmitter): llvm.Value {
-    let v1: llvm.Value; // = emit(emitter, tree.lhs);
-    let v2: llvm.Value; // = emit(emitter, tree.rhs);
+    let v1: llvm.Value = emit(emitter, tree.lhs);
+    let v2: llvm.Value = emit(emitter, tree.rhs);
 
     let [lType, _1] = emitter.ir.type_table[tree.lhs.id!];
     let [rType, _2] = emitter.ir.type_table[tree.rhs.id!];
