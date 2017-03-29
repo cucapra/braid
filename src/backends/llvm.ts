@@ -65,6 +65,10 @@ function emit_extern(name: string, type: Type): llvm.Value {
   }
 }
 
+function emit_fun(name: string | null, argnames: string[], localnames: string[], body: string): llvm.Value {
+  throw "not implemented yet"
+}
+
 function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=varsym): llvm.Value {
   let defid = emitter.ir.defuse[tree.id!];
   let extern = emitter.ir.externs[defid];
@@ -111,6 +115,18 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
 ///////////////////////////////////////////////////////////////////
 // End Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
+
+/**
+ * Create an alloca with the provided name in the entry block of the provided function
+ */
+function createEntryBlockAlloca(func: llvm.Function, type: llvm.Type, name: string): llvm.Value {
+  let builder: llvm.Builder = llvm.Builder.create();
+  let bb: llvm.BasicBlock = func.getEntryBlock();
+  let instr: llvm.Value = bb.getFirstInstr();
+
+  builder.positionAfter(bb, instr);
+  return builder.buildAlloca(type, name);
+}
 
 let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
