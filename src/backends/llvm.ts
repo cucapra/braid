@@ -162,46 +162,48 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: LLVMEmitter): llvm.Value {
-    let v1: llvm.Value = emit(emitter, tree.lhs);
-    let v2: llvm.Value = emit(emitter, tree.rhs);
+    let lVal: llvm.Value = emit(emitter, tree.lhs);
+    let rVal: llvm.Value = emit(emitter, tree.rhs);
 
     let [lType, _1] = emitter.ir.type_table[tree.lhs.id!];
     let [rType, _2] = emitter.ir.type_table[tree.rhs.id!];
 
     if (lType === INT && rType === INT) {
+      // both operands are ints, so do integer operation
       switch (tree.op) {
         case "+": {
-          return emitter.builder.add(v1, v2, "addtmp");
+          return emitter.builder.add(lVal, rVal, "addtmp");
         }
         case "*": {
-          return emitter.builder.mul(v1, v2, "multmp");
+          return emitter.builder.mul(lVal, rVal, "multmp");
         }
         default: {
           throw "Unknown bin op";
         }
       }
-    } else if (lType === FLOAT && rType === FLOAT) {
-      switch (tree.op) {
-        case "+": {
-          return emitter.builder.addf(v1, v2, "addtmp");
-        }
-        case "*": {
-          return emitter.builder.mulf(v1, v2, "multmp");
-        }
-        default: {
-          throw "Unknown bin op";
-        }
-      }
-    } else if (lType === FLOAT && rType === INT) {
-      // TODO
-      throw "Not implemented yet"
-    }
-    else if (lType === INT && rType === FLOAT) {
-      // TODO
-      throw "Not implemented yet"
-    } else {
+    } else if ((lType !== FLOAT && lType !== INT) || (rType !== FLOAT && rType !== INT)) {
+      // at least one operand is neither an int nor a float, so throw error
       throw "Incompatible Operands";
-    }
+    } else {
+      // at least one operand is a float, and the other is either a float or an int
+      // perform casts if needed, and us float operation
+      if (lType !== FLOAT)
+        lVal = emitter.builder.buildSIToFP(lVal, llvm.Type.double(), "lCast");
+      if (rType !== FLOAT)
+        rVal = emitter.builder.buildSIToFP(rVal, llvm.Type.double(), "lCast");
+      
+      switch (tree.op) {
+        case "+": {
+          return emitter.builder.addf(lVal, rVal, "addtmp");
+        }
+        case "*": {
+          return emitter.builder.mulf(lVal, rVal, "multmp");
+        }
+        default: {
+          throw "Unknown bin op";
+        }
+      }
+    } 
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: LLVMEmitter): llvm.Value {
