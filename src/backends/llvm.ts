@@ -107,7 +107,7 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
   }
 }
 
-// copy of emitter function
+// mostly a copy of emitter function
 function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
@@ -120,11 +120,13 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
  * Create an alloca with the provided name in the entry block of the provided function
  */
 function createEntryBlockAlloca(func: llvm.Function, type: llvm.Type, name: string): llvm.Value {
+  // create builder and position after func's first instruction
   let builder: llvm.Builder = llvm.Builder.create();
   let bb: llvm.BasicBlock = func.getEntryBlock();
   let instr: llvm.Value = bb.getFirstInstr();
-
   builder.positionAfter(bb, instr);
+
+  // create alloca
   return builder.buildAlloca(type, name);
 }
 
@@ -147,7 +149,15 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   visit_let(tree: ast.LetNode, emitter: LLVMEmitter): llvm.Value {
     let jsvar: string = varsym(tree.id!);
     let val: llvm.Value = emit(emitter, tree.expr)
-    throw "not implemented";
+    
+    // get pointer to stack location
+    if (!emitter.namedValues.hasOwnProperty(jsvar))
+      throw "Unknown variable";
+    let ptr: llvm.Value = emitter.namedValues[jsvar];
+
+    // store new value and return this value
+    emitter.builder.buildStore(val, ptr);
+    return val;
   },
 
   visit_assign(tree: ast.AssignNode, emitter: LLVMEmitter): llvm.Value {
