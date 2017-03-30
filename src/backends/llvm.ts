@@ -30,10 +30,10 @@ interface LLVMEmitter {
   // These are copies of `emitter.Emitter`'s `emit_` functions, except for
   // generating LLVM IR constructs.
   emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => llvm.Value;
-  emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
-  emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
-  emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) =>
-    llvm.Value;
+  //emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
+  //emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
+  //emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) => llvm.Value;
+  //variant: Variant|null;
 }
 
 // Copy of emitutils.ts function
@@ -55,15 +55,6 @@ function _is_fun_type(type: Type): boolean {
   } else {
     return false;
   }
-}
-
-function emit_fun(name: string | null, argnames: string[], localnames: string[], body: string): llvm.Value {
-  // create function with appropriate name/body
-
-  // do stuff with argnames (probably store their values somewhere...)
-
-  // for each name in localnames
-  //  create_entry_block_alloca(function, type, name)
 }
 
 function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.ExpressionNode) => boolean = useful_pred): llvm.Value {
@@ -314,19 +305,62 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   }
 };
 
+function emit_proc() {
+
+}
+
+function emit_prog() {
+
+}
+
+function emit_prog_variant() {
+
+}
 
 // Compile the IR to a complete JavaScript program.
 export function codegen(ir: CompilerIR): llvm.Value {
   let emitter: LLVMEmitter = {
     ir: ir,
+    builder: llvm.Builder.create(),
+    namedValues: {},
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
-    emit_proc: emit_proc,
-    emit_prog: emit_prog,
-    emit_prog_variant: emit_prog_variant,
-    variant: null,
-    builder: null,
+    //emit_proc: emit_proc,
+    //emit_prog: emit_prog,
+    //emit_prog_variant: emit_prog_variant,
+    //variant: null,
   };
 
   // Emit and invoke the main (anonymous) function.
-  return emit_main_wrapper(emit_main(emitter));
+  return emit_main(emitter);
+}
+
+function emit_main(emitter: LLVMEmitter): llvm.Value { 
+  // get return type
+  let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
+  let llvmType: llvm.Type;
+  if (type === INT)
+    llvmType = llvm.Type.int32();
+  else if (type === FLOAT)
+    llvmType = llvm.Type.double();
+  else
+    throw "Unknown type";
+
+  // construct module
+  let mod: llvm.Module = llvm.Module.create("some_module");
+
+  // construct wrapper func
+  let funcType: llvm.FunctionType = llvm.FunctionType.create(llvmType, []);
+  let main: llvm.Function = mod.addFunction("main", funcType);
+  let entry: llvm.BasicBlock = main.appendBasicBlock("entry");
+  emitter.builder.positionAtEnd(entry);
+
+  // emit body
+  let body: llvm.Value = emit(emitter, emitter.ir.main.body);
+  emitter.builder.ret(body);
+
+  console.log(mod.toString());
+
+  emitter.builder.free();
+  mod.free();
+  return main;
 }
