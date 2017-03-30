@@ -41,6 +41,11 @@ function varsym(defid: number) {
   return 'v' + defid;
 }
 
+// copy of emitutils.ts function
+function useful_pred(tree: ast.ExpressionNode): boolean {
+  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
+}
+
 // Copy of js.ts function
 function _is_fun_type(type: Type): boolean {
   if (type instanceof FunType) {
@@ -67,6 +72,16 @@ function emit_extern(name: string, type: Type): llvm.Value {
 
 function emit_fun(name: string | null, argnames: string[], localnames: string[], body: string): llvm.Value {
   throw "not implemented yet"
+}
+
+function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.ExpressionNode) => boolean = useful_pred): llvm.Value {
+  if (pred(seq.lhs))
+    emit(emitter, seq.lhs);
+  return emit(emitter, seq.rhs);
+}
+
+function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
+  return assignment_helper(emitter, tree);
 }
 
 function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=varsym): llvm.Value {
@@ -161,11 +176,11 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_seq(tree: ast.SeqNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    return emit_seq(emitter, tree);
   },
 
   visit_let(tree: ast.LetNode, emitter: LLVMEmitter): llvm.Value {
-    return assignment_helper(emitter, tree);
+    return emit_let(emitter, tree);
   },
 
   visit_assign(tree: ast.AssignNode, emitter: LLVMEmitter): llvm.Value {
