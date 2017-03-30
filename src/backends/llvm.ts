@@ -57,19 +57,6 @@ function _is_fun_type(type: Type): boolean {
   }
 }
 
-function emit_extern(name: string, type: Type): llvm.Value {
-  if (_is_fun_type(type)) {
-    // The extern is a function. Wrap it in the clothing of our closure
-    // format (with no environment).
-    // TODO
-    return undefined;
-  } else {
-    // An ordinary value. Just look it up by name.
-    // TODO
-    return undefined;
-  }
-}
-
 function emit_fun(name: string | null, argnames: string[], localnames: string[], body: string): llvm.Value {
   throw "not implemented yet"
 }
@@ -117,6 +104,19 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 
     // load value
     return emitter.builder.buildLoad(ptr, id);
+  }
+}
+
+function emit_extern(name: string, type: Type): llvm.Value {
+  if (_is_fun_type(type)) {
+    // The extern is a function. Wrap it in the clothing of our closure
+    // format (with no environment).
+    // TODO
+    return undefined;
+  } else {
+    // An ordinary value. Just look it up by name.
+    // TODO
+    return undefined;
   }
 }
 
@@ -170,7 +170,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     else if (tree.type === "float")
       return llvm.ConstFloat.create(<number>tree.value, llvm.Type.double());
     else if (tree.type === "string")
-      return llvm.ConstString.create(<string>tree.value, true); // TODO: Null terminate? In Context?
+      return llvm.ConstString.create(<string>tree.value, false);
     else
       throw "Unrecognized Type";
   },
