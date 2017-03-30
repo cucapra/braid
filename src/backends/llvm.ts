@@ -102,7 +102,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     
     // get pointer to stack location
     if (!emitter.namedValues.hasOwnProperty(jsvar))
-      throw "Unknown variable";
+      throw "Unknown variable name";
     let ptr: llvm.Value = emitter.namedValues[jsvar];
 
     // store new value and return this value
