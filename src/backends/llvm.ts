@@ -58,7 +58,12 @@ function _is_fun_type(type: Type): boolean {
 }
 
 function emit_fun(name: string | null, argnames: string[], localnames: string[], body: string): llvm.Value {
-  throw "not implemented yet"
+  // create function with appropriate name/body
+
+  // do stuff with argnames (probably store their values somewhere...)
+
+  // for each name in localnames
+  //  create_entry_block_alloca(function, type, name)
 }
 
 function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.ExpressionNode) => boolean = useful_pred): llvm.Value {
@@ -68,7 +73,27 @@ function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.Expressi
 }
 
 function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
-  return assignment_helper(emitter, tree);
+  // Get variable name and value
+  let jsvar: string = varsym(tree.id!);
+  let val: llvm.Value = emit(emitter, tree.expr);
+  
+  // Get variable type
+  let [type, _] = emitter.ir.type_table[tree.expr.id!];
+  let llvmType: llvm.Type;
+  if (type === INT)
+    llvmType = llvm.Type.int32();
+  else if (type === FLOAT)
+    llvmType = llvm.Type.double();
+  else
+    throw "unknown type";
+
+  // Create alloca for variable and store ptr in namedValues
+  let ptr: llvm.Value = create_entry_block_alloca(emitter.builder.getInsertBlock().getParent(), llvmType, jsvar);
+  emitter.namedValues[jsvar] = ptr;
+
+  // Store and return value
+  emitter.builder.buildStore(val, ptr);
+  return val;
 }
 
 function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=varsym): llvm.Value {
@@ -81,7 +106,17 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     throw "not implemented yet";
   } else {
     // Ordinary variable assignment.
-    return assignment_helper(emitter, tree, get_varsym);
+    let jsvar: string = get_varsym(tree.id!);
+    let val: llvm.Value = emit(emitter, tree.expr)
+    
+    // get pointer to stack location
+    if (!emitter.namedValues.hasOwnProperty(jsvar))
+      throw "Unknown variable";
+    let ptr: llvm.Value = emitter.namedValues[jsvar];
+
+    // store new value and return this value
+    emitter.builder.buildStore(val, ptr);
+    return val;
   }
 }
 
@@ -141,23 +176,6 @@ function create_entry_block_alloca(func: llvm.Function, type: llvm.Type, name: s
 
   // create alloca
   return builder.buildAlloca(type, name);
-}
-
-/**
- * Perform ordinary variable assignment
- */
-function assignment_helper(emitter: LLVMEmitter, tree: ast.LetNode|ast.AssignNode, get_varsym=varsym): llvm.Value {
-  let jsvar: string = varsym(tree.id!);
-  let val: llvm.Value = emit(emitter, tree.expr)
-    
-  // get pointer to stack location
-  if (!emitter.namedValues.hasOwnProperty(jsvar))
-    throw "Unknown variable";
-  let ptr: llvm.Value = emitter.namedValues[jsvar];
-
-  // store new value and return this value
-  emitter.builder.buildStore(val, ptr);
-  return val;
 }
 
 /**
@@ -298,11 +316,10 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 
 
 // Compile the IR to a complete JavaScript program.
-export function codegen(ir: CompilerIR): string {
+export function codegen(ir: CompilerIR): llvm.Value {
   let emitter: LLVMEmitter = {
     ir: ir,
-    emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) =>
-      ast_visit(compile_rules, tree, emitter),
+    emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
     emit_prog: emit_prog,
     emit_prog_variant: emit_prog_variant,
