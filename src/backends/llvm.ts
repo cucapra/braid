@@ -138,11 +138,11 @@ function emit_extern(name: string, type: Type): llvm.Value {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     // TODO
-    return undefined;
+    throw "not implemented"
   } else {
     // An ordinary value. Just look it up by name.
     // TODO
-    return undefined;
+    throw "not implemented"
   }
 }
 

@@ -1,7 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
-  emit_while, variantsym } from './emitutil';
+  emit_while, variantsym, is_fun_type } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
   specialized_prog } from './emitter';
 import * as ast from '../ast';
@@ -56,18 +56,8 @@ export const FUNC_ANNOTATION = "js";
 
 // Code-generation utilities.
 
-function _is_fun_type(type: Type): boolean {
-  if (type instanceof FunType) {
-    return true;
-  } else if (type instanceof OverloadedType) {
-    return _is_fun_type(type.types[0]);
-  } else {
-    return false;
-  }
-}
-
 function emit_extern(name: string, type: Type) {
-  if (_is_fun_type(type)) {
+  if (is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     return "{ proc: " + name + ", env: [] }";
