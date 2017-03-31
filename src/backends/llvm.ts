@@ -47,7 +47,7 @@ function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
   // Get variable name and value
   let jsvar: string = varsym(tree.id!);
   let val: llvm.Value = emit(emitter, tree.expr);
-  
+
   // Get variable type
   let [type, _] = emitter.ir.type_table[tree.expr.id!];
   let llvmType: llvm.Type;
@@ -79,7 +79,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     // Ordinary variable assignment.
     let jsvar: string = get_varsym(defid);
     let val: llvm.Value = emit(emitter, tree.expr)
-    
+
     // get pointer to stack location
     if (!emitter.namedValues.hasOwnProperty(jsvar))
       throw "Unknown variable name";
@@ -229,7 +229,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
         lVal = emitter.builder.buildSIToFP(lVal, llvm.Type.double(), "lCast");
       if (rType !== FLOAT)
         rVal = emitter.builder.buildSIToFP(rVal, llvm.Type.double(), "lCast");
-      
+
       switch (tree.op) {
         case "+": {
           return emitter.builder.addf(lVal, rVal, "addtmp");
@@ -241,7 +241,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
           throw "Unknown bin op";
         }
       }
-    } 
+    }
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: LLVMEmitter): llvm.Value {
@@ -314,7 +314,7 @@ export function codegen(ir: CompilerIR): llvm.Value {
   return emit_main(emitter);
 }
 
-function emit_main(emitter: LLVMEmitter): llvm.Value { 
+function emit_main(emitter: LLVMEmitter): llvm.Value {
   // get return type
   let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
   let llvmType: llvm.Type;
