@@ -97,7 +97,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     throw "not implemented yet";
   } else {
     // Ordinary variable assignment.
-    let jsvar: string = get_varsym(tree.id!);
+    let jsvar: string = get_varsym(defid);
     let val: llvm.Value = emit(emitter, tree.expr)
     
     // get pointer to stack location
