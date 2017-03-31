@@ -297,11 +297,15 @@ function emit_prog_variant() {
 
 }
 
-// Compile the IR to a complete JavaScript program.
-export function codegen(ir: CompilerIR): llvm.Value {
+/**
+ * Compile the IR to an LLVM module.
+ */
+export function codegen(ir: CompilerIR): llvm.Module {
+  // Set up the emitter, which includes the LLVM IR builder.
+  let builder = llvm.Builder.create();
   let emitter: LLVMEmitter = {
     ir: ir,
-    builder: llvm.Builder.create(),
+    builder: builder,
     namedValues: {},
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
     //emit_proc: emit_proc,
@@ -310,11 +314,29 @@ export function codegen(ir: CompilerIR): llvm.Value {
     //variant: null,
   };
 
-  // Emit and invoke the main (anonymous) function.
-  return emit_main(emitter);
+  // Create a module. This is where all the generated code will go.
+  let mod: llvm.Module = llvm.Module.create("braidprogram");
+
+  // Generate the main function into the module.
+  emit_main(emitter, mod);
+
+  // TODO: We currently just log the IR and then free the module. Eventually,
+  // we'd like to return the module to the caller so it can do whatever it
+  // wants with the result---at the moment, we return a dangling pointer!
+  console.log(mod.toString());
+  mod.free();
+
+  // Now that we're done generating code, we can free the IR builder.
+  emitter.builder.free();
+
+  return mod;
 }
 
-function emit_main(emitter: LLVMEmitter): llvm.Value {
+/**
+ * Emit the main function (and all the functions it depends on, eventually)
+ * into the specified LLVM module.
+ */
+function emit_main(emitter: LLVMEmitter, mod: llvm.Module): llvm.Value {
   // get return type
   let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
   let llvmType: llvm.Type;
@@ -324,9 +346,6 @@ function emit_main(emitter: LLVMEmitter): llvm.Value {
     llvmType = llvm.Type.double();
   else
     throw "Unknown type";
-
-  // construct module
-  let mod: llvm.Module = llvm.Module.create("some_module");
 
   // construct wrapper func
   let funcType: llvm.FunctionType = llvm.FunctionType.create(llvmType, []);
@@ -338,9 +357,6 @@ function emit_main(emitter: LLVMEmitter): llvm.Value {
   let body: llvm.Value = emit(emitter, emitter.ir.main.body);
   emitter.builder.ret(body);
 
-  console.log(mod.toString());
 
-  emitter.builder.free();
-  mod.free();
   return main;
 }
