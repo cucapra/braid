@@ -3,6 +3,7 @@ import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
 import { Proc, Prog, Variant, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
+import { varsym, is_fun_type, useful_pred } from './emitutil';
 
 ///////////////////////////////////////////////////////////////////
 // Begin Emit Functions & Redundant Funcs
@@ -34,27 +35,6 @@ interface LLVMEmitter {
   //emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
   //emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) => llvm.Value;
   //variant: Variant|null;
-}
-
-// Copy of emitutils.ts function
-function varsym(defid: number) {
-  return 'v' + defid;
-}
-
-// copy of emitutils.ts function
-function useful_pred(tree: ast.ExpressionNode): boolean {
-  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
-}
-
-// Copy of js.ts function
-function _is_fun_type(type: Type): boolean {
-  if (type instanceof FunType) {
-    return true;
-  } else if (type instanceof OverloadedType) {
-    return _is_fun_type(type.types[0]);
-  } else {
-    return false;
-  }
 }
 
 function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.ExpressionNode) => boolean = useful_pred): llvm.Value {
@@ -134,7 +114,7 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
-  if (_is_fun_type(type)) {
+  if (is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     // TODO

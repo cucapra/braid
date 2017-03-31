@@ -170,7 +170,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
  * This way, expressions with no effect avoid getting emitted unless their
  * results are actually used.
  */
-function useful_pred(tree: ast.ExpressionNode): boolean {
+export function useful_pred(tree: ast.ExpressionNode): boolean {
   return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
 }
 
