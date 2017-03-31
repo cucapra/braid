@@ -50,13 +50,7 @@ function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
 
   // Get variable type
   let [type, _] = emitter.ir.type_table[tree.expr.id!];
-  let llvmType: llvm.Type;
-  if (type === INT)
-    llvmType = llvm.Type.int32();
-  else if (type === FLOAT)
-    llvmType = llvm.Type.double();
-  else
-    throw "unknown type";
+  let llvmType = llvm_type(type);
 
   // Create alloca for variable and store ptr in namedValues
   let ptr: llvm.Value = create_entry_block_alloca(emitter.builder.getInsertBlock().getParent(), llvmType, jsvar);
@@ -147,6 +141,19 @@ function create_entry_block_alloca(func: llvm.Function, type: llvm.Type, name: s
 
   // create alloca
   return builder.buildAlloca(type, name);
+}
+
+/**
+ * Get the LLVM type represented by a Braid type.
+ */
+function llvm_type(type: Type): llvm.Type {
+  if (type === INT) {
+    return llvm.Type.int32();
+  } else if (type === FLOAT) {
+    return llvm.Type.double();
+  } else {
+    throw "unsupported type in LLVM backend";
+  }
 }
 
 /**
@@ -337,15 +344,9 @@ export function codegen(ir: CompilerIR): llvm.Module {
  * into the specified LLVM module.
  */
 function emit_main(emitter: LLVMEmitter, mod: llvm.Module): llvm.Value {
-  // get return type
+  // Get the function's return type.
   let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
-  let llvmType: llvm.Type;
-  if (type === INT)
-    llvmType = llvm.Type.int32();
-  else if (type === FLOAT)
-    llvmType = llvm.Type.double();
-  else
-    throw "Unknown type";
+  let llvmType = llvm_type(type);
 
   // construct wrapper func
   let funcType: llvm.FunctionType = llvm.FunctionType.create(llvmType, []);
@@ -356,7 +357,6 @@ function emit_main(emitter: LLVMEmitter, mod: llvm.Module): llvm.Value {
   // emit body
   let body: llvm.Value = emit(emitter, emitter.ir.main.body);
   emitter.builder.ret(body);
-
 
   return main;
 }
