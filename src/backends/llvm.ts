@@ -1,7 +1,7 @@
 import * as ast from '../ast';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
-import { Proc, Prog, Variant, CompilerIR } from '../compile/ir'
+import { Proc, Prog, Variant, Scope, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emitutil';
 
@@ -125,30 +125,76 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function _emit_scope_func(emitter: LLVMEmitter, name: string, argnames: string[], scope: Scope): llvm.Value {
-  // Emit all children scopes.
-  let subscopes = _emit_subscopes(emitter, scope);
+function emit_fun(name: string | null, arg_ids: number[], local_ids: number[], body: string): llvm.Value { // argid's, localids, scope, emitter
+  let anon = (name === null);
+
+  // Emit the definition.
+  let out = "";
+  if (anon) {
+    out += "(";
+  }
+  out += "function ";
+  if (!anon) {
+    out += name;
+  }
+  out += "(" + arg_ids.join(", ") + ") {\n";
+  if (local_ids.length) {
+    out += "  var " + local_ids.join(", ") + ";\n";
+  }
+  out += indent(body, true);
+  out += "\n}";
+  if (anon) {
+    out += ")";
+  }
+  return out;
+}
+
+// Compile all the Procs and progs who are children of a given scope.
+function _emit_subscopes(emitter: LLVMEmitter, scope: Scope) {
+  let out = "";
+  for (let id of scope.children) {
+    let res = emit_scope(emitter, id);
+    if (res !== "") {
+      out += res + "\n";
+    }
+  }
+  return out;
+}
+
+// Get all the names of bound variables in a scope.
+// In Python: [varsym(id) for id in scope.bound]
+function _bound_vars(scope: Scope): number[] {
+  let names: number[] = [];
+  for (let bv of scope.bound) {
+    names.push(bv);
+  }
+  return names;
+}
+
+function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], scope: Scope): llvm.Value {
+  // TODO: Emit all children scopes.
+  //let subscopes = _emit_subscopes(emitter, scope);
 
   // Emit the target function code.
-  let localnames = _bound_vars(scope);
+  let local_ids = _bound_vars(scope);
   let body = emit_body(emitter, scope.body);
 
-  let func = emit_fun(name, argnames, localnames, body);
-  return subscopes + func;
+  let func = emit_fun(name, arg_ids, local_ids, body);
+  return func;
 }
 
 function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
-  let argnames: string[] = [];
+  let arg_ids: number[] = [];
   for (let param of proc.params) {
-    argnames.push(varsym(param)); // param is an id
+    arg_ids.push(param); 
   }
   for (let fv of proc.free) {
-    argnames.push(varsym(fv)); // fv is an id
+    arg_ids.push(fv); 
   }
   for (let p of proc.persist) {
-    argnames.push(persistsym(p.id)); // p is an escape. p.id is an id.....TODO: probably just push the id's instead of the names?
+    arg_ids.push(p.id);
   }
 
   // Get the name of the function, or null for the main function.
@@ -159,7 +205,7 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
     name = procsym(proc.id);
   }
 
-  return _emit_scope_func(emitter, name, argnames, proc);
+  return _emit_scope_func(emitter, name, arg_ids, proc);
 }
 
 function emit_prog() {
