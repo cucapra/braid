@@ -3,7 +3,7 @@ import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
 import { Proc, Prog, Variant, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
-import { varsym, is_fun_type, useful_pred } from './emitutil';
+import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emitutil';
 
 ///////////////////////////////////////////////////////////////////
 // Begin Emit Functions & Redundant Funcs
@@ -123,6 +123,51 @@ function emit_extern(name: string, type: Type): llvm.Value {
 // mostly a copy of emitter function
 function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
+}
+
+function _emit_scope_func(emitter: LLVMEmitter, name: string, argnames: string[], scope: Scope): llvm.Value {
+  // Emit all children scopes.
+  let subscopes = _emit_subscopes(emitter, scope);
+
+  // Emit the target function code.
+  let localnames = _bound_vars(scope);
+  let body = emit_body(emitter, scope.body);
+
+  let func = emit_fun(name, argnames, localnames, body);
+  return subscopes + func;
+}
+
+function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
+  // The arguments consist of the actual parameters, the closure environment
+  // (free variables), and the persists used inside the function.
+  let argnames: string[] = [];
+  for (let param of proc.params) {
+    argnames.push(varsym(param)); // param is an id
+  }
+  for (let fv of proc.free) {
+    argnames.push(varsym(fv)); // fv is an id
+  }
+  for (let p of proc.persist) {
+    argnames.push(persistsym(p.id)); // p is an escape. p.id is an id.....TODO: probably just push the id's instead of the names?
+  }
+
+  // Get the name of the function, or null for the main function.
+  let name: string;
+  if (proc.id === null) {
+    name = 'main';
+  } else {
+    name = procsym(proc.id);
+  }
+
+  return _emit_scope_func(emitter, name, argnames, proc);
+}
+
+function emit_prog() {
+
+}
+
+function emit_prog_variant() {
+
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -291,18 +336,6 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     throw "not implemented";
   }
 };
-
-function emit_proc() {
-
-}
-
-function emit_prog() {
-
-}
-
-function emit_prog_variant() {
-
-}
 
 /**
  * Compile the IR to an LLVM module.
