@@ -150,16 +150,16 @@ function emit_fun(name: string | null, arg_ids: number[], local_ids: number[], b
 }
 
 // Compile all the Procs and progs who are children of a given scope.
-function _emit_subscopes(emitter: LLVMEmitter, scope: Scope) {
-  let out = "";
-  for (let id of scope.children) {
-    let res = emit_scope(emitter, id);
-    if (res !== "") {
-      out += res + "\n";
-    }
-  }
-  return out;
-}
+// function _emit_subscopes(emitter: LLVMEmitter, scope: Scope) {
+//   let out = "";
+//   for (let id of scope.children) {
+//     let res = emit_scope(emitter, id);
+//     if (res !== "") {
+//       out += res + "\n";
+//     }
+//   }
+//   return out;
+// }
 
 // Get all the names of bound variables in a scope.
 // In Python: [varsym(id) for id in scope.bound]
