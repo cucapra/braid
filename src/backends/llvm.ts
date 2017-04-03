@@ -125,28 +125,8 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(name: string | null, arg_ids: number[], local_ids: number[], body: string): llvm.Value { // argid's, localids, scope, emitter
-  let anon = (name === null);
-
-  // Emit the definition.
-  let out = "";
-  if (anon) {
-    out += "(";
-  }
-  out += "function ";
-  if (!anon) {
-    out += name;
-  }
-  out += "(" + arg_ids.join(", ") + ") {\n";
-  if (local_ids.length) {
-    out += "  var " + local_ids.join(", ") + ";\n";
-  }
-  out += indent(body, true);
-  out += "\n}";
-  if (anon) {
-    out += ")";
-  }
-  return out;
+function emit_fun(emitter: LLVMEmitter, name: string | null, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
+  
 }
 
 // Compile all the Procs and progs who are children of a given scope.
@@ -177,9 +157,9 @@ function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[],
 
   // Emit the target function code.
   let local_ids = _bound_vars(scope);
-  let body = emit_body(emitter, scope.body);
+  //let body = emit_body(emitter, scope.body);
 
-  let func = emit_fun(name, arg_ids, local_ids, body);
+  let func = emit_fun(emitter, name, arg_ids, local_ids, scope.body);
   return func;
 }
 
