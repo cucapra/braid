@@ -14,6 +14,11 @@ import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emituti
  */
 interface LLVMEmitter {
   /**
+   * LLVM Module object
+   */
+  mod: llvm.Module;
+
+  /**
    * The LLVM IRBuilder object used to generate code.
    */
   builder: llvm.Builder;
@@ -31,7 +36,7 @@ interface LLVMEmitter {
   // These are copies of `emitter.Emitter`'s `emit_` functions, except for
   // generating LLVM IR constructs.
   emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => llvm.Value;
-  //emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
+  emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
   //emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
   //emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) => llvm.Value;
   //variant: Variant|null;
@@ -126,7 +131,7 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
 }
 
 function emit_fun(emitter: LLVMEmitter, name: string | null, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
-  
+
 }
 
 // Compile all the Procs and progs who are children of a given scope.
@@ -369,47 +374,48 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 export function codegen(ir: CompilerIR): llvm.Module {
   // Set up the emitter, which includes the LLVM IR builder.
   let builder = llvm.Builder.create();
+  // Create a module. This is where all the generated code will go.
+  let mod: llvm.Module = llvm.Module.create("braidprogram");
+  
   let emitter: LLVMEmitter = {
     ir: ir,
+    mod: mod,
     builder: builder,
     namedValues: {},
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
-    //emit_proc: emit_proc,
+    emit_proc: emit_proc,
     //emit_prog: emit_prog,
     //emit_prog_variant: emit_prog_variant,
     //variant: null,
   };
 
-  // Create a module. This is where all the generated code will go.
-  let mod: llvm.Module = llvm.Module.create("braidprogram");
-
   // Generate the main function into the module.
-  emit_main(emitter, mod);
+  emit_main(emitter);
 
   // TODO: We currently just log the IR and then free the module. Eventually,
   // we'd like to return the module to the caller so it can do whatever it
   // wants with the result---at the moment, we return a dangling pointer!
-  console.log(mod.toString());
-  mod.free();
+  console.log(emitter.mod.toString());
+  emitter.mod.free();
 
   // Now that we're done generating code, we can free the IR builder.
   emitter.builder.free();
 
-  return mod;
+  return emitter.mod;
 }
 
 /**
  * Emit the main function (and all the functions it depends on, eventually)
  * into the specified LLVM module.
  */
-function emit_main(emitter: LLVMEmitter, mod: llvm.Module): llvm.Value {
+function emit_main(emitter: LLVMEmitter): llvm.Value {
   // Get the function's return type.
   let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
   let llvmType = llvm_type(type);
 
   // construct wrapper func
   let funcType: llvm.FunctionType = llvm.FunctionType.create(llvmType, []);
-  let main: llvm.Function = mod.addFunction("main", funcType);
+  let main: llvm.Function = emitter.mod.addFunction("main", funcType);
   let entry: llvm.BasicBlock = main.appendBasicBlock("entry");
   emitter.builder.positionAtEnd(entry);
 
