@@ -130,7 +130,52 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
 }
 
 function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
-  throw "not implemented yet";
+  // create function
+  let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[body.id!][0]);
+  let arg_types: llvm.Type[] = [];
+  for (let id in arg_ids) {
+    arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
+  }
+  let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+  let func: llvm.Function = emitter.mod.addFunction(name, func_type);
+  
+  // create builder, entry block for func
+  let bb: llvm.BasicBlock = func.appendBasicBlock("entry");
+  let new_builder: llvm.Builder = llvm.Builder.create();
+  new_builder.positionAtEnd(bb);
+
+  // save old builder & reset
+  let old_builder: llvm.Builder = emitter.builder;
+  emitter.builder = new_builder;
+
+  // save old namedValues map & reset
+  let old_named_values = emitter.named_values
+  emitter.named_values = [];
+
+  // make allocas for args
+  for (let i = 0; i < arg_ids.length; i++) {
+    // get arg id & type
+    let id = arg_ids[i]
+    let type = arg_types[i];
+    
+    // create alloca
+    // TODO: make it possible to create allocas in batches
+    let ptr: llvm.Value = create_entry_block_alloca(func, type, name);
+    emitter.named_values[id] = ptr;
+  }
+
+  // TODO: create local var allocas
+
+  // generate body
+  let body_val: llvm.Value = emit(emitter, body);
+  emitter.builder.ret(body_val);
+
+  // reset saved things
+  emitter.builder.free();
+  emitter.builder = old_builder;
+  emitter.named_values = old_named_values;
+
+  return func;
 }
 
 // Compile all the Procs and progs who are children of a given scope.
@@ -327,43 +372,43 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit quote not implemented";
   },
 
   visit_escape(tree: ast.EscapeNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit escape not implemented";
   },
 
   visit_run(tree: ast.RunNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit run not implemented";
   },
 
   visit_fun(tree: ast.FunNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit fun not implemented";
   },
 
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit call not implemented";
   },
 
   visit_extern(tree: ast.ExternNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit extern not implemented";
   },
 
   visit_persist(tree: ast.PersistNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit persist not implemented";
   },
 
   visit_if(tree: ast.IfNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit if not implemented";
   },
 
   visit_while(tree: ast.WhileNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit while not implemented";
   },
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: LLVMEmitter): llvm.Value {
-    throw "not implemented";
+    throw "visit macrocall not implemented";
   }
 };
 
@@ -408,19 +453,5 @@ export function codegen(ir: CompilerIR): llvm.Module {
  * into the specified LLVM module.
  */
 function emit_main(emitter: LLVMEmitter): llvm.Value {
-  // Get the function's return type.
-  let [type, _] = emitter.ir.type_table[emitter.ir.main.body.id!]
-  let llvmType = llvm_type(type);
-
-  // construct wrapper func
-  let funcType: llvm.FunctionType = llvm.FunctionType.create(llvmType, []);
-  let main: llvm.Function = emitter.mod.addFunction("main", funcType);
-  let entry: llvm.BasicBlock = main.appendBasicBlock("entry");
-  emitter.builder.positionAtEnd(entry);
-
-  // emit body
-  let body: llvm.Value = emit(emitter, emitter.ir.main.body);
-  emitter.builder.ret(body);
-
-  return main;
+  return emit_fun(emitter, "main", [], [], emitter.ir.main.body);
 }
