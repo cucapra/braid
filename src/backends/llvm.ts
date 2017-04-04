@@ -113,7 +113,6 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   for (let id in arg_ids) {
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
-
   let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
   
@@ -139,6 +138,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
 
     // create alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
+    emitter.builder.buildStore(func.getParam(i), ptr);
     emitter.named_values[id] = ptr;
   }
 
