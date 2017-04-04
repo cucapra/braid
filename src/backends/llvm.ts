@@ -26,7 +26,7 @@ interface LLVMEmitter {
   /**
    * Map from id's to Alloca ptr's
    */
-  namedValues: {[id:string] : llvm.Value};
+  named_values: llvm.Value[];
 
   /**
    * Program we are compiling
@@ -59,7 +59,7 @@ function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
 
   // Create alloca for variable and store ptr in namedValues
   let ptr: llvm.Value = create_entry_block_alloca(emitter.builder.getInsertBlock().getParent(), llvmType, jsvar);
-  emitter.namedValues[jsvar] = ptr;
+  emitter.named_values[tree.id!] = ptr;
 
   // Store and return value
   emitter.builder.buildStore(val, ptr);
@@ -76,13 +76,12 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     throw "not implemented yet";
   } else {
     // Ordinary variable assignment.
-    let jsvar: string = get_varsym(defid);
     let val: llvm.Value = emit(emitter, tree.expr)
 
     // get pointer to stack location
-    if (!emitter.namedValues.hasOwnProperty(jsvar))
+    if (emitter.named_values[defid] === undefined)
       throw "Unknown variable name";
-    let ptr: llvm.Value = emitter.namedValues[jsvar];
+    let ptr: llvm.Value = emitter.named_values[defid];
 
     // store new value and return this value
     emitter.builder.buildStore(val, ptr);
@@ -100,12 +99,12 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
     return emit_extern(name, type);
   } else {
     // An ordinary variable lookup
-    let id = get_varsym(defid);
+    let id = varsym(defid);
 
     // look up the pointer
-    if (!emitter.namedValues.hasOwnProperty(id))
+    if (emitter.named_values[defid] === undefined)
       throw "Unknown variable name";
-    let ptr: llvm.Value = emitter.namedValues[id];
+    let ptr: llvm.Value = emitter.named_values[defid];
 
     // load value
     return emitter.builder.buildLoad(ptr, id);
@@ -130,8 +129,8 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(emitter: LLVMEmitter, name: string | null, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
-
+function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
+  throw "not implemented yet";
 }
 
 // Compile all the Procs and progs who are children of a given scope.
@@ -381,7 +380,7 @@ export function codegen(ir: CompilerIR): llvm.Module {
     ir: ir,
     mod: mod,
     builder: builder,
-    namedValues: {},
+    named_values: [],
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
     //emit_prog: emit_prog,
