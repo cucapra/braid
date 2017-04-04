@@ -49,17 +49,12 @@ function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.Expressi
 }
 
 function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
-  // Get variable name and value
-  let jsvar: string = varsym(tree.id!);
   let val: llvm.Value = emit(emitter, tree.expr);
 
-  // Get variable type
-  let [type, _] = emitter.ir.type_table[tree.expr.id!];
-  let llvmType = llvm_type(type);
-
-  // Create alloca for variable and store ptr in namedValues
-  let ptr: llvm.Value = create_entry_block_alloca(emitter.builder.getInsertBlock().getParent(), llvmType, jsvar);
-  emitter.named_values[tree.id!] = ptr;
+  // get pointer
+  if (emitter.named_values[tree.id!] === undefined)
+      throw "Unknown variable name (let)";
+  let ptr: llvm.Value = emitter.named_values[tree.id!];
 
   // Store and return value
   emitter.builder.buildStore(val, ptr);
@@ -80,7 +75,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
 
     // get pointer to stack location
     if (emitter.named_values[defid] === undefined)
-      throw "Unknown variable name";
+      throw "Unknown variable name (assign)";
     let ptr: llvm.Value = emitter.named_values[defid];
 
     // store new value and return this value
@@ -103,7 +98,7 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 
     // look up the pointer
     if (emitter.named_values[defid] === undefined)
-      throw "Unknown variable name";
+      throw "Unknown variable name (lookup)";
     let ptr: llvm.Value = emitter.named_values[defid];
 
     // load value
@@ -157,14 +152,23 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
     // get arg id & type
     let id = arg_ids[i]
     let type = arg_types[i];
-    
+
     // create alloca
     // TODO: make it possible to create allocas in batches
-    let ptr: llvm.Value = create_entry_block_alloca(func, type, name);
+    let ptr: llvm.Value = create_entry_block_alloca(func, type, varsym(id));
     emitter.named_values[id] = ptr;
   }
 
-  // TODO: create local var allocas
+  // make allocas for local vars
+  for (let id of local_ids) {
+    // get type
+    let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
+
+    // create alloca
+    // TODO: make it possible to create allocas in batches
+    let ptr: llvm.Value = create_entry_block_alloca(func, type, varsym(id));
+    emitter.named_values[id] = ptr;
+  }
 
   // generate body
   let body_val: llvm.Value = emit(emitter, body);
@@ -207,7 +211,7 @@ function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[],
   // Emit the target function code.
   let local_ids = _bound_vars(scope);
   //let body = emit_body(emitter, scope.body);
-
+  
   let func = emit_fun(emitter, name, arg_ids, local_ids, scope.body);
   return func;
 }
@@ -453,5 +457,5 @@ export function codegen(ir: CompilerIR): llvm.Module {
  * into the specified LLVM module.
  */
 function emit_main(emitter: LLVMEmitter): llvm.Value {
-  return emit_fun(emitter, "main", [], [], emitter.ir.main.body);
+  return emit_proc(emitter, emitter.ir.main);
 }
