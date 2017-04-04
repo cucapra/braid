@@ -130,6 +130,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   let old_named_values = emitter.named_values
   emitter.named_values = [];
 
+  // TODO: Store arg values in alloca
   // make allocas for args
   for (let i = 0; i < arg_ids.length; i++) {
     // get arg id & type
@@ -137,17 +138,16 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
     let type = arg_types[i];
 
     // create alloca
-    // TODO: make it possible to create allocas in batches
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.named_values[id] = ptr;
   }
+
   // make allocas for local vars
   for (let id of local_ids) {
     // get type
     let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
 
     // create alloca
-    // TODO: make it possible to create allocas in batches
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.named_values[id] = ptr;
   }
