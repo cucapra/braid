@@ -49,16 +49,7 @@ function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.Expressi
 }
 
 function emit_let(emitter: LLVMEmitter, tree: ast.LetNode): llvm.Value {
-  let val: llvm.Value = emit(emitter, tree.expr);
-
-  // get pointer
-  if (emitter.named_values[tree.id!] === undefined)
-      throw "Unknown variable name (let)";
-  let ptr: llvm.Value = emitter.named_values[tree.id!];
-
-  // Store and return value
-  emitter.builder.buildStore(val, ptr);
-  return val;
+  return assignment_helper(emitter, emit(emitter, tree.expr), tree.id!);
 }
 
 function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=varsym): llvm.Value {
@@ -71,16 +62,7 @@ function emit_assign(emitter: LLVMEmitter, tree: ast.AssignNode, get_varsym=vars
     throw "not implemented yet";
   } else {
     // Ordinary variable assignment.
-    let val: llvm.Value = emit(emitter, tree.expr)
-
-    // get pointer to stack location
-    if (emitter.named_values[defid] === undefined)
-      throw "Unknown variable name (assign)";
-    let ptr: llvm.Value = emitter.named_values[defid];
-
-    // store new value and return this value
-    emitter.builder.buildStore(val, ptr);
-    return val;
+    return assignment_helper(emitter, emit(emitter, tree.expr), defid);
   }
 }
 
@@ -278,6 +260,17 @@ function llvm_type(type: Type): llvm.Type {
   } else {
     throw "unsupported type in LLVM backend";
   }
+}
+
+function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): llvm.Value {
+  // get pointer to stack location
+  if (emitter.named_values[id] === undefined)
+    throw "Unknown variable name (assign helper)";
+  let ptr: llvm.Value = emitter.named_values[id];
+
+  // store new value and return this value
+  emitter.builder.buildStore(val, ptr);
+  return val;
 }
 
 /**
