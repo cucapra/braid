@@ -39,7 +39,7 @@ interface LLVMEmitter {
   emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
   //emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
   //emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) => llvm.Value;
-  //variant: Variant|null;
+  variant: Variant|null;
 }
 
 function emit_seq(emitter: LLVMEmitter, seq: ast.SeqNode, pred: (_: ast.ExpressionNode) => boolean = useful_pred): llvm.Value {
@@ -113,6 +113,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   for (let id in arg_ids) {
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
+
   let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
   
@@ -140,7 +141,6 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.named_values[id] = ptr;
   }
-
   // make allocas for local vars
   for (let id of local_ids) {
     // get type
@@ -164,17 +164,39 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   return func;
 }
 
+/**
+ * Get the current specialized version of a function.
+ */
+export function specialized_proc(emitter: LLVMEmitter, procid: number) {
+  let variant = emitter.variant;
+  if (!variant) {
+    return emitter.ir.procs[procid];
+  }
+  return variant.procs[procid] || emitter.ir.procs[procid];
+}
+
+/*
+ * Emit either kind of scope
+ */
+function emit_scope(emitter: LLVMEmitter, scope: number) {
+  // Try a Proc.
+  let proc = specialized_proc(emitter, scope);
+  if (proc) {
+    return emitter.emit_proc(emitter, proc);
+  }
+
+  // TODO prog
+  throw "cannot handle progs yet";
+
+  //throw "error: unknown scope id";
+}
+
 // Compile all the Procs and progs who are children of a given scope.
-// function _emit_subscopes(emitter: LLVMEmitter, scope: Scope) {
-//   let out = "";
-//   for (let id of scope.children) {
-//     let res = emit_scope(emitter, id);
-//     if (res !== "") {
-//       out += res + "\n";
-//     }
-//   }
-//   return out;
-// }
+function _emit_subscopes(emitter: LLVMEmitter, scope: Scope): void {
+  for (let id of scope.children) {
+    emit_scope(emitter, id);
+  }
+}
 
 // Get all the names of bound variables in a scope.
 // In Python: [varsym(id) for id in scope.bound]
@@ -187,13 +209,9 @@ function _bound_vars(scope: Scope): number[] {
 }
 
 function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], scope: Scope): llvm.Value {
-  // TODO: Emit all children scopes.
-  //let subscopes = _emit_subscopes(emitter, scope);
-
-  // Emit the target function code.
-  let local_ids = _bound_vars(scope);
-  //let body = emit_body(emitter, scope.body);
+  _emit_subscopes(emitter, scope);
   
+  let local_ids = _bound_vars(scope);  
   let func = emit_fun(emitter, name, arg_ids, local_ids, scope.body);
   return func;
 }
@@ -244,7 +262,9 @@ function llvm_type(type: Type): llvm.Type {
   } else if (type === FLOAT) {
     return llvm.Type.double();
   } else {
-    throw "unsupported type in LLVM backend";
+    // TODO: This is just a temporary hack to make it run
+    return llvm.Type.int32();
+    //throw "unsupported type in LLVM backend: " + type;
   }
 }
 
@@ -367,7 +387,9 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_fun(tree: ast.FunNode, emitter: LLVMEmitter): llvm.Value {
-    throw "visit fun not implemented";
+    // TODO: This is just a temporary hack to make it run
+    return llvm.ConstInt.create(1, llvm.Type.int32());
+    //throw "visit fun not implemented";
   },
 
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
@@ -413,7 +435,7 @@ export function codegen(ir: CompilerIR): llvm.Module {
     emit_proc: emit_proc,
     //emit_prog: emit_prog,
     //emit_prog_variant: emit_prog_variant,
-    //variant: null,
+    variant: null,
   };
 
   // Generate the main function into the module.
