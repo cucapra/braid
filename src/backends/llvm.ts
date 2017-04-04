@@ -137,7 +137,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
 
     // create alloca
     // TODO: make it possible to create allocas in batches
-    let ptr: llvm.Value = create_entry_block_alloca(func, type, varsym(id));
+    let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.named_values[id] = ptr;
   }
 
@@ -148,7 +148,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
 
     // create alloca
     // TODO: make it possible to create allocas in batches
-    let ptr: llvm.Value = create_entry_block_alloca(func, type, varsym(id));
+    let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.named_values[id] = ptr;
   }
 
@@ -234,20 +234,6 @@ function emit_prog_variant() {
 ///////////////////////////////////////////////////////////////////
 // End Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
-
-/**
- * Create an alloca with the provided name in the entry block of the provided function
- */
-function create_entry_block_alloca(func: llvm.Function, type: llvm.Type, name: string): llvm.Value {
-  // create builder and position after func's first instruction
-  let builder: llvm.Builder = llvm.Builder.create();
-  let bb: llvm.BasicBlock = func.getEntryBlock();
-  let instr: llvm.Value = bb.getFirstInstr();
-  builder.positionAfter(bb, instr);
-
-  // create alloca
-  return builder.buildAlloca(type, name);
-}
 
 /**
  * Get the LLVM type represented by a Braid type.
