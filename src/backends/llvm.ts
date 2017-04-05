@@ -110,11 +110,13 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   // create function
   let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[body.id!][0]);
   let arg_types: llvm.Type[] = [];
-  for (let id in arg_ids) {
+  for (let id of arg_ids) {
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
   let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
+  
+  console.log("In emit_fun, func name: " + name);
   
   // create builder, entry block for func
   let bb: llvm.BasicBlock = func.appendBasicBlock("entry");
@@ -129,7 +131,6 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   let old_named_values = emitter.named_values
   emitter.named_values = [];
 
-  // TODO: Store arg values in alloca
   // make allocas for args
   for (let i = 0; i < arg_ids.length; i++) {
     // get arg id & type
@@ -263,7 +264,7 @@ function llvm_type(type: Type): llvm.Type {
     return llvm.Type.double();
   } else {
     // TODO: This is just a temporary hack to make it run
-    return llvm.Type.int32();
+    return llvm.Type.int1();
     //throw "unsupported type in LLVM backend: " + type;
   }
 }
@@ -388,12 +389,35 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
 
   visit_fun(tree: ast.FunNode, emitter: LLVMEmitter): llvm.Value {
     // TODO: This is just a temporary hack to make it run
-    return llvm.ConstInt.create(1, llvm.Type.int32());
+    return llvm.ConstInt.create(1, llvm.Type.int1());
     //throw "visit fun not implemented";
   },
 
+  //TODO: clear up naming stuff
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
-    throw "visit call not implemented";
+    let id = tree.fun.id!;
+    
+    console.log("Inside visit_call: " + procsym(id));
+    /*
+    // Get function
+    let func: llvm.Function = emitter.mod.getFunction(procsym(id));
+    if (!func)
+      throw "Unknown function";
+    if (func.countParams() !== tree.args.length)
+      throw "Function requires " + func.countParams() + " params. You gave " + tree.args.length;
+    
+    console.log("got func");
+    
+    // Turn args into llvm Values
+    let llvm_args: llvm.Value[] = [];
+    for (let arg of tree.args)
+      llvm_args.push(emit(emitter, arg));
+    
+    console.log("got llvm args");
+    
+    return emitter.builder.buildCall(func, llvm_args, "calltmp");
+    */
+    return llvm.ConstInt.create(1, llvm.Type.int32());
   },
 
   visit_extern(tree: ast.ExternNode, emitter: LLVMEmitter): llvm.Value {
