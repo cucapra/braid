@@ -119,9 +119,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
   }
   let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
-  
-  console.log("In emit_fun, func name: " + name);
-  
+    
   // create builder, entry block for func
   let bb: llvm.BasicBlock = func.appendBasicBlock("entry");
   let new_builder: llvm.Builder = llvm.Builder.create();
@@ -149,7 +147,6 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
 
   // make allocas for local vars
   for (let id of local_ids) {
-    console.log("local var: " + id);
     // get type
     let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
 
@@ -411,16 +408,12 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     let func = emit(emitter, tree.fun);
     if (!func)
       throw "Unknown function";
-    
-    console.log("got func");
-    
+        
     // Turn args into llvm Values
     let llvm_args: llvm.Value[] = [];
     for (let arg of tree.args)
       llvm_args.push(emit(emitter, arg));
-    
-    console.log("got llvm args");
-    
+        
     return emitter.builder.buildCall(func, llvm_args, "calltmp");
   },
 
