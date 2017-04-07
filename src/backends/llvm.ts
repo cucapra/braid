@@ -262,10 +262,17 @@ function llvm_type(type: Type): llvm.Type {
     return llvm.Type.int32();
   } else if (type === FLOAT) {
     return llvm.Type.double();
+  } else if (type instanceof FunType) {
+    // get types of args and return value
+    let arg_types: llvm.Type[] = [];
+    for (let arg of type.params)
+      arg_types.push(llvm_type(arg));
+    let ret_type: llvm.Type = llvm_type(type.ret);
+
+    // construct and return appropriate func type
+    return llvm.FunctionType.create(ret_type, arg_types);
   } else {
-    // TODO: This is just a temporary hack to make it run
-    return llvm.Type.int1();
-    //throw "unsupported type in LLVM backend: " + type;
+    throw "Unsupported type in LLVM backend: " + type;
   }
 }
 
@@ -396,8 +403,8 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   //TODO: clear up naming stuff
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
     let id = tree.fun.id!;
-    
-    console.log("Inside visit_call: " + procsym(id));
+    console.log("visit call parent: " + tree.id!)
+    console.log("Inside visit_call child: " + procsym(id));
     /*
     // Get function
     let func: llvm.Function = emitter.mod.getFunction(procsym(id));
