@@ -88,6 +88,10 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
   }
 }
 
+function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
+  return emitter.mod.getFunction(procsym(tree.id!));
+}
+
 function emit_extern(name: string, type: Type): llvm.Value {
   if (is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
@@ -145,6 +149,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
 
   // make allocas for local vars
   for (let id of local_ids) {
+    console.log("local var: " + id);
     // get type
     let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
 
@@ -269,8 +274,11 @@ function llvm_type(type: Type): llvm.Type {
       arg_types.push(llvm_type(arg));
     let ret_type: llvm.Type = llvm_type(type.ret);
 
-    // construct and return appropriate func type
-    return llvm.FunctionType.create(ret_type, arg_types);
+    // construct appropriate func type
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+
+    // return pointer around func type
+    return llvm.Pointer.create(func_type, 0);
   } else {
     throw "Unsupported type in LLVM backend: " + type;
   }
@@ -395,9 +403,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_fun(tree: ast.FunNode, emitter: LLVMEmitter): llvm.Value {
-    // TODO: This is just a temporary hack to make it run
-    return llvm.ConstInt.create(1, llvm.Type.int1());
-    //throw "visit fun not implemented";
+    return emit_func(emitter, tree);
   },
 
   //TODO: clear up naming stuff
