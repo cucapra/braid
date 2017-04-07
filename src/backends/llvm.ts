@@ -406,18 +406,11 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     return emit_func(emitter, tree);
   },
 
-  //TODO: clear up naming stuff
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
-    let id = tree.fun.id!;
-    console.log("visit call parent: " + tree.id!)
-    console.log("Inside visit_call child: " + procsym(id));
-    /*
     // Get function
-    let func: llvm.Function = emitter.mod.getFunction(procsym(id));
+    let func = emit(emitter, tree.fun);
     if (!func)
       throw "Unknown function";
-    if (func.countParams() !== tree.args.length)
-      throw "Function requires " + func.countParams() + " params. You gave " + tree.args.length;
     
     console.log("got func");
     
@@ -429,8 +422,6 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     console.log("got llvm args");
     
     return emitter.builder.buildCall(func, llvm_args, "calltmp");
-    */
-    return llvm.ConstInt.create(1, llvm.Type.int32());
   },
 
   visit_extern(tree: ast.ExternNode, emitter: LLVMEmitter): llvm.Value {
