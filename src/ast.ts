@@ -157,6 +157,17 @@ export interface MacroCallNode extends ExpressionNode {
 export interface TypeNode extends SyntaxNode {
 }
 
+export interface TypeAliasNode extends ExpressionNode {
+  tag: "type_alias";
+  ident: string;
+  type: TypeNode;
+}
+
+export interface OverloadedTypeNode extends TypeNode {
+  tag: "type_overloaded";
+  types: TypeNode[];
+}
+
 export interface PrimitiveTypeNode extends TypeNode {
   tag: "type_primitive";
   name: string;
