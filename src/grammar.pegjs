@@ -8,6 +8,23 @@
     obj.location = location();
     return obj;
   }
+
+  // Takes an overloaded type and cleans it up
+  function flattenOverloadedType(type) {
+    var first_type = type['first_type'];
+
+    var types = [first_type];
+    for (var i = 0; i < type['other_types'].length; i++) {
+      types.push(type['other_types'][i][2]);
+    }
+    
+    delete type['first_type'];
+    delete type['other_types'];
+
+    type['types'] = types;
+
+    return type;
+  }
 }
 
 Program
@@ -18,7 +35,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign /
+  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign / TypeAlias /
   CCall / Call / MacroCall / TermExpr
 
 SeqExpr
@@ -187,6 +204,9 @@ While
 // Type syntax.
 
 Type
+  = OverloadedType / FunType / InstanceType / TermType
+
+NonOverloadedType
   = FunType / InstanceType / TermType
 
 TermType
@@ -216,6 +236,13 @@ FunTypeParam
   = t:TermType _
   { return t; }
 
+OverloadedType
+  = t:NonOverloadedType _ other_types:(pipe_operator _ NonOverloadedType _)+
+  { return setLocation(flattenOverloadedType({tag: "type_overloaded", first_type:t, other_types:other_types})); }
+
+TypeAlias
+  = type _ i:ident _ eq _ t:Type
+  { return setLocation({tag: "type_alias", ident:i, type:t}); }
 
 // Tokens.
 
@@ -296,6 +323,9 @@ paren_open
 paren_close
   = ")"
 
+pipe_operator
+  = "|"
+
 extern
   = "extern"
 
@@ -313,6 +343,9 @@ if
 
 while
   = "while"
+
+type
+  = "type"
 
 macromark
   = "@"
