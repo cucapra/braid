@@ -95,6 +95,20 @@ export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
   return out;
 }
 
+export function emit_exprs(emitter: Emitter, exprs: ast.ExpressionNode[], sep: string,
+  pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
+{
+  let out = "";
+  for (let expr of exprs) {
+    if (pred(expr)) {
+      out += emit(emitter, expr);
+      out += sep;
+    }
+  }
+
+  return out;
+}
+
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
 export function emit_assign(emitter: Emitter,

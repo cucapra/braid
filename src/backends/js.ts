@@ -1,5 +1,5 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
-import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
+import { varsym, indent, emit_seq, emit_exprs, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
   emit_while, variantsym } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
@@ -176,11 +176,7 @@ export function pretty_value(v: any): string {
 
 export let compile_rules = {
   visit_root(tree: ast.RootNode, emitter: Emitter): string {
-    let p:string = "";
-    for (let child of tree.children) {
-      p += emit(emitter, child);
-    }
-    return p;
+    return emit_exprs(emitter, tree.children, ",\n");
   },
 
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
