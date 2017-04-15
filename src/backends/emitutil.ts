@@ -120,12 +120,13 @@ export function check_header(emitter: Emitter, expr: ast.ExpressionNode, sep: st
         visit_seq(seq: ast.SeqNode, p: void): string {
           let result = "";
           if (pred(seq.lhs)) {
-            let lhs = emit(emitter, seq.lhs);
+            let lhs = check_header(emitter, seq.lhs, sep);
             result += (lhs !== "") ? lhs + sep : "";
           }
           if (pred(seq.rhs)) {
-            let rhs = emit(emitter, seq.rhs);
-            result += (rhs !== "") ? rhs + sep : "";
+            let rhs = check_header(emitter, seq.rhs, sep);
+            // Don't add sep on RHS
+            result += (rhs !== "") ? rhs : "";
           }
           return result;
         }
@@ -211,7 +212,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
  * results are actually used.
  */
 function useful_pred(tree: ast.ExpressionNode): boolean {
-  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
+  return ["extern", "lookup", "literal", "type_alias"].indexOf(tree.tag) === -1;
 }
 
 /**

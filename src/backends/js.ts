@@ -184,6 +184,7 @@ export let compile_rules = {
       let header_emit = check_header(emitter, header, ",\n");
       if (header_emit !== "") {
         out += header_emit;
+        out += ",\n";
       }
     }
     return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
