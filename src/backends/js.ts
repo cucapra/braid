@@ -1,7 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
 import { varsym, indent, emit_seq, emit_exprs, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
-  emit_while, variantsym } from './emitutil';
+  emit_while, variantsym, check_header } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
   specialized_prog } from './emitter';
 import * as ast from '../ast';
@@ -176,7 +176,17 @@ export function pretty_value(v: any): string {
 
 export let compile_rules = {
   visit_root(tree: ast.RootNode, emitter: Emitter): string {
-    return emit_exprs(emitter, tree.children, ",\n");
+    let out = "";
+    // Do a special check for the first child
+    if (tree.children.length > 0) {
+      let header = tree.children[0];
+      // See if anything needs to be emitted at all
+      let header_emit = check_header(emitter, header, ",\n");
+      if (header_emit !== "") {
+        out += header_emit;
+      }
+    }
+    return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
   },
 
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
@@ -216,6 +226,10 @@ export let compile_rules = {
     let p1 = emit(emitter, tree.lhs);
     let p2 = emit(emitter, tree.rhs);
     return paren(p1) + " " + tree.op + " " + paren(p2);
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+    return "TODO JS (eric)";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {

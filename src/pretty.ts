@@ -64,6 +64,10 @@ let Pretty: ASTVisit<void, string> = {
       " " + pretty_paren(tree.rhs, pred);
   },
 
+  visit_typealias(tree: ast.TypeAliasNode, _: void): string {
+    return "TODO Pretty (eric)";
+  },
+
   visit_quote(tree: ast.QuoteNode, _: void): string {
     let out = "< " + pretty(tree.expr) + " >";
     if (tree.snippet) {
@@ -185,6 +189,10 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
 
   visit_instance(tree: ast.InstanceTypeNode, param: void): string {
     return pretty_type_ast(tree.arg) + " " + tree.name;
+  },
+
+  visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
+    return "TODO (eric)";
   },
 }
 

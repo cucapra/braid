@@ -11,6 +11,7 @@ export interface ASTVisit<P, R> {
   visit_lookup(tree: ast.LookupNode, param: P): R;
   visit_unary(tree: ast.UnaryNode, param: P): R;
   visit_binary(tree: ast.BinaryNode, param: P): R;
+  visit_typealias(tree: ast.TypeAliasNode, param: P): R;
   visit_quote(tree: ast.QuoteNode, param: P): R;
   visit_escape(tree: ast.EscapeNode, param: P): R;
   visit_run(tree: ast.RunNode, param: P): R;
@@ -45,6 +46,8 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_unary(<ast.UnaryNode> tree, param);
     case "binary":
       return visitor.visit_binary(<ast.BinaryNode> tree, param);
+    case "type_alias":
+      return visitor.visit_typealias(<ast.TypeAliasNode> tree, param);
     case "quote":
       return visitor.visit_quote(<ast.QuoteNode> tree, param);
     case "escape":
@@ -84,6 +87,7 @@ interface PartialASTVisit<P, R> {
   visit_lookup? (tree: ast.LookupNode, param: P): R;
   visit_unary? (tree: ast.UnaryNode, param: P): R;
   visit_binary? (tree: ast.BinaryNode, param: P): R;
+  visit_typealias? (tree: ast.TypeAliasNode, param: P): R;
   visit_quote? (tree: ast.QuoteNode, param: P): R;
   visit_escape? (tree: ast.EscapeNode, param: P): R;
   visit_run? (tree: ast.RunNode, param: P): R;
@@ -98,7 +102,7 @@ interface PartialASTVisit<P, R> {
 }
 
 let AST_TYPES = ["root", "literal", "seq", "let", "assign", "lookup", "unary",
-                 "binary", "quote", "escape", "run", "fun", "call", "extern",
+                 "binary", "typealias", "quote", "escape", "run", "fun", "call", "extern",
                  "persist", "param", "if", "while", "macro", "macrocall"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
@@ -183,6 +187,10 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
       });
     },
 
+    visit_typealias(tree: ast.TypeAliasNode, param: void): ast.SyntaxNode {
+      return merge(tree);
+    },
+
     visit_quote(tree: ast.QuoteNode, param: void): ast.SyntaxNode {
       return merge(tree, {
         expr: fself(tree.expr),
@@ -265,6 +273,7 @@ export interface TypeASTVisit<P, R> {
   visit_fun(tree: ast.FunTypeNode, param: P): R;
   visit_code(tree: ast.CodeTypeNode, param: P): R;
   visit_instance(tree: ast.InstanceTypeNode, param: P): R;
+  visit_overloaded(tree: ast.OverloadedTypeNode, param: P): R;
 }
 
 // Tag-based dispatch to the type visitor visit functions.
@@ -279,6 +288,8 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
       return visitor.visit_code(<ast.CodeTypeNode> tree, param);
     case "type_instance":
       return visitor.visit_instance(<ast.InstanceTypeNode> tree, param);
+    case "type_overloaded":
+      return visitor.visit_overloaded(<ast.OverloadedTypeNode> tree, param);
 
     default:
       throw "error: unknown type syntax node " + tree.tag;
@@ -328,6 +339,10 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
       let p1 = fself(tree.lhs, p);
       let p2 = fself(tree.rhs, p1);
       return p2;
+    },
+
+    visit_typealias(tree: ast.TypeAliasNode, p: T): T {
+      return p;
     },
 
     visit_quote(tree: ast.QuoteNode, p: T): T {

@@ -85,7 +85,6 @@ export function indent(s: string, first=false, spaces=2): string {
 export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
     pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
-  let e1 = pred(seq.lhs);
   let out = "";
   if (pred(seq.lhs)) {
     out += emit(emitter, seq.lhs);
@@ -105,9 +104,35 @@ export function emit_exprs(emitter: Emitter, exprs: ast.ExpressionNode[], sep: s
       out += sep;
     }
   }
-
   return out;
 }
+
+// Helper for emitting a header file. Same as normal, but checks both LHS and RHS of seq
+export function check_header(emitter: Emitter, expr: ast.ExpressionNode, sep: string,
+  pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
+  {
+    let out = "";
+    let rules = complete_visit(
+      function (tree: ast.SyntaxNode) {
+        return emit(emitter, tree);
+      },
+      {
+        visit_seq(seq: ast.SeqNode, p: void): string {
+          let result = "";
+          if (pred(seq.lhs)) {
+            let lhs = emit(emitter, seq.lhs);
+            result += (lhs !== "") ? lhs + sep : "";
+          }
+          if (pred(seq.rhs)) {
+            let rhs = emit(emitter, seq.rhs);
+            result += (rhs !== "") ? rhs + sep : "";
+          }
+          return result;
+        }
+      }
+    );
+    return ast_visit(rules, expr, null);
+  }
 
 // A helper for emitting assignments. Handles both externs and normal
 // variables.

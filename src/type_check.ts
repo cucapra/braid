@@ -231,6 +231,28 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
+    visit_typealias(tree: ast.TypeAliasNode, env: TypeEnv): [Type, TypeEnv] {
+      // Check if name has been defined before
+      let t = env.named[tree.ident];
+      if (t !== undefined) {
+        throw "type error: Type Alias redefined" + locationError(tree);
+      }
+
+      // Get type from TypeNode
+      let type = get_type(tree.type, env.named);
+
+      // Add to TypeEnv
+      let new_named: TypeMap = env.named;
+      new_named[tree.ident] = type;
+
+      let e: TypeEnv = merge(env, {
+        named: new_named,
+      })
+
+      // Return void type
+      return [VOID, e];
+    },
+
     visit_quote(tree: ast.QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // If this is a snippet quote, we need to "resume" type context from the
       // escape point. Also, we'll record the ID from the environment in the
@@ -711,6 +733,14 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     } else {
       throw "type error: unknown type constructor " + tree.name + locationError(tree);
     }
+  },
+
+  visit_overloaded(tree: ast.OverloadedTypeNode, types: TypeMap) {
+    let ts = []
+    for (let t of tree.types) {
+      ts.push(get_type(t, types));
+    }
+    return new OverloadedType(ts);
   },
 };
 

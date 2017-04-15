@@ -213,6 +213,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
     }
   },
 
+  visit_typealias(tree: ast.TypeAliasNode, state: State): [Value, State] {
+    throw "TODO (eric)";
+  },
+
   visit_fun(tree: ast.FunNode, state: State): [Value, State] {
     // Extract the parameter names.
     let param_names : string[] = [];
@@ -479,6 +483,12 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     let [t1, s1, p1] = quote_interp(tree.lhs, stage, state, pers);
     let [t2, s2, p2] = quote_interp(tree.rhs, stage, s1, p1);
     return [merge(tree, { lhs: t1, rhs: t2 }), s2, p2];
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    throw "TODO (eric)";
   },
 
   visit_run(tree: ast.RunNode,

@@ -152,6 +152,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
            paren(emit(emitter, tree.rhs));
   },
 
+  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+    return "TODO GLSL (eric)";
+  },
+
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
     throw "unimplemented";
   },
