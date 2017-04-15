@@ -8,23 +8,6 @@
     obj.location = location();
     return obj;
   }
-
-  // Takes an overloaded type and cleans it up
-  function flattenOverloadedType(type) {
-    var first_type = type['first_type'];
-
-    var types = [first_type];
-    for (var i = 0; i < type['other_types'].length; i++) {
-      types.push(type['other_types'][i][2]);
-    }
-    
-    delete type['first_type'];
-    delete type['other_types'];
-
-    type['types'] = types;
-
-    return type;
-  }
 }
 
 Program
@@ -237,8 +220,12 @@ FunTypeParam
   { return t; }
 
 OverloadedType
-  = t:NonOverloadedType _ other_types:(pipe_operator _ NonOverloadedType _)+
-  { return setLocation(flattenOverloadedType({tag: "type_overloaded", first_type:t, other_types:other_types})); }
+  = t:NonOverloadedType _ other_types:(OverloadedTypeElement)+
+  { return setLocation({tag: "type_overloaded", types: [t].concat(other_types)}); }
+
+OverloadedTypeElement
+  = _ pipe_operator _ t:NonOverloadedType
+  { return t; }
 
 TypeAlias
   = type _ i:ident _ eq _ t:Type
