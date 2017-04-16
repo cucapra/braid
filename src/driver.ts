@@ -95,7 +95,10 @@ export function frontend_multiple(config: Config, sources: string[],
     // Parse.
     let tree: SyntaxNode;
     try {
-      tree = parser.parse(source);
+      // Give the parser the filename
+      let options = { filename: filename };
+
+      tree = parser.parse(source, options);
     } catch (e) {
       if (e instanceof parser.SyntaxError) {
         let loc = e.location.start;

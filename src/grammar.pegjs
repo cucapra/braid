@@ -6,6 +6,7 @@
 
   function setLocation(obj) {
     obj.location = location();
+    obj.location.filename = options.filename;
     return obj;
   }
 }

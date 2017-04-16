@@ -10,6 +10,7 @@ export interface LocationData {
 export interface Location {
   start: LocationData;
   end: LocationData;
+  filename: string;
 }
 
 /**

@@ -172,7 +172,8 @@ export function location(node: ast.SyntaxNode): string {
   let start: ast.LocationData = node.location.start;
   let end: ast.LocationData = node.location.end;
   return "(" + start.line + "," + start.column + ") to (" 
-    + end.line + "," + end.column + ")";
+    + end.line + "," + end.column + ")"
+    + " in file " + node.location.filename;
 }
 
 export function locationError(node: ast.SyntaxNode): string {
