@@ -92,14 +92,8 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // get function
   let func = emitter.mod.getFunction(procsym(tree.id!));
   let func_as_proc = emitter.ir.procs[tree.id!];
-
-  let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[func_as_proc.body.id!][0]);
-  let arg_types: llvm.Type[] = [];
-  for (let id of func_as_proc.params)
-    arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
-  let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
-
+  let _func_type = get_func_type(emitter, func_as_proc.body.id!, func_as_proc.params);
+  let func_type = llvm.FunctionType.create(_func_type[0], _func_type[1]);
   let func_ptr = emitter.builder.buildAlloca(func_type, "funcptr");
 
   // get closure ids
@@ -149,13 +143,8 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
 
 function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
   // create function
-  let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[body.id!][0]);
-  let arg_types: llvm.Type[] = [];
-  for (let id of arg_ids) {
-    arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  }
-  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
-  let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+  let _func_type = get_func_type(emitter, body.id!, arg_ids);
+  let func_type = llvm.FunctionType.create(_func_type[0], _func_type[1]);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
     
   // create builder, entry block for func
@@ -175,16 +164,13 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure
   for (let i = 0; i < arg_ids.length; i++) {
     // get arg id & type
     let id = arg_ids[i]
-    let type = arg_types[i];
+    let type = _func_type[1][i];
 
     // create alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.builder.buildStore(func.getParam(i), ptr);
     emitter.named_values[id] = ptr;
   }
-
-  //let void_ptr: llvm.Value = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.Type._void(),0), name + "_clos");
-  //emitter.builder.buildStore(func.getParam(arg_ids.length), void_ptr);
 
   // get struct type
   let closure_types: llvm.Type[] = [];
@@ -195,8 +181,8 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure
   let struct_ptr_type = llvm.PointerType.create(llvm.StructType.create(closure_types, true), 0);
 
   // make allocas for closure vars
-  let env_ptr = func.getParam(arg_ids.length);
-  let struct_ptr = emitter.builder.buildBitCast(env_ptr, struct_ptr_type, "");
+  let _struct_ptr = func.getParam(arg_ids.length);
+  let struct_ptr = emitter.builder.buildBitCast(_struct_ptr, struct_ptr_type, "");
 
   for (let i = 0; i < closure_ids.length; i++) {
     // get id and type
@@ -349,6 +335,18 @@ function llvm_type(type: Type): llvm.Type {
   } else {
     throw "Unsupported type in LLVM backend: " + type;
   }
+}
+
+/**
+ * Get return type and arg types of function. Returns [return type, array of arg types]
+ */
+function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]): [llvm.Type, llvm.Type[]] {
+  let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[ret_id][0]);
+  let arg_types: llvm.Type[] = [];
+  for (let id of arg_ids)
+    arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
+  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
+  return [ret_type, arg_types];
 }
 
 function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): llvm.Value {
