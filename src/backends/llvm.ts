@@ -89,7 +89,44 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 }
 
 function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
-  return emitter.mod.getFunction(procsym(tree.id!));
+  // get function
+  let func = emitter.mod.getFunction(procsym(tree.id!));
+  let func_as_proc = emitter.ir.procs[tree.id!];
+
+  let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[func_as_proc.body.id!][0]);
+  let arg_types: llvm.Type[] = [];
+  for (let id of func_as_proc.params)
+    arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
+  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
+  let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+
+  let func_ptr = emitter.builder.buildAlloca(func_type, "funcptr");
+
+  // get closure ids
+  let closure_ids = emitter.ir.procs[tree.id!].free;
+  
+  // get types and create environment struct
+  let closure_vals = [];
+  let closure_types = [];
+  for (let id of closure_ids) {
+    closure_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
+    closure_types.push(llvm_type(emitter.ir.type_table[id][0]));
+  }
+  
+  let env_struct = llvm.ConstStruct.create(closure_vals, true);
+  let env_type = llvm.StructType.create(closure_types, true);
+  let env_struct_ptr = emitter.builder.buildAlloca(env_type, "envptr");
+  emitter.builder.buildStore(env_struct, env_struct_ptr);
+  let void_env_ptr = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.Type._void(), 0), "");
+
+  // The function captures its closed-over references and any persists
+  // used inside.
+  for (let p of emitter.ir.procs[tree.id!].persist) {
+    throw "persists not implemented yet"
+  }
+
+  let func_struct = llvm.ConstStruct.create([func_ptr, void_env_ptr], true);
+  return func_struct;
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
@@ -110,13 +147,14 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
+function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
   // create function
   let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[body.id!][0]);
   let arg_types: llvm.Type[] = [];
   for (let id of arg_ids) {
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
+  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
   let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
     
@@ -142,6 +180,34 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], local_i
     // create alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
     emitter.builder.buildStore(func.getParam(i), ptr);
+    emitter.named_values[id] = ptr;
+  }
+
+  //let void_ptr: llvm.Value = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.Type._void(),0), name + "_clos");
+  //emitter.builder.buildStore(func.getParam(arg_ids.length), void_ptr);
+
+  // get struct type
+  let closure_types: llvm.Type[] = [];
+  for (let id of closure_ids) {
+    let type = llvm_type(emitter.ir.type_table[id][0]);
+    closure_types.push(type);
+  }
+  let struct_ptr_type = llvm.PointerType.create(llvm.StructType.create(closure_types, true), 0);
+
+  // make allocas for closure vars
+  let env_ptr = func.getParam(arg_ids.length);
+  let struct_ptr = emitter.builder.buildBitCast(env_ptr, struct_ptr_type, "");
+
+  for (let i = 0; i < closure_ids.length; i++) {
+    // get id and type
+    let id = closure_ids[i];
+    let type = closure_types[i];    // create alloca
+    let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
+        
+    let struct_elem = emitter.builder.buildStructGEP(struct_ptr, i, "");
+    let elem: llvm.Value = emitter.builder.buildLoad(struct_elem, "");
+        
+    emitter.builder.buildStore(elem, ptr);
     emitter.named_values[id] = ptr;
   }
 
@@ -211,11 +277,11 @@ function _bound_vars(scope: Scope): number[] {
   return names;
 }
 
-function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], scope: Scope): llvm.Value {
+function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], closure_ids: number[], scope: Scope): llvm.Value {
   _emit_subscopes(emitter, scope);
   
   let local_ids = _bound_vars(scope);  
-  let func = emit_fun(emitter, name, arg_ids, local_ids, scope.body);
+  let func = emit_fun(emitter, name, arg_ids, closure_ids, local_ids, scope.body);
   return func;
 }
 
@@ -223,14 +289,15 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let arg_ids: number[] = [];
+  let closure_ids: number[] = [];
   for (let param of proc.params) {
     arg_ids.push(param); 
   }
   for (let fv of proc.free) {
-    arg_ids.push(fv); 
+    closure_ids.push(fv); 
   }
   for (let p of proc.persist) {
-    arg_ids.push(p.id);
+    throw "Persist not implemented yet";
   }
 
   // Get the name of the function, or null for the main function.
@@ -241,7 +308,7 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
     name = procsym(proc.id);
   }
 
-  return _emit_scope_func(emitter, name, arg_ids, proc);
+  return _emit_scope_func(emitter, name, arg_ids, closure_ids, proc);
 }
 
 function emit_prog() {
@@ -269,13 +336,16 @@ function llvm_type(type: Type): llvm.Type {
     let arg_types: llvm.Type[] = [];
     for (let arg of type.params)
       arg_types.push(llvm_type(arg));
+    arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0));
     let ret_type: llvm.Type = llvm_type(type.ret);
 
-    // construct appropriate func type
+    // construct appropriate func type & wrap in ptr
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0); 
 
-    // return pointer around func type
-    return llvm.Pointer.create(func_type, 0);
+    // create struct environment: {function, closure environment}
+    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.Type._void(), 0)], true);
+    return struct_type;
   } else {
     throw "Unsupported type in LLVM backend: " + type;
   }
@@ -404,6 +474,8 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
+    throw "not implemented";
+    /*
     // Get function
     let func = emit(emitter, tree.fun);
     if (!func)
@@ -415,6 +487,7 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
       llvm_args.push(emit(emitter, arg));
         
     return emitter.builder.buildCall(func, llvm_args, "calltmp");
+    */
   },
 
   visit_extern(tree: ast.ExternNode, emitter: LLVMEmitter): llvm.Value {
