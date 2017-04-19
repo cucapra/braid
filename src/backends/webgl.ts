@@ -2,9 +2,9 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
+  FLOAT4X4, FLOAT4,SHADER_ANNOTATION, TEXTURE } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
-import { Type, PrimitiveType } from '../type';
+import { Type, PrimitiveType, FLOAT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import { assign } from '../util';
@@ -51,6 +51,12 @@ function vec3(x, y, z) {
 function mat4mult(a, b) {
   var out = mat4.create();
   mat4.multiply(out, a, b);
+  return out;
+}
+
+function mat4multiplyScalar(a, b) {
+  var out = mat4.create();
+  mat4.multiplyScalar(out, a, b);
   return out;
 }
 `.trim();
@@ -315,10 +321,18 @@ let compile_rules: ASTVisit<Emitter, string> =
       // If this is a matrix/matrix multiply, emit a function call.
       if (tree.op === "*") {
         let [typ,] = emitter.ir.type_table[tree.id!];
+        let [typL,] = emitter.ir.type_table[tree.lhs.id!];
+        let [typR,] = emitter.ir.type_table[tree.rhs.id!];
         if (typ === FLOAT4X4) {
           let lhs = paren(emit(emitter, tree.lhs));
           let rhs = paren(emit(emitter, tree.rhs));
-          return `mat4mult(${lhs}, ${rhs})`;
+          if (typL === FLOAT4X4 && typR === FLOAT4X4) {
+            return `mat4mult(${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT4X4) {
+            return `mat4multiplyScalar(${rhs}, ${lhs})`;
+          } else if (typL === FLOAT4X4 && typR === FLOAT) {
+            return `mat4multiplyScalar(${lhs}, ${rhs})`;
+          }
         }
       }
 

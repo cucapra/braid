@@ -121,6 +121,10 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT3], FLOAT3),
   new FunType([FLOAT, FLOAT4], FLOAT4),
 
+  // Matrix-by-scalar
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
