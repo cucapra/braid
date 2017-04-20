@@ -97,12 +97,12 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   let func_ptr = emitter.builder.buildAlloca(func_type, "funcptr");
 
   // get closure ids
-  let closure_ids = emitter.ir.procs[tree.id!].free;
+  let free_ids = emitter.ir.procs[tree.id!].free;
   
   // get types and create environment struct
   let closure_vals = [];
   let closure_types = [];
-  for (let id of closure_ids) {
+  for (let id of free_ids) {
     closure_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
     closure_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
@@ -141,13 +141,13 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
+function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
   // create function
-  let _func_type = get_func_type(emitter, body.id!, arg_ids);
-  let func_type = llvm.FunctionType.create(_func_type[0], _func_type[1]);
+  let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, body.id!, arg_ids);
+  let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
     
-  // create builder, entry block for func
+  // create builder & entry block for func
   let bb: llvm.BasicBlock = func.appendBasicBlock("entry");
   let new_builder: llvm.Builder = llvm.Builder.create();
   new_builder.positionAtEnd(bb);
@@ -157,14 +157,14 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure
   emitter.builder = new_builder;
 
   // save old namedValues map & reset
-  let old_named_values = emitter.named_values
+  let old_named_values: llvm.Value[] = emitter.named_values
   emitter.named_values = [];
 
   // make allocas for args
   for (let i = 0; i < arg_ids.length; i++) {
     // get arg id & type
-    let id = arg_ids[i]
-    let type = _func_type[1][i];
+    let id: number = arg_ids[i]
+    let type:llvm.Type = _func_type[1][i];
 
     // create alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
@@ -172,27 +172,31 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], closure
     emitter.named_values[id] = ptr;
   }
 
-  // get struct type
-  let closure_types: llvm.Type[] = [];
-  for (let id of closure_ids) {
-    let type = llvm_type(emitter.ir.type_table[id][0]);
-    closure_types.push(type);
+  // get evironment struct type
+  let free_types: llvm.Type[] = [];
+  for (let id of free_ids) {
+    let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
+    free_types.push(type);
   }
-  let struct_ptr_type = llvm.PointerType.create(llvm.StructType.create(closure_types, true), 0);
+  let env_ptr_type: llvm.Type = llvm.PointerType.create(llvm.StructType.create(free_types, true), 0);
 
-  // make allocas for closure vars
-  let _struct_ptr = func.getParam(arg_ids.length);
-  let struct_ptr = emitter.builder.buildBitCast(_struct_ptr, struct_ptr_type, "");
+  // get ptr to environment struct
+  let _env_ptr: llvm.Value = func.getParam(arg_ids.length);
+  let env_ptr: llvm.Value = emitter.builder.buildBitCast(_env_ptr, env_ptr_type, "");
 
-  for (let i = 0; i < closure_ids.length; i++) {
+  for (let i = 0; i < free_ids.length; i++) {
     // get id and type
-    let id = closure_ids[i];
-    let type = closure_types[i];    // create alloca
+    let id: number = free_ids[i];
+    let type: llvm.Type = free_types[i];
+
+    // build alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
-        
-    let struct_elem = emitter.builder.buildStructGEP(struct_ptr, i, "");
-    let elem: llvm.Value = emitter.builder.buildLoad(struct_elem, "");
-        
+    
+    // get the element in the struct that we want  
+    let struct_elem_ptr: llvm.Value = emitter.builder.buildStructGEP(env_ptr, i, "");
+    let elem: llvm.Value = emitter.builder.buildLoad(struct_elem_ptr, "");
+    
+    // store the element in the alloca    
     emitter.builder.buildStore(elem, ptr);
     emitter.named_values[id] = ptr;
   }
@@ -263,11 +267,11 @@ function _bound_vars(scope: Scope): number[] {
   return names;
 }
 
-function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], closure_ids: number[], scope: Scope): llvm.Value {
+function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], scope: Scope): llvm.Value {
   _emit_subscopes(emitter, scope);
   
   let local_ids = _bound_vars(scope);  
-  let func = emit_fun(emitter, name, arg_ids, closure_ids, local_ids, scope.body);
+  let func = emit_fun(emitter, name, arg_ids, free_ids, local_ids, scope.body);
   return func;
 }
 
@@ -275,12 +279,12 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let arg_ids: number[] = [];
-  let closure_ids: number[] = [];
+  let free_ids: number[] = [];
   for (let param of proc.params) {
     arg_ids.push(param); 
   }
   for (let fv of proc.free) {
-    closure_ids.push(fv); 
+    free_ids.push(fv); 
   }
   for (let p of proc.persist) {
     throw "Persist not implemented yet";
@@ -294,7 +298,7 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
     name = procsym(proc.id);
   }
 
-  return _emit_scope_func(emitter, name, arg_ids, closure_ids, proc);
+  return _emit_scope_func(emitter, name, arg_ids, free_ids, proc);
 }
 
 function emit_prog() {
