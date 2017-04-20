@@ -14,7 +14,7 @@
 declare function require(name: string): any;
 
 const eye = require('eye-vector');
-const mat4 = require('gl-mat4');
+const mat4 = require('gl-matrix').mat4;
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');

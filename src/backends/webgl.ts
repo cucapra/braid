@@ -4,7 +4,7 @@ import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, FLOAT4,SHADER_ANNOTATION, TEXTURE } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
-import { Type, PrimitiveType, FLOAT } from '../type';
+import { Type, PrimitiveType, FLOAT, INT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import { assign } from '../util';
@@ -328,9 +328,9 @@ let compile_rules: ASTVisit<Emitter, string> =
           let rhs = paren(emit(emitter, tree.rhs));
           if (typL === FLOAT4X4 && typR === FLOAT4X4) {
             return `mat4mult(${lhs}, ${rhs})`;
-          } else if (typL === FLOAT && typR === FLOAT4X4) {
+          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
             return `mat4multiplyScalar(${rhs}, ${lhs})`;
-          } else if (typL === FLOAT4X4 && typR === FLOAT) {
+          } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
             return `mat4multiplyScalar(${lhs}, ${rhs})`;
           }
         }
