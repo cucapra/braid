@@ -482,26 +482,27 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {    
-    // Get function struct
-    let func_struct = emit(emitter, tree.fun);
+    // Get pointer to function struct
+    let func_struct: llvm.Value = emit(emitter, tree.fun);
     if (!func_struct)
       throw "Unknown function";
-    let func_type = llvm_type(emitter.ir.type_table[tree.fun.id!][0]);
+    let func_type: llvm.Type = llvm_type(emitter.ir.type_table[tree.fun.id!][0]);
     let _func_struct_ptr: llvm.Value = emitter.builder.buildAlloca(func_type, "");
-    let func_struct_ptr = emitter.builder.buildStore(func_struct, _func_struct_ptr);
+    let func_struct_ptr: llvm.Value = emitter.builder.buildStore(func_struct, _func_struct_ptr);
     
-    // get function
-    let func = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 0, ""), "");
+    // get ptr to function inside function struct
+    let func: llvm.Value = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 0, ""), "");
     
-    // get closure env
-    let env = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 1, ""), "");
+    // get pointer to environment inside function struct
+    let env: llvm.Value = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 1, ""), "");
         
     // Turn args into llvm Values
     let llvm_args: llvm.Value[] = [];
     for (let arg of tree.args)
       llvm_args.push(emit(emitter, arg));
     llvm_args.push(env);
-        
+    
+    // build function call    
     return emitter.builder.buildCall(func, llvm_args, "calltmp");
   },
 
