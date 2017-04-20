@@ -90,28 +90,31 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 
 function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // get function
-  let func = emitter.mod.getFunction(procsym(tree.id!));
-  let func_as_proc = emitter.ir.procs[tree.id!];
-  let _func_type = get_func_type(emitter, func_as_proc.body.id!, func_as_proc.params);
-  let func_type = llvm.FunctionType.create(_func_type[0], _func_type[1]);
-  let func_ptr = emitter.builder.buildAlloca(func_type, "funcptr");
-
-  // get closure ids
-  let free_ids = emitter.ir.procs[tree.id!].free;
+  let func: llvm.Function = emitter.mod.getFunction(procsym(tree.id!));
   
-  // get types and create environment struct
-  let closure_vals = [];
-  let closure_types = [];
+  // get proc corresponding to provided FunNode
+  let func_as_proc: Proc = emitter.ir.procs[tree.id!];
+
+  // construct pointer to func
+  let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, func_as_proc.body.id!, func_as_proc.params);
+  let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
+  let func_ptr: llvm.Value = emitter.builder.buildAlloca(func_type, "funcptr");
+
+  // get values/types of free vars
+  let free_ids: number[] = emitter.ir.procs[tree.id!].free;
+  let free_vals: llvm.Value[] = [];
+  let free_types: llvm.Type[] = [];
   for (let id of free_ids) {
-    closure_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
-    closure_types.push(llvm_type(emitter.ir.type_table[id][0]));
+    free_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
+    free_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
   
-  let env_struct = llvm.ConstStruct.create(closure_vals, true);
-  let env_type = llvm.StructType.create(closure_types, true);
-  let env_struct_ptr = emitter.builder.buildAlloca(env_type, "envptr");
+  // build an environment structure that wraps around free vals
+  let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
+  let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
+  let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
   emitter.builder.buildStore(env_struct, env_struct_ptr);
-  let void_env_ptr = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.Type._void(), 0), "");
+  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.Type._void(), 0), "vdptr");
 
   // The function captures its closed-over references and any persists
   // used inside.
@@ -119,8 +122,8 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
     throw "persists not implemented yet"
   }
 
-  let func_struct = llvm.ConstStruct.create([func_ptr, void_env_ptr], true);
-  return func_struct;
+  // return struct that wraps the function and its environment
+  return llvm.ConstStruct.create([func_ptr, env_void_ptr], true);
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
