@@ -353,6 +353,9 @@ function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]):
   return [ret_type, arg_types];
 }
 
+/**
+ * Store a val in the ptr location to which emitter maps the provided id
+ */
 function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): llvm.Value {
   // get pointer to stack location
   if (emitter.named_values[id] === undefined)
