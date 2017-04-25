@@ -2,7 +2,7 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, FLOAT4,SHADER_ANNOTATION, TEXTURE } from './gl';
+  FLOAT4X4, FLOAT3X3, FLOAT4,SHADER_ANNOTATION, TEXTURE } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType, FLOAT, INT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
@@ -54,9 +54,27 @@ function mat4mult(a, b) {
   return out;
 }
 
+function mat3mult(a, b) {
+  var out = mat3.create();
+  mat3.multiply(out, a, b);
+  return out;
+}
+
 function mat4multiplyScalar(a, b) {
   var out = mat4.create();
   mat4.multiplyScalar(out, a, b);
+  return out;
+}
+
+function mat3multiplyScalar(a, b) {
+  var out = mat3.create();
+  mat3.multiplyScalar(out, a, b);
+  return out;
+}
+
+function vec4transformMat4(m, a) {
+  var out = mat4.create();
+  vec4.transformMat4(out, a, m);
   return out;
 }
 `.trim();
@@ -323,15 +341,28 @@ let compile_rules: ASTVisit<Emitter, string> =
         let [typ,] = emitter.ir.type_table[tree.id!];
         let [typL,] = emitter.ir.type_table[tree.lhs.id!];
         let [typR,] = emitter.ir.type_table[tree.rhs.id!];
+        let lhs = paren(emit(emitter, tree.lhs));
+        let rhs = paren(emit(emitter, tree.rhs));
         if (typ === FLOAT4X4) {
-          let lhs = paren(emit(emitter, tree.lhs));
-          let rhs = paren(emit(emitter, tree.rhs));
           if (typL === FLOAT4X4 && typR === FLOAT4X4) {
             return `mat4mult(${lhs}, ${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
             return `mat4multiplyScalar(${rhs}, ${lhs})`;
           } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
             return `mat4multiplyScalar(${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT3X3) {
+          // TODO: Cannot find mat3
+          if (typL === FLOAT3X3 && typR === FLOAT3X3) {
+            return `mat3mult(${lhs}, ${rhs})`;
+          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
+            return `mat3multiplyScalar(${rhs}, ${lhs})`;
+          } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
+            return `mat3multiplyScalar(${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT4) {
+          if (typL == FLOAT4X4 && typR == FLOAT4) {
+            return `vec4transformMat4(${lhs}, ${rhs})`;
           }
         }
       }
