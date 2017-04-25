@@ -114,7 +114,7 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
   let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
   emitter.builder.buildStore(env_struct, env_struct_ptr);
-  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.Type._void(), 0), "vdptr");
+  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0), "vdptr");
 
   // The function captures its closed-over references and any persists
   // used inside.
@@ -321,15 +321,15 @@ function emit_prog_variant() {
  */
 function llvm_type(type: Type): llvm.Type {
   if (type === INT) {
-    return llvm.Type.int32();
+    return llvm.IntType.int32();
   } else if (type === FLOAT) {
-    return llvm.Type.double();
+    return llvm.FloatType.double();
   } else if (type instanceof FunType) {
     // get types of args and return value
     let arg_types: llvm.Type[] = [];
     for (let arg of type.params)
       arg_types.push(llvm_type(arg));
-    arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0));
+    arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0));
     let ret_type: llvm.Type = llvm_type(type.ret);
 
     // construct appropriate func type & wrap in ptr
@@ -337,7 +337,7 @@ function llvm_type(type: Type): llvm.Type {
     let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0); 
 
     // create struct environment: {function, closure environment}
-    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.Type._void(), 0)], true);
+    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0)], true);
     return struct_type;
   } else {
     throw "Unsupported type in LLVM backend: " + type;
@@ -352,7 +352,7 @@ function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]):
   let arg_types: llvm.Type[] = [];
   for (let id of arg_ids)
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  arg_types.push(llvm.PointerType.create(llvm.Type._void(), 0)); // closure environment struct ptr
+  arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0)); // closure environment struct ptr
   return [ret_type, arg_types];
 }
 
@@ -376,9 +376,9 @@ function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): l
 let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
     if (tree.type === "int")
-      return llvm.ConstInt.create(<number>tree.value, llvm.Type.int32());
+      return llvm.ConstInt.create(<number>tree.value, llvm.IntType.int32());
     else if (tree.type === "float")
-      return llvm.ConstFloat.create(<number>tree.value, llvm.Type.double());
+      return llvm.ConstFloat.create(<number>tree.value, llvm.FloatType.double());
     else if (tree.type === "string")
       return llvm.ConstString.create(<string>tree.value, false);
     else
@@ -447,9 +447,9 @@ let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
       // at least one operand is a float, and the other is either a float or an int
       // perform casts if needed, and us float operation
       if (lType !== FLOAT)
-        lVal = emitter.builder.buildSIToFP(lVal, llvm.Type.double(), "lCast");
+        lVal = emitter.builder.buildSIToFP(lVal, llvm.FloatType.double(), "lCast");
       if (rType !== FLOAT)
-        rVal = emitter.builder.buildSIToFP(rVal, llvm.Type.double(), "lCast");
+        rVal = emitter.builder.buildSIToFP(rVal, llvm.FloatType.double(), "lCast");
 
       switch (tree.op) {
         case "+": {
