@@ -129,6 +129,7 @@ export const BUILTIN_TYPES: TypeMap = {
   "Void": VOID,
   "String": STRING,
   "Boolean": BOOLEAN,
+  "Any": ANY,
 };
 
 
