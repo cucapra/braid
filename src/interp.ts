@@ -214,7 +214,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
   },
 
   visit_typealias(tree: ast.TypeAliasNode, state: State): [Value, State] {
-    throw "TODO (eric)";
+    return [42, state];
   },
 
   visit_fun(tree: ast.FunNode, state: State): [Value, State] {
@@ -488,7 +488,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   visit_typealias(tree: ast.TypeAliasNode,
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers] {
-    throw "TODO (eric)";
+    return [merge(tree), state, pers];
   },
 
   visit_run(tree: ast.RunNode,
