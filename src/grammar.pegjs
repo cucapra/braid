@@ -162,8 +162,20 @@ MacroCall
   { return setLocation({tag: "macrocall", macro: i, args: as}); }
 
 Extern
-  = extern _ i:ident _ typed _ t:Type e:ExternExpansion?
+  = extern _ i:ExternIdent _ typed _ t:Type e:ExternExpansion?
   { return setLocation({tag: "extern", name: i, type: t, expansion: e}); }
+
+ExternIdent
+  = ident / ExternIdentOperator
+
+ExternIdentOperator
+  = paren_open _ op:ExternOperator _ paren_close
+  { return op; }
+
+ExternOperator
+  = addbinop / mulbinop
+  { return text(); }
+
 ExternExpansion
   = _ eq _ s:string
   { return s; }
