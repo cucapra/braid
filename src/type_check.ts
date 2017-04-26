@@ -247,7 +247,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       let e: TypeEnv = merge(env, {
         named: new_named,
-      })
+      });
 
       // Return void type
       return [VOID, e];

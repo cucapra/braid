@@ -86,7 +86,7 @@ export function elaborate(tree: ast.SyntaxNode, externs: TypeMap = BUILTIN_TYPES
     stack: [{}],
     anns: [null],
     externs: externs,
-    named: named_types,
+    named: merge(named_types),
     snip: null,
   };
   let elaborated = elaborate_subtree(tree, env, table, check);
