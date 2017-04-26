@@ -359,7 +359,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   visit_quote(tree: ast.QuoteNode,
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers] {
-    let level = tree.snippet ? state.snipdist : 1;
+    let level = tree.snippet ? state.snipdist! : 1;
     let inner_stage = stage + level;  // Recurse at a deeper stage.
     let [t, s, p] = quote_interp(tree.expr, inner_stage, state, pers);
     return [merge(tree, { expr: t }), s, p];

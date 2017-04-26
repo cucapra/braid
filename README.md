@@ -15,6 +15,23 @@ Check out the [code documentation][hacking] for an introduction to the compiler'
 [docs]: http://microsoft.github.io/staticstaging/docs/
 [hacking]: http://microsoft.github.io/staticstaging/docs/hacking.html
 
+## Using and Hacking
+
+To get started, make sure you have Node and clone the repository. The included Makefile should build everything, or you can type these commands to use `npm` to get things ready:
+
+    $ npm install
+    $ npm run build
+
+The latter produces the parser and compiles the source code with [TypeScript][]'s `tsc` command. Then, you might want to run:
+
+    $ npm link
+
+to install an alias to the `ssc` command. Then, type:
+
+    $ ssc --help
+
+to see some options. In particular, run `ssc example.ss` to interpret programs; run `ssc -c example.ss` to compile programs to JavaScript; and run `ssc -cx example.ss` to compile programs and then execute the resulting JavaScript.
+
 ## Details
 
 The license is [MIT][].

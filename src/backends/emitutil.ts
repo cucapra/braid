@@ -1,6 +1,6 @@
 import { Emitter, emit } from './emitter';
 import * as ast from '../ast';
-import { Type } from '../type';
+import { Type, FunType, OverloadedType } from '../type';
 import { complete_visit, ast_visit } from '../visit';
 import { Prog, Variant } from '../compile/ir';
 
@@ -266,4 +266,18 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     }
   }
   return statements.join(sep + "\n") + sep;
+}
+
+/**
+ * Check whether a type is any function type, including an overloaded function
+ * type.
+ */
+export function is_fun_type(type: Type): boolean {
+  if (type instanceof FunType) {
+    return true;
+  } else if (type instanceof OverloadedType) {
+    return is_fun_type(type.types[0]);
+  } else {
+    return false;
+  }
 }

@@ -365,7 +365,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     // The size, in scalar numbers, of the index array.
     mesh_size(obj: Mesh) {
-      return obj.cells.length * obj.cells[0].length;
+      return obj.cells!.length * obj.cells![0].length;
     },
 
     // The size, in scalar numbers, of the vertex position array.
@@ -491,6 +491,10 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       canvas.width = img.width;
       canvas.height = img.height;
       let context = canvas.getContext('2d');
+      if (!context) {
+        console.error("could not get canvas context");
+        return;
+      }
       context.drawImage(img, 0, 0, img.width, img.height);
       let data = context.getImageData(0, 0, img.width, img.height).data;
 

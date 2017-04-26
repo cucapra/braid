@@ -1,9 +1,14 @@
 {
     "compilerOptions": {
         "noImplicitAny": true,
-        "module": "commonjs",
+        "strictNullChecks": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+
         "allowJs": true,
         "outDir": "build",
+
+        "module": "commonjs",
         "lib": ["dom", "es5", "es2015.promise"]
     },
     "files": [

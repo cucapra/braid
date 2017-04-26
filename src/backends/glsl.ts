@@ -23,7 +23,7 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
       // Look up the type and stage of a variable.
       if (env.anns[0] === SHADER_ANNOTATION) {  // Shader stage.
         let [t, pos] = stack_lookup(env.stack, tree.ident);
-        if (t !== undefined && pos > 0) {
+        if (t !== undefined && pos! > 0) {
           return [_unwrap_array(t), env];
         }
       }
@@ -246,10 +246,6 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 };
 
-export function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
-  return ast_visit(compile_rules, tree, emitter);
-}
-
 
 // Emitting the surrounding machinery for communicating between stages.
 
@@ -258,7 +254,8 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   let ir = parent_emitter.ir;
   let emitter: Emitter = {
     ir: ir,
-    compile: compile,
+    emit_expr: (tree: ast.SyntaxNode, emitter: Emitter) =>
+      ast_visit(compile_rules, tree, emitter),
     emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
     emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
     emit_prog_variant:

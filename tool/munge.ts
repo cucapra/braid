@@ -1,5 +1,3 @@
-/// <reference path="../typings/main.d.ts" />
-
 /**
  * Turn a list of plain-text files into a single JSON document.
  */

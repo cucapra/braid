@@ -80,7 +80,7 @@ function _check(config: Config): Gen<TypeCheck> {
 }
 
 export function frontend(config: Config, sources: string[],
-    filenames: string[],
+    filenames: string[] | null,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
   if (sources.length != filenames.length) { throw 'Sources and Filenames must have same length'; }
