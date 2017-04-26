@@ -94,15 +94,14 @@ export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
   return out;
 }
 
+// A helper for emitting children of root
 export function emit_exprs(emitter: Emitter, exprs: ast.ExpressionNode[], sep: string,
   pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
   let out = "";
-  for (let expr of exprs) {
-    if (pred(expr)) {
-      out += emit(emitter, expr);
-      out += sep;
-    }
+  for (var i = 0; i < exprs.length; i++) {
+    out += emit(emitter, exprs[i]);
+    if (i != exprs.length-1) out += sep;
   }
   return out;
 }

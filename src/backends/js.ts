@@ -177,8 +177,8 @@ export function pretty_value(v: any): string {
 export let compile_rules = {
   visit_root(tree: ast.RootNode, emitter: Emitter): string {
     let out = "";
-    // Do a special check for the first child
-    if (tree.children.length > 0) {
+    // Do a special check for the first child (header), if there is more than one file
+    if (tree.children.length > 1) {
       let header = tree.children[0];
       // See if anything needs to be emitted at all
       let header_emit = check_header(emitter, header, ",\n");
@@ -186,8 +186,9 @@ export let compile_rules = {
         out += header_emit;
         out += ",\n";
       }
+      return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
     }
-    return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
+    return emit_exprs(emitter, tree.children, ",\n");
   },
 
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
