@@ -83,14 +83,12 @@ export function frontend(config: Config, sources: string[],
     filenames: string[] | null,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
-  if (sources.length != filenames.length) { throw 'Sources and Filenames must have same length'; }
-
   let emptyExpressionNodeArray: ExpressionNode[] = [];
   let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
 
   for (var i = 0; i < sources.length; i++) {
     let source: string = sources[i];
-    let filename: string = filenames[i];
+    let filename: string | null = (filenames != null && i < sources.length) ? filenames[i] : null;
 
     // Parse.
     let tree: SyntaxNode;
