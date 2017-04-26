@@ -204,6 +204,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
           v = v1 * v2; break;
         case "/":
           v = v1 / v2; break;
+        case "==":
+          v = v1 == v2; break;
+        case "!==":
+          v = v1 != v2; break;
         default:
           throw "error: unknown binary operator " + tree.op;
       }

@@ -1,5 +1,5 @@
 var f = fun i:Int ->
-  while (i) (
+  while (i !== 0) (
     i = i - 1
   );
 f 5;
