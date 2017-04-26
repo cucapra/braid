@@ -89,7 +89,7 @@ function run(filename: string, source: string, webgl: boolean,
       sources.unshift(fs.readFileSync(HEADER_FILE, 'utf8'));
     }
 
-    driver.frontend_multiple(config, sources, filenames, function (tree, types) {
+    driver.frontend(config, sources, filenames, function (tree, types) {
       if (compile) {
         // Compiler.
         driver.compile(config, tree, types, function (code) {

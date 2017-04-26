@@ -79,7 +79,7 @@ function _check(config: Config): Gen<TypeCheck> {
   return check;
 }
 
-export function frontend_multiple(config: Config, sources: string[],
+export function frontend(config: Config, sources: string[],
     filenames: string[],
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
@@ -124,49 +124,6 @@ export function frontend_multiple(config: Config, sources: string[],
   try {
     [elaborated, type_table] =
       elaborate(root, _intrinsics(config), _types(config),
-          _check(config));
-    let [type, _] = type_table[elaborated.id!];
-    config.typed(pretty_type(type));
-  } catch (e) {
-    config.error(e);
-    return;
-  }
-  config.log('type table', type_table);
-
-  checked(elaborated, type_table);
-}
-
-// TODO: probably delete this and rename frontend_multiple to frontend
-export function frontend(config: Config, source: string,
-    filename: string,
-    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
-{
-  // Parse.
-  let tree: SyntaxNode;
-  try {
-    tree = parser.parse(source);
-  } catch (e) {
-    if (e instanceof parser.SyntaxError) {
-      let loc = e.location.start;
-      let err = 'parse error at ';
-      if (filename) {
-        err += filename + ':';
-      }
-      err += loc.line + ',' + loc.column + ': ' + e.message;
-      config.error(err);
-      return;
-    } else {
-      throw e;
-    }
-  }
-  config.log(tree);
-
-  // Check and elaborate types.
-  let elaborated: SyntaxNode;
-  let type_table: TypeTable;
-  try {
-    [elaborated, type_table] =
-      elaborate(tree, _intrinsics(config), _types(config),
           _check(config));
     let [type, _] = type_table[elaborated.id!];
     config.typed(pretty_type(type));
