@@ -630,6 +630,12 @@ function compatible(ltype: Type, rtype: Type): boolean {
       ltype.snippet === rtype.snippet &&
       ltype.snippet_var === rtype.snippet_var;
 
+  } else if (ltype instanceof OverloadedType) {
+    for (let t of ltype.types) {
+      if (compatible(t, rtype)) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -814,6 +820,11 @@ let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
   {
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
+  },
+  visit_overloaded(type: OverloadedType,
+      [tvar, targ]: [TypeVariable, any]): Type
+  {
+    return type;
   },
 }
 

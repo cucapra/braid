@@ -145,6 +145,7 @@ export interface TypeVisit<P, R> {
   visit_instance(type: InstanceType, param: P): R;
   visit_quantified(type: QuantifiedType, param: P): R;
   visit_variable(type: VariableType, param: P): R;
+  visit_overloaded(type: OverloadedType, param: P): R;
 }
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
@@ -167,6 +168,8 @@ export function type_visit<P, R>(visitor: TypeVisit<P, R>,
     return visitor.visit_quantified(type, param);
   } else if (type instanceof VariableType) {
     return visitor.visit_variable(type, param);
+  } else if (type instanceof OverloadedType) {
+    return visitor.visit_overloaded(type, param);
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
@@ -214,6 +217,14 @@ let pretty_type_rules: TypeVisit<void, string> = {
   },
   visit_variable(type: VariableType, param: void): string {
     return type.variable.name;
+  },
+  visit_overloaded(type: OverloadedType, param: void): string {
+    let out:string = "";
+    for (var i = 0; i < type.types.length; i++) {
+      out += pretty_type(type.types[i]);
+      if (i != type.types.length - 1) out += " | ";
+    }
+    return out;
   },
 }
 
