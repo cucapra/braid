@@ -244,7 +244,14 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     pred: (_: ast.ExpressionNode) => boolean = useful_pred,
     stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {
-  let exprs = flatten_seq(tree);
+  let exprs: ast.ExpressionNode[] = [];
+  if (tree.tag == "root") {
+    for (let child of (tree as ast.RootNode).children) {
+      exprs = exprs.concat(flatten_seq(child));
+    }
+  } else {
+    exprs = flatten_seq(tree);
+  }
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
     let expr = exprs[i];
