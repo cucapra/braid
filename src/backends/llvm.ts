@@ -12,7 +12,7 @@ import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emituti
 /**
  * Like `emitter.Emitter`, but for generating LLVM code instead of strings.
  */
-interface LLVMEmitter {
+export interface LLVMEmitter {
   /**
    * LLVM Module object
    */
@@ -373,7 +373,7 @@ function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): l
 /**
  * Core recursive compile rules
  */
-let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
+export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
     if (tree.type === "int")
       return llvm.ConstInt.create(<number>tree.value, llvm.IntType.int32());
