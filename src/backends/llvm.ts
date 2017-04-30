@@ -531,12 +531,15 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
  * Compile the IR to an LLVM module.
  */
 export function codegen(ir: CompilerIR): llvm.Module {
+  llvm.initX86Target();
   // Set up the emitter, which includes the LLVM IR builder.
   let builder = llvm.Builder.create();
   // Create a module. This is where all the generated code will go.
   let mod: llvm.Module = llvm.Module.create("braidprogram");
   let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple();
   mod.setTarget(target_triple);
+  let target = llvm.Target.getFromTriple(target_triple);
+  //let target_machine = llvm.TargetMachine.create(target, target_triple);
   
   let emitter: LLVMEmitter = {
     ir: ir,
