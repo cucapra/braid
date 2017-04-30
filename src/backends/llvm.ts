@@ -536,10 +536,14 @@ export function codegen(ir: CompilerIR): llvm.Module {
   let builder = llvm.Builder.create();
   // Create a module. This is where all the generated code will go.
   let mod: llvm.Module = llvm.Module.create("braidprogram");
-  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple();
-  mod.setTarget(target_triple);
+  
+  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple(); 
   let target = llvm.Target.getFromTriple(target_triple);
-  //let target_machine = llvm.TargetMachine.create(target, target_triple);
+  let target_machine = llvm.TargetMachine.create(target, target_triple);
+  let data_layout = target_machine.getTargetMachineTarget().toString();
+  
+  mod.setDataLayout(data_layout);
+  mod.setTarget(target_triple);
   
   let emitter: LLVMEmitter = {
     ir: ir,
