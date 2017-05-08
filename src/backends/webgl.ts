@@ -80,14 +80,14 @@ const GL_ATTRIBUTE_TYPES: { [_: string]: [string, string] } = {
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
 // of the outermost (vertex) shader Prog.
-function shadersym(progid: number) {
+export function shadersym(progid: number) {
   return "s" + progid;
 }
 
 // Get a JavaScript variable name to hold a shader location. Uses the ID of
 // the corresponding escape expression inside the shader, or the defining
 // variable ID for free variables. Also needs the ID of the quote.
-function locsym(scopeid: number, escid: number) {
+export function locsym(scopeid: number, escid: number) {
   return "s" + scopeid + "l" + escid;
 }
 
