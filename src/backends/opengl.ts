@@ -1,7 +1,10 @@
+import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as llvm_be from './llvm';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import * as ast from '../ast';
+import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
+  FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
 import {locsym, shadersym} from './webgl'
 
 //////////////////////////////////////////
@@ -68,10 +71,16 @@ function glCompileShader(emitter: llvm_be.LLVMEmitter, shader_type: llvm.Value):
   return emitter.builder.buildCall(func, [shader_type], "");
 }
 
-function glGetShaderParameter(emitter: llvm_be.LLVMEmitter): llvm.Value {
+/**
+ * void glGetShaderiv(  GLuint shader, GLenum pname, GLint *params)
+ */
+function glGetShaderParameter(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, pname: llvm.Value): llvm.Value {
   throw "not implemented yet";
 }
 
+/**
+ * void glGetShaderInfoLog(  GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+ */
 function glGetShaderInfoLog(emitter: llvm_be.LLVMEmitter): llvm.Value {
   throw "not implemented yet";
 }
@@ -118,6 +127,9 @@ function glLinkProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.
   return emitter.builder.buildCall(func, [program], "");
 }
 
+/*
+ *void glGetProgramiv(  GLuint program, GLenum pname, GLint *params);
+*/
 function glGetProgramParameter(emitter: llvm_be.LLVMEmitter): llvm.Value {
   throw "not implemented yet";
 }
@@ -198,6 +210,71 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
       throw "not implemented yet"
     },
   });
+
+function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant | null): llvm.Value {
+  throw "not implemented yet";
+}
+
+// Compile the IR to a JavaScript program that uses WebGL and GLSL.
+export function codegen(ir: CompilerIR): llvm.Module {
+  llvm.initX86Target();
+  // Set up the emitter, which includes the LLVM IR builder.
+  let builder = llvm.Builder.create();
+  // Create a module. This is where all the generated code will go.
+  let mod: llvm.Module = llvm.Module.create("braidprogram");
+  // Set the target triple and data layout  
+  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple(); 
+  let target = llvm.Target.getFromTriple(target_triple);
+  let target_machine = llvm.TargetMachine.create(target, target_triple);
+  let data_layout = target_machine.getTargetMachineData().toString();
+
+  mod.setTarget(target_triple);
+  mod.setDataLayout(data_layout);
+  
+  let emitter: llvm_be.LLVMEmitter = {
+    mod: mod,
+    builder: builder,
+    named_values: [],
+    ir: ir,
+    emit_expr: (tree: ast.SyntaxNode, emitter: llvm_be.LLVMEmitter) =>
+      ast_visit(compile_rules, tree, emitter),
+    
+    emit_proc: llvm_be.emit_proc,
+
+    emit_prog(emitter: llvm_be.LLVMEmitter, prog: Prog): llvm.Value {
+      // Choose between emitting JavaScript and GLSL.
+      if (prog.annotation === SHADER_ANNOTATION) {
+        return emit_glsl_prog(emitter, prog, null);
+      } else {
+        return llvm_be.emit_prog(emitter, prog);
+      }
+    },
+
+    // emit_prog_variant(emitter: llvm_be.LLVMEmitter, variant: Variant, prog: Prog) {
+    //   if (prog.annotation === SHADER_ANNOTATION) {
+    //     return emit_glsl_prog(emitter, prog, variant);
+    //   } else {
+    //     return js.emit_prog_variant(emitter, variant, prog);
+    //   }
+    // },
+
+    variant: null,
+  };
+
+  // Generate the main function into the module.
+  llvm_be.emit_main(emitter);
+
+  // TODO: We currently just log the IR and then free the module. Eventually,
+  // we'd like to return the module to the caller so it can do whatever it
+  // wants with the result---at the moment, we return a dangling pointer!
+  console.log(emitter.mod.toString());
+  emitter.mod.free();
+
+  // Now that we're done generating code, we can free the IR builder.
+  emitter.builder.free();
+
+  return emitter.mod;
+}
 
 
 

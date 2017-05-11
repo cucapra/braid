@@ -361,7 +361,7 @@ function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[],
   return func;
 }
 
-function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
+export function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let arg_ids: number[] = [];
@@ -430,12 +430,12 @@ function emit_prog_decl(emitter: LLVMEmitter, prog: Prog, name: string): llvm.Va
 /**
  * Emit a single-variant program.
  */
-function emit_prog(emitter: LLVMEmitter, prog: Prog): llvm.Value {
+export function emit_prog(emitter: LLVMEmitter, prog: Prog): llvm.Value {
   return emit_prog_decl(emitter, prog, progsym(prog.id!));
 }
 
 
-function emit_prog_variant() {
+export function emit_prog_variant() {
 
 }
 
@@ -719,6 +719,6 @@ export function codegen(ir: CompilerIR): llvm.Module {
  * Emit the main function (and all the functions it depends on, eventually)
  * into the specified LLVM module.
  */
-function emit_main(emitter: LLVMEmitter): llvm.Value {
+export function emit_main(emitter: LLVMEmitter): llvm.Value {
   return emit_proc(emitter, emitter.ir.main);
 }
