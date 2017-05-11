@@ -18,6 +18,7 @@ import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
 import { varsym } from './emitutil';
 import { Emitter, specialized_prog } from './emitter';
 import { FUNC_ANNOTATION } from './js';
+import { LLVMEmitter } from './llvm'
 
 // General OpenGL-related backend components.
 
@@ -470,6 +471,6 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
  * Eventually, it would be nice to pre-compute or memoize this. At the moment,
  * we may be re-computing this many times.
  */
-export function emit_glue(emitter: Emitter, progid: number) {
+export function emit_glue(emitter: Emitter|LLVMEmitter, progid: number) {
   return get_glue(emitter.ir, specialized_prog(emitter, progid));
 }

@@ -7,6 +7,7 @@
 import { SyntaxNode } from '../ast';
 import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
 import { assign } from '../util';
+import { LLVMEmitter } from './llvm'
 
 /**
  * A structure specifying a code-generation backend and its state.
@@ -59,7 +60,7 @@ export function emit_main(emitter: Emitter) {
  * Get the current specialized version of a program, according to the
  * emitter's current variant.
  */
-export function specialized_prog(emitter: Emitter, progid: number) {
+export function specialized_prog(emitter: Emitter|LLVMEmitter, progid: number) {
   let variant = emitter.variant;
   if (!variant) {
     return emitter.ir.progs[progid];
@@ -70,7 +71,7 @@ export function specialized_prog(emitter: Emitter, progid: number) {
 /**
  * Get the current specialized version of a function.
  */
-export function specialized_proc(emitter: Emitter, procid: number) {
+export function specialized_proc(emitter: Emitter|LLVMEmitter, procid: number) {
   let variant = emitter.variant;
   if (!variant) {
     return emitter.ir.procs[procid];

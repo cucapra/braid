@@ -2,7 +2,10 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as llvm_be from './llvm';
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
+import { progsym, paren, variant_suffix } from './emitutil';
 import * as ast from '../ast';
+import * as js from './js';
+import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
 import {locsym, shadersym} from './webgl'
@@ -212,7 +215,31 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
   });
 
 function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant | null): llvm.Value {
-  throw "not implemented yet";
+  // Emit subprograms.
+  for (let subid of prog.quote_children) {
+    let subprog = emitter.ir.progs[subid];
+    if (subprog.annotation !== SHADER_ANNOTATION) {
+      throw "error: subprograms not allowed in shaders";
+    }
+    emit_glsl_prog(emitter, subprog, variant)
+    let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), "");
+    emitter.builder.buildStore(, ptr);
+  }
+
+  // Emit the shader program.
+  let code = glsl.compile_prog(emitter, prog.id!);
+  let name = progsym(prog.id!) + variant_suffix(variant);
+
+  let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), name);
+  emitter.builder.buildStore(llvm.ConstString.create(js.emit_string(code), false), ptr);
+
+  // If it's a *vertex shader* quote (i.e., a top-level shader quote),
+  // emit its setup code too.
+  if (prog_kind(emitter.ir, prog.id!) === ProgKind.vertex) {
+    out += emit_shader_setup(emitter, prog.id!, variant);
+  }
+
+  return ptr;
 }
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.

@@ -4,6 +4,7 @@ import { INT, FLOAT, Type, OverloadedType, FunType, CodeType } from '../type';
 import { Proc, Prog, Variant, Scope, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 import { varsym, persistsym, procsym, progsym, variantsym, is_fun_type, useful_pred } from './emitutil';
+import { specialized_prog, specialized_proc } from './emitter';
 
 export let FUNC_ANNOTATION = "js";
 
@@ -292,29 +293,6 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
   emitter.named_values = old_named_values;
 
   return func;
-}
-
-/**
- * Get the current specialized version of a program, according to the
- * emitter's current variant.
- */
- function specialized_prog(emitter: LLVMEmitter, progid: number) {
-  let variant = emitter.variant;
-  if (!variant) {
-    return emitter.ir.progs[progid];
-  }
-  return variant.progs[progid] || emitter.ir.progs[progid];
-}
-
-/**
- * Get the current specialized version of a function.
- */
-function specialized_proc(emitter: LLVMEmitter, procid: number) {
-  let variant = emitter.variant;
-  if (!variant) {
-    return emitter.ir.procs[procid];
-  }
-  return variant.procs[procid] || emitter.ir.procs[procid];
 }
 
 /*
