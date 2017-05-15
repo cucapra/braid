@@ -91,7 +91,7 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
 function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // get function
   let func: llvm.Function = emitter.mod.getFunction(procsym(tree.id!));
-  
+
   // get proc corresponding to provided FunNode
   let func_as_proc: Proc = emitter.ir.procs[tree.id!];
 
@@ -108,7 +108,7 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
     free_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
     free_types.push(llvm_type(emitter.ir.type_table[id][0]));
   }
-  
+
   // build an environment structure that wraps around free vals
   let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
   let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
@@ -144,12 +144,12 @@ function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
+function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value {
   // create function
   let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, body.id!, arg_ids);
   let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
   let func: llvm.Function = emitter.mod.addFunction(name, func_type);
-    
+
   // create builder & entry block for func
   let bb: llvm.BasicBlock = func.appendBasicBlock("entry");
   let new_builder: llvm.Builder = llvm.Builder.create();
@@ -194,12 +194,12 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
 
     // build alloca
     let ptr: llvm.Value = emitter.builder.buildAlloca(type, varsym(id));
-    
-    // get the element in the struct that we want  
+
+    // get the element in the struct that we want
     let struct_elem_ptr: llvm.Value = emitter.builder.buildStructGEP(env_ptr, i, "");
     let elem: llvm.Value = emitter.builder.buildLoad(struct_elem_ptr, "");
-    
-    // store the element in the alloca    
+
+    // store the element in the alloca
     emitter.builder.buildStore(elem, ptr);
     emitter.named_values[id] = ptr;
   }
@@ -272,8 +272,8 @@ function _bound_vars(scope: Scope): number[] {
 
 function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], scope: Scope): llvm.Value {
   _emit_subscopes(emitter, scope);
-  
-  let local_ids = _bound_vars(scope);  
+
+  let local_ids = _bound_vars(scope);
   let func = emit_fun(emitter, name, arg_ids, free_ids, local_ids, scope.body);
   return func;
 }
@@ -284,10 +284,10 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   let arg_ids: number[] = [];
   let free_ids: number[] = [];
   for (let param of proc.params) {
-    arg_ids.push(param); 
+    arg_ids.push(param);
   }
   for (let fv of proc.free) {
-    free_ids.push(fv); 
+    free_ids.push(fv);
   }
   for (let p of proc.persist) {
     throw "Persist not implemented yet";
@@ -334,7 +334,7 @@ function llvm_type(type: Type): llvm.Type {
 
     // construct appropriate func type & wrap in ptr
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
-    let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0); 
+    let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0);
 
     // create struct environment: {function, closure environment}
     let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0)], true);
@@ -481,7 +481,7 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     return emit_func(emitter, tree);
   },
 
-  visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {    
+  visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
     // Get pointer to function struct
     let func_struct: llvm.Value = emit(emitter, tree.fun);
     if (!func_struct)
@@ -489,20 +489,20 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
     let func_type: llvm.Type = llvm_type(emitter.ir.type_table[tree.fun.id!][0]);
     let _func_struct_ptr: llvm.Value = emitter.builder.buildAlloca(func_type, "");
     let func_struct_ptr: llvm.Value = emitter.builder.buildStore(func_struct, _func_struct_ptr);
-    
+
     // get ptr to function inside function struct
     let func: llvm.Value = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 0, ""), "");
-    
+
     // get pointer to environment inside function struct
     let env: llvm.Value = emitter.builder.buildLoad(emitter.builder.buildStructGEP(_func_struct_ptr, 1, ""), "");
-        
+
     // Turn args into llvm Values
     let llvm_args: llvm.Value[] = [];
     for (let arg of tree.args)
       llvm_args.push(emit(emitter, arg));
     llvm_args.push(env);
-    
-    // build function call    
+
+    // build function call
     return emitter.builder.buildCall(func, llvm_args, "calltmp");
   },
 
@@ -536,15 +536,15 @@ export function codegen(ir: CompilerIR): llvm.Module {
   let builder = llvm.Builder.create();
   // Create a module. This is where all the generated code will go.
   let mod: llvm.Module = llvm.Module.create("braidprogram");
-  
-  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple(); 
+
+  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple();
   let target = llvm.Target.getFromTriple(target_triple);
   let target_machine = llvm.TargetMachine.create(target, target_triple);
   let data_layout = target_machine.getTargetMachineTarget().toString();
-  
+
   mod.setDataLayout(data_layout);
   mod.setTarget(target_triple);
-  
+
   let emitter: LLVMEmitter = {
     ir: ir,
     mod: mod,
