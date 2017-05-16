@@ -540,7 +540,7 @@ export function codegen(ir: CompilerIR): llvm.Module {
   let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple();
   let target = llvm.Target.getFromTriple(target_triple);
   let target_machine = llvm.TargetMachine.create(target, target_triple);
-  let data_layout = target_machine.getTargetMachineTarget().toString();
+  let data_layout = target_machine.createDataLayout().toString();
 
   mod.setDataLayout(data_layout);
   mod.setTarget(target_triple);
