@@ -5,6 +5,11 @@ import { Proc, Prog, Variant, Scope, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
 import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emitutil';
 
+/**
+ * Export the LLVM Module type, which is the result of LLVM compilation.
+ */
+export type Module = llvm.Module;
+
 ///////////////////////////////////////////////////////////////////
 // Begin Emit Functions & Redundant Funcs
 ///////////////////////////////////////////////////////////////////
@@ -559,12 +564,6 @@ export function codegen(ir: CompilerIR): llvm.Module {
 
   // Generate the main function into the module.
   emit_main(emitter);
-
-  // TODO: We currently just log the IR and then free the module. Eventually,
-  // we'd like to return the module to the caller so it can do whatever it
-  // wants with the result---at the moment, we return a dangling pointer!
-  console.log(emitter.mod.toString());
-  emitter.mod.free();
 
   // Now that we're done generating code, we can free the IR builder.
   emitter.builder.free();

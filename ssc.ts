@@ -97,6 +97,11 @@ function run(filename: string, source: string, webgl: boolean,
           } else {
             console.log(code);
           }
+        },
+
+        // Native compilation result.
+        (mod) => {
+          console.log(mod.toString());
         });
 
       } else {
