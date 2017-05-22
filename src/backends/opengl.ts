@@ -11,9 +11,20 @@ import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
 import {locsym, shadersym, get_prog_pair} from './webgl'
 
 ////////////////////////////////////////////
-// TODO: Pass around instead of global
+// Handling llvm string lengths
 ////////////////////////////////////////////
-let str_lens = [];
+
+// TODO: Just use map for now...will probably need to change this eventually
+let str_lens: {[id: string]: number} = {};
+
+/**
+ * Function for getting string length.
+ * All length lookups will be from here, so will just need to change this 
+ * method when find better way to handle string lengths
+ */
+function get_code_length(id: number) {
+  return str_lens[id];
+}
 
 //////////////////////////////////////////
 // useful openGL bindings
@@ -155,6 +166,34 @@ function glGetProgramInfoLog(emitter: llvm_be.LLVMEmitter, program: llvm.Value, 
   }
   return emitter.builder.buildCall(func, [program, max_length, length, info_log], "");
 }
+
+/**
+ * GLint glGetAttribLocation(GLuint program, const GLchar *name);
+ */
+function glGetAttribLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value, name: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glGetAttribLocation");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = glint();
+    let arg_types: llvm.Type[] = [gluint(), glstring()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glGetAttribLocation", func_type);
+  }
+  return emitter.builder.buildCall(func, [program, name], "");
+}
+
+/**
+ * GLint glGetUniformLocation(GLuint program, const GLchar *name)
+ */
+function glGetUniformLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value, name: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glGetUniformLocation");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = glint();
+    let arg_types: llvm.Type[] = [gluint(), glstring()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glGetUniformLocation", func_type);
+  }
+  return emitter.builder.buildCall(func, [program, name], "");
+} 
 //////////////////////////////////////////
 
 /**
@@ -189,7 +228,7 @@ function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source:
   return shader;
 }
 
-function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, vertex_len: number, fragment_source: llvm.Value, fragment_len: number) {
+function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, vertex_len: number, fragment_source: llvm.Value, fragment_len: number): llvm.Value {
   let vert = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source, vertex_len);
   let frag = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source, fragment_len);
   
@@ -211,21 +250,39 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
   compose_visit(llvm_be.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: ast.CallNode, emitter: llvm_be.LLVMEmitter): llvm.Value {
-      throw "not implemented yet"
+      throw "not implemented yet";
     },
 
     visit_binary(tree: ast.BinaryNode, emitter: llvm_be.LLVMEmitter): llvm.Value {
-      throw "not implemented yet"
+      throw "not implemented yet";
     },
   });
 
 // TODO: handle splices and things!!
 function emit_shader_code_ref(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant|null): llvm.Value {
-  //let code_expr = progsym(prog.id!) + variant_suffix(variant);
+  let code_expr = progsym(prog.id!) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
     throw "not implemented yet";
   }
-  return emitter.builder.buildLoad(emitter.named_values[prog.id!], ""); // TODO: use code_expr instead of prog.id to look up ptr?
+  return emitter.builder.buildLoad(emitter.named_values2[code_expr], ""); 
+}
+
+function emit_loc_var(emitter: llvm_be.LLVMEmitter, scopeid: number, attribute: boolean, varname: string, varid: number, variant: Variant | null): llvm.Value {
+  let shader = shadersym(scopeid) + variant_suffix(variant);
+  let prog_ptr = emitter.named_values2[shader];
+  let program = emitter.builder.buildLoad(prog_ptr, "");
+  
+  let name = locsym(scopeid, varid) + variant_suffix(variant);
+  let ptr = emitter.builder.buildAlloca(glint(), name);
+  let value;
+  if (attribute) {
+    value = glGetAttribLocation(emitter, program, llvm.ConstString.create(name, true));
+  } else {
+    value = glGetUniformLocation(emitter, program, llvm.ConstString.create(name, true));
+  }
+  emitter.builder.buildStore(value, ptr);
+  emitter.named_values2[name] = ptr;
+  return ptr;
 }
 
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
@@ -237,18 +294,21 @@ function emit_shader_setup(emitter: llvm_be.LLVMEmitter, progid: number, variant
   let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
   let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
   let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
-  get_shader(emitter, vtx_code, str_lens[vertex_prog.id!], frag_code, str_lens[fragment_prog.id!]); // TODO: str_lens...un-global? change to name->val map?
+  
+  let program = get_shader(emitter, vtx_code, get_code_length(vertex_prog.id!), frag_code, get_code_length(fragment_prog.id!)); 
+  let ptr = emitter.builder.buildAlloca(gluint(), name);
+  emitter.builder.buildStore(program, ptr);
+
+  emitter.named_values2[name] = ptr; 
 
   // Get the variable locations, for both explicit persists and for free
   // variables.
-  // let glue = emit_glue(emitter, vertex_prog.id!);
-  // for (let g of glue) {
-  //   out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
-  //                       variant) + "\n";
-  // }
-
-  // return out;
-  throw "not implemented yet";
+  let glue = emit_glue(emitter, vertex_prog.id!);
+  let val;
+  for (let g of glue) {
+    val = emit_loc_var(emitter, vertex_prog.id!, g.attribute, g.name, g.id, variant);
+  }
+  return val;
 }
 
 function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant | null): llvm.Value {
@@ -267,8 +327,9 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
 
   let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), name);
   emitter.builder.buildStore(llvm.ConstString.create(js.emit_string(code), false), ptr);
-  emitter.named_values[prog.id!] = ptr; // TODO: should we change named_values to map name -> ptr??
-  str_lens[prog.id!] = code.length; // TODO: un-global? change to name->val map?
+  
+  emitter.named_values2[name] = ptr;
+  str_lens[name] = code.length; // TODO: str_lens
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
@@ -298,7 +359,8 @@ export function codegen(ir: CompilerIR): llvm.Module {
   let emitter: llvm_be.LLVMEmitter = {
     mod: mod,
     builder: builder,
-    named_values: [],
+    named_values: [], // TODO: rectify named_values and named_values2
+    named_values2: {},
     ir: ir,
     emit_expr: (tree: ast.SyntaxNode, emitter: llvm_be.LLVMEmitter) =>
       ast_visit(compile_rules, tree, emitter),

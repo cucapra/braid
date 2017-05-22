@@ -35,7 +35,9 @@ export interface LLVMEmitter {
   /**
    * Map from id's to Alloca ptr's
    */
+  // TODO: rectifiy named_values and named_values2
   named_values: llvm.Value[];
+  named_values2: {[key: string]: llvm.Value;};
 
   /**
    * Program we are compiling
@@ -238,6 +240,9 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
   let old_named_values: llvm.Value[] = emitter.named_values
   emitter.named_values = [];
 
+  let old_named_values2 = emitter.named_values2;
+  emitter.named_values2 = {};
+
   // make allocas for args
   for (let i = 0; i < arg_ids.length; i++) {
     // get arg id & type
@@ -297,6 +302,7 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
   emitter.builder.free();
   emitter.builder = old_builder;
   emitter.named_values = old_named_values;
+  emitter.named_values2 = old_named_values2;
 
   return func;
 }
@@ -678,6 +684,7 @@ export function codegen(ir: CompilerIR): llvm.Module {
     mod: mod,
     builder: builder,
     named_values: [],
+    named_values2: {},
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
     emit_prog: emit_prog,
