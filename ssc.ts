@@ -53,7 +53,7 @@ function check_output(filename: string, source: string, result: string):
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
     generate: boolean, log: (...msg: any[]) => void, presplice: boolean,
-    native: boolean)
+    native: boolean, outfile: string)
 {
   let success = true;
 
@@ -97,6 +97,18 @@ function run(filename: string, source: string, webgl: boolean,
           } else {
             console.log(code);
           }
+        },
+
+        // Native compilation result.
+        (mod) => {
+          if (outfile) {
+            let err = mod.writeBitcodeToFile(outfile);
+            if (err) {
+              throw "error writing bitcode: " + err;
+            }
+          } else {
+            console.log(mod.toString());
+          }
         });
 
       } else {
@@ -132,6 +144,7 @@ function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
     boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P', 'n'],
+    string: ['o'],
   });
 
   // The flags: -v, -c, and -x.
@@ -143,6 +156,7 @@ function main() {
   let generate: boolean = args['g'];
   let no_presplice: boolean = args['P'];
   let native: boolean = args['n'];
+  let outfile: string = args['o'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
@@ -155,6 +169,7 @@ function main() {
     console.error("  -g: dump generated code");
     console.error("  -P: do not use the presplicing optimization");
     console.error("  -n: use native (LLVM) backend");
+    console.error("  -o FILE: emit result in FILE");
     process.exit(1);
   }
 
@@ -195,7 +210,7 @@ function main() {
     return new Promise(function (resolve, reject) {
       let then = function (source: string) {
         success = run(fn, source, webgl, compile, execute, test,
-            generate, log, !no_presplice, native) && success;
+            generate, log, !no_presplice, native, outfile) && success;
         resolve();
       };
       if (fn === STDIN_FILENAME) {

@@ -339,8 +339,3 @@ export function codegen(ir: CompilerIR): llvm.Module {
 
   return emitter.mod;
 }
-
-
-
-
-

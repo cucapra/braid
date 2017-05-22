@@ -124,7 +124,8 @@ export function frontend(config: Config, source: string,
 }
 
 export function compile(config: Config, tree: SyntaxNode,
-    type_table: TypeTable, compiled: (code: string) => void)
+    type_table: TypeTable, compiled: (code: string) => void,
+    compiled_native: (mod: llvm.Module) => void)
 {
   // Desugar macros.
   let sugarfree = desugar_macros(tree, type_table, _check(config));
@@ -144,24 +145,21 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = webgl.codegen(ir);
+      compiled(webgl.codegen(ir));
     } else if (config.native) {
-      llvm.codegen(ir);
-      // TODO: Return the result in memory, or write to disk?
-      return;
+      let mod = llvm.codegen(ir);
+      compiled_native(mod);
+      mod.free();
     } else {
-      jscode = js.codegen(ir);
+      compiled(js.codegen(ir));
     }
   } catch (e) {
     if (typeof(e) === "string") {
       config.error(e);
-      return;
     } else {
       throw e;
     }
   }
-
-  compiled(jscode);
 }
 
 export function interpret(config: Config, tree: SyntaxNode,
