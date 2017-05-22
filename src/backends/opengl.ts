@@ -8,7 +8,12 @@ import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
-import {locsym, shadersym} from './webgl'
+import {locsym, shadersym, get_prog_pair} from './webgl'
+
+////////////////////////////////////////////
+// TODO: Pass around instead of global
+////////////////////////////////////////////
+let str_lens = [];
 
 //////////////////////////////////////////
 // useful openGL bindings
@@ -168,11 +173,11 @@ function printf(emitter: llvm_be.LLVMEmitter, str: llvm.Value, args: llvm.Value[
   return emitter.builder.buildCall(func, _args, "");
 }
 
-function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source: string): llvm.Value {
+function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source: llvm.Value, len: number): llvm.Value {
   let shader: llvm.Value = glCreateShader(emitter, llvm.ConstInt.create(shader_type, glenum()));
   
-  let sources: llvm.ConstArray = llvm.ConstArray.create(glstring(), [llvm.ConstString.create(source, false)]);
-  let lengths: llvm.ConstArray = llvm.ConstArray.create(glint(), [llvm.ConstInt.create(source.length, glint())]);
+  let sources: llvm.ConstArray = llvm.ConstArray.create(glstring(), [source]);
+  let lengths: llvm.ConstArray = llvm.ConstArray.create(glint(), [llvm.ConstInt.create(len, glint())]);
   glShaderSource(emitter, shader, llvm.ConstInt.create(1, glsizei()), sources, lengths);
   glCompileShader(emitter, shader);
 
@@ -184,9 +189,9 @@ function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source:
   return shader;
 }
 
-function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: string, fragment_source: string) {
-  let vert = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source);
-  let frag = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source);
+function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, vertex_len: number, fragment_source: llvm.Value, fragment_len: number) {
+  let vert = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source, vertex_len);
+  let frag = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source, fragment_len);
   
   let program = glCreateProgram(emitter);
   glAttachShader(emitter, program, vert);
@@ -214,6 +219,38 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
     },
   });
 
+// TODO: handle splices and things!!
+function emit_shader_code_ref(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant|null): llvm.Value {
+  //let code_expr = progsym(prog.id!) + variant_suffix(variant);
+  for (let esc of prog.owned_splice) {
+    throw "not implemented yet";
+  }
+  return emitter.builder.buildLoad(emitter.named_values[prog.id!], ""); // TODO: use code_expr instead of prog.id to look up ptr?
+}
+
+// Emit the setup declarations for a shader program. Takes the ID of a vertex
+// (top-level) shader program.
+function emit_shader_setup(emitter: llvm_be.LLVMEmitter, progid: number, variant: Variant | null): llvm.Value {
+  let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
+
+  // Compile and link the shader program.
+  let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
+  let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
+  let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
+  get_shader(emitter, vtx_code, str_lens[vertex_prog.id!], frag_code, str_lens[fragment_prog.id!]); // TODO: str_lens...un-global? change to name->val map?
+
+  // Get the variable locations, for both explicit persists and for free
+  // variables.
+  // let glue = emit_glue(emitter, vertex_prog.id!);
+  // for (let g of glue) {
+  //   out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
+  //                       variant) + "\n";
+  // }
+
+  // return out;
+  throw "not implemented yet";
+}
+
 function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant | null): llvm.Value {
   // Emit subprograms.
   for (let subid of prog.quote_children) {
@@ -222,8 +259,6 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
       throw "error: subprograms not allowed in shaders";
     }
     emit_glsl_prog(emitter, subprog, variant)
-    let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), "");
-    emitter.builder.buildStore(, ptr);
   }
 
   // Emit the shader program.
@@ -232,11 +267,13 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
 
   let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), name);
   emitter.builder.buildStore(llvm.ConstString.create(js.emit_string(code), false), ptr);
+  emitter.named_values[prog.id!] = ptr; // TODO: should we change named_values to map name -> ptr??
+  str_lens[prog.id!] = code.length; // TODO: un-global? change to name->val map?
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
   if (prog_kind(emitter.ir, prog.id!) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter, prog.id!, variant);
+    return emit_shader_setup(emitter, prog.id!, variant);
   }
 
   return ptr;

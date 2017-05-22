@@ -91,7 +91,7 @@ export function locsym(scopeid: number, escid: number) {
   return "s" + scopeid + "l" + escid;
 }
 
-function get_prog_pair(ir: CompilerIR, progid: number) {
+export function get_prog_pair(ir: CompilerIR, progid: number) {
   let vertex_prog = ir.progs[progid];
 
   // Get the fragment program.
