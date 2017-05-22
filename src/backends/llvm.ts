@@ -169,7 +169,7 @@ function emit_extern(name: string, type: Type): llvm.Value {
 }
 
 // mostly a copy of emitter function
-function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
+export function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 

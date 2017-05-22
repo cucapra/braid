@@ -245,12 +245,53 @@ function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, ver
   return program;
 }
 
+function emit_shader_binding_variant(emitter: llvm_be.LLVMEmitter, progid: number, variant: Variant | null): llvm.Value {
+  throw "not implemented yet";
+}
+
+function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm.Value {
+  // Check whether this shader has variants.
+  let variants = emitter.ir.presplice_variants[progid];
+  if (variants === null) {
+    // No variants.
+    return emit_shader_binding_variant(emitter, progid, null);
+  } else {
+    // Variants exist. Emit the selector.
+    //return js.emit_variant_selector(
+    //  emitter, emitter.ir.progs[progid], variants,
+    //  (variant) => {
+    //    return emit_shader_binding_variant(emitter, progid, variant);
+    //  }
+    //);
+  }
+
+  throw "not implemented yet";
+}
+
 // Extend the JavaScript compiler with some WebGL specifics.
 let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
   compose_visit(llvm_be.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: ast.CallNode, emitter: llvm_be.LLVMEmitter): llvm.Value {
-      throw "not implemented yet";
+      // Check for the intrinsic that indicates a shader invocation.
+      if (vtx_expr(tree)) {
+        // For the moment, we require a literal quote so we can statically
+        // emit the bindings.
+        if (tree.args[0].tag === "quote") {
+          let quote = tree.args[0] as ast.QuoteNode;
+          return emit_shader_binding(emitter, quote.id!);
+        } else {
+          throw "dynamic `vtx` calls unimplemented";
+        }
+
+      // And our intrinsic for indicating the rendering stage.
+      } else if (render_expr(tree)) {
+        // Pass through the code argument.
+        return llvm_be.emit(emitter, tree.args[0]);
+      }
+
+      // An ordinary function call.
+      return ast_visit(llvm_be.compile_rules, tree, emitter);
     },
 
     visit_binary(tree: ast.BinaryNode, emitter: llvm_be.LLVMEmitter): llvm.Value {
