@@ -295,7 +295,19 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
     },
 
     visit_binary(tree: ast.BinaryNode, emitter: llvm_be.LLVMEmitter): llvm.Value {
-      throw "not implemented yet";
+      // If this is a matrix/matrix multiply, emit a function call.
+      if (tree.op === "*") {
+        let [typ,] = emitter.ir.type_table[tree.id!];
+        if (typ === FLOAT4X4) {
+          let lhs = llvm_be.emit(emitter, tree.lhs);
+          let rhs = llvm_be.emit(emitter, tree.rhs);
+          throw "not implemented yet";
+          //return `mat4mult(${lhs}, ${rhs})`;
+        }
+      }
+
+      // Otherwise, use the ordinary JavaScript backend.
+      return ast_visit(llvm_be.compile_rules, tree, emitter);
     },
   });
 
