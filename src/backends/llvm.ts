@@ -440,7 +440,7 @@ function llvm_type(type: Type): llvm.Type {
     let arg_types: llvm.Type[] = [];
     for (let arg of type.params)
       arg_types.push(llvm_type(arg));
-    arg_types.push FUNC_ENV_TYPE);
+    arg_types.push(FUNC_ENV_TYPE);
     let ret_type: llvm.Type = llvm_type(type.ret);
 
     // construct appropriate func type & wrap in ptr
@@ -453,7 +453,7 @@ function llvm_type(type: Type): llvm.Type {
   } else if (type instanceof CodeType) {
       if (type.annotation == FUNC_ANNOTATION) {
         // get arg_types and ret_type
-        let arg_types: llvm.Type[] =  FUNC_ENV_TYPE];
+        let arg_types: llvm.Type[] =  [FUNC_ENV_TYPE];
         let ret_type: llvm.Type = llvm_type(type.inner);
 
         // construct appropriate func type & wrap in ptr
@@ -479,7 +479,7 @@ function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]):
   let arg_types: llvm.Type[] = [];
   for (let id of arg_ids)
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  arg_types.push FUNC_ENV_TYPE); // closure environment struct ptr
+  arg_types.push(FUNC_ENV_TYPE); // closure environment struct ptr
   return [ret_type, arg_types];
 }
 
