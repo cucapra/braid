@@ -58,7 +58,7 @@ function mat4mult(a, b) {
 /**
  * The WebGL functions for binding uniforms.
  */
-const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
+export const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Int": "uniform1i",
   "Int3": "uniform3iv",
   "Int4": "uniform4iv",

@@ -6,9 +6,11 @@ import { progsym, paren, variant_suffix } from './emitutil';
 import * as ast from '../ast';
 import * as js from './js';
 import * as glsl from './glsl';
+import { Type, PrimitiveType } from '../type';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
-import {locsym, shadersym, get_prog_pair} from './webgl'
+import { assign } from '../util';
+import {locsym, shadersym, get_prog_pair, GL_UNIFORM_FUNCTIONS} from './webgl'
 
 ////////////////////////////////////////////
 // Handling llvm string lengths
@@ -33,20 +35,32 @@ function get_code_length(id: number) {
 /**
  * Methods for getting various llvm versions of openGL types
  */
-function glchar(): llvm.Type   {return llvm.IntType.int8();}
-function glstring(): llvm.Type {return llvm.PointerType.create(glchar(), 0);}
-function glint(): llvm.Type    {return llvm.IntType.int32();}
-function gluint(): llvm.Type   {return llvm.IntType.int32();}
-function glsizei(): llvm.Type  {return llvm.IntType.int32();}
-function glenum(): llvm.Type   {return llvm.IntType.int32();}
+function glvoid(): llvm.Type    {return llvm.PointerType.create(llvm.IntType.int8(), 0);}
+function glchar(): llvm.Type     {return llvm.IntType.int8();}
+function glstring(): llvm.Type   {return llvm.PointerType.create(glchar(), 0);}
+function glboolean(): llvm.Type  {return llvm.IntType.int1();}
+function glint(): llvm.Type      {return llvm.IntType.int32();}
+function gluint(): llvm.Type     {return llvm.IntType.int32();}
+function glsizei(): llvm.Type    {return llvm.IntType.int32();}
+function glenum(): llvm.Type     {return llvm.IntType.int32();}
+function glfloat(): llvm.Type    {return llvm.FloatType.float();}
 
 /**
  * Various constants
  */
+let GL_TEXTURE_2D = 0x0DE1;
+let GL_FLOAT = 0x1406;
+let GL_TEXTURE0 = 0x84C0;
+let GL_ARRAY_BUFFER = 0x8892; //TODO: check this one
 let GL_FRAGMENT_SHADER = 0x8B30;
 let GL_VERTEX_SHADER = 0x8B31;
 let GL_COMPILE_STATUS = 0x8B81;
 let GL_LINK_STATUS = 0x8B82;
+
+const GL_ATTRIBUTE_TYPES: { [_: string]: [number, number] } = {
+  "Float2": [2, GL_FLOAT],
+  "Float3": [3, GL_FLOAT],
+};
 
 /**
  * GLuint glCreateShader(GLenum shaderType)
@@ -194,6 +208,204 @@ function glGetUniformLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value,
   }
   return emitter.builder.buildCall(func, [program, name], "");
 } 
+
+/**
+ * void glUseProgram(GLuint program)
+ */
+function glUseProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUseProgram");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [gluint()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUseProgram", func_type);
+  }
+  return emitter.builder.buildCall(func, [program], "");
+}
+
+/**
+ * void glActiveTexture(GLenum texture);
+ */
+function glActiveTexture(emitter: llvm_be.LLVMEmitter, texture: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glActiveTexture");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glenum()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glActiveTexture", func_type);
+  }
+  return emitter.builder.buildCall(func, [texture], "");
+}
+
+/**
+ * void glBindTexture(GLenum target, GLuint texture);
+ */
+function glBindTexture(emitter: llvm_be.LLVMEmitter, target: llvm.Value, texture: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glBindTexture");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glenum(), gluint()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glBindTexture", func_type);
+  }
+  return emitter.builder.buildCall(func, [target, texture], "");
+}
+
+/**
+ * void glUniform1i(GLint location, GLint v0);
+ */
+function glUniform1i(emitter: llvm_be.LLVMEmitter, location: llvm.Value, v0: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform1i");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glint()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform1i", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, v0], "");
+}
+
+/**
+ * void glUniform3iv(GLint location, GLsizei count, const GLint *value);
+ */
+function glUniform3iv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform3iv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glint(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform3iv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, value], "");
+}
+
+/**
+ * void glUniform4iv(GLint location, GLsizei count, const GLint *value);
+ */
+function glUniform4iv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform4iv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glint(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform4iv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, value], "");
+}
+
+/**
+ * void glUniform1f(GLint location, GLfloat v0): llvm.Value;
+ */
+function glUniform1f(emitter: llvm_be.LLVMEmitter, location: llvm.Value, v0: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform1f");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glfloat()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform1f", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, v0], "");
+}
+
+/**
+ * void glUniform3fv(  GLint location, GLsizei count, const GLfloat *value);
+ */
+function glUniform3fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform3fv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glfloat(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform3fv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, value], "");
+}
+
+/**
+ * void glUniform4fv(GLint location, GLsizei count, const GLfloat *value);
+ */
+function glUniform4fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform4fv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glfloat(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform4fv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, value], "");
+}
+
+/**
+ * void glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+ */
+function glUniformMatrix3fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, transpose: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniform4fv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), glboolean(), llvm.PointerType.create(glfloat(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniform4fv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, transpose, value], "");
+}
+
+/**
+ * void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+ */
+function glUniformMatrix4fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count: llvm.Value, transpose: llvm.Value, value: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glUniformMatrix4fv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glint(), glsizei(), glboolean(), llvm.PointerType.create(glfloat(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glUniformMatrix4fv", func_type);
+  }
+  return emitter.builder.buildCall(func, [location, count, transpose, value], "");
+}
+
+/**
+ * void glBindBuffer(GLenum target, GLuint buffer);
+ */
+function glBindBuffer(emitter: llvm_be.LLVMEmitter, target: llvm.Value, buffer: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glBindBuffer");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [glenum(), gluint()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glBindBuffer", func_type);
+  }
+  return emitter.builder.buildCall(func, [target, buffer], "");
+}
+
+/**
+ * void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
+ */
+function glVertexAttribPointer(emitter: llvm_be.LLVMEmitter, index: llvm.Value, size: llvm.Value, type: llvm.Value, 
+  normalized: llvm.Value, stride: llvm.Value, pointer: llvm.Value): llvm.Value {
+  
+  let func: llvm.Function = emitter.mod.getFunction("glVertexAttribPointer");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [gluint(), glint(), glenum(), glboolean(), glsizei(), glvoid()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glVertexAttribPointer", func_type);
+  }
+  return emitter.builder.buildCall(func, [index, size, type, normalized, stride, pointer], "");
+}
+
+/**
+ * void glEnableVertexAttribArray(GLuint index);
+ */
+function glEnableVertexAttribArray(emitter: llvm_be.LLVMEmitter, index: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glEnableVertexAttribArray");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [gluint()];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glEnableVertexAttribArray", func_type);
+  }
+  return emitter.builder.buildCall(func, [index], "");
+}
 //////////////////////////////////////////
 
 /**
@@ -245,8 +457,112 @@ function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, ver
   return program;
 }
 
+function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type: Type, varid: number, value: llvm.Value, attribute: boolean, 
+    texture_index: number | undefined, variant: Variant | null): llvm.Value {
+
+
+  if (!attribute) {
+    if (type === TEXTURE) {
+      // Bind a texture sampler.
+      if (texture_index === undefined) {
+        throw "missing texture index";
+      }
+      glActiveTexture(emitter, llvm.ConstInt.create(GL_TEXTURE0 + texture_index, glenum()));
+      glBindTexture(emitter, llvm.ConstInt.create(GL_TEXTURE_2D, glenum()), value);
+      
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
+      let locptr = emitter.named_values2[locname];
+      let loc = emitter.builder.buildLoad(locptr, "");
+      return glUniform1i(emitter, loc, llvm.ConstInt.create(texture_index, glint()));
+    } else if (type instanceof PrimitiveType) {
+      // Ordinary uniform.
+      let fname = GL_UNIFORM_FUNCTIONS[type.name];
+      if (fname === undefined) {
+        throw "error: unsupported uniform type " + type.name;
+      }
+
+      // Construct the call to gl.uniformX.
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
+      let locptr = emitter.named_values2[locname];
+      let loc = emitter.builder.buildLoad(locptr, "");
+
+      switch (fname) {
+        case "uniform3iv":
+          return glUniform3iv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+        case "uniform4iv":
+          return glUniform4iv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+        case "uniform1f":
+          return glUniform1f(emitter, loc, value);
+        case "uniform3fv":
+          return glUniform3fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+        case "uniform4fv":
+          return glUniform4fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+        case "uniformMatrix3fv":
+          return glUniformMatrix3fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), llvm.ConstInt.create(0, glboolean()), value);
+        case "uniformMatrix4fv":
+          return glUniformMatrix4fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), llvm.ConstInt.create(0, glboolean()), value)
+        default:
+          throw "Unsupported function name";
+      }
+    } else {
+      throw "error: uniforms must be primitive types";
+    }
+  // Array types are bound as attributes.
+  } else {
+    if (type instanceof PrimitiveType) {
+      // The value is a WebGL buffer object.
+      // let buf_expr = paren(value);
+
+      // Location handle.
+      let loc_expr = locsym(scopeid, varid) + variant_suffix(variant);
+      let loc_ptr = emitter.named_values2[loc_expr];
+      let loc = emitter.builder.buildLoad(loc_ptr, "");
+
+      // Choose the `vertexAttribPointer` arguments based on the type.
+      let pair = GL_ATTRIBUTE_TYPES[type.name];
+      if (!pair) {
+        throw `error: unknown attribute type ${type.name}`;
+      }
+      let [dims, eltype] = pair;
+
+      glBindBuffer(emitter, llvm.ConstInt.create(GL_ARRAY_BUFFER, glenum()), value);
+      glVertexAttribPointer(emitter, loc, llvm.ConstInt.create(dims, glint()), llvm.ConstInt.create(eltype, glenum()), 
+        llvm.ConstInt.create(0, glboolean()), llvm.ConstInt.create(0, glsizei()), ___ptr___); // TODO: handle this
+      return glEnableVertexAttribArray(emitter, loc);
+    } else {
+      throw "error: attributes must be primitive types";
+    }
+  }
+}
+
 function emit_shader_binding_variant(emitter: llvm_be.LLVMEmitter, progid: number, variant: Variant | null): llvm.Value {
-  throw "not implemented yet";
+  let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
+
+  // Bind the shader program.
+  let shader_name = shadersym(vertex_prog.id!) + variant_suffix(variant);
+  let ptr = emitter.named_values2[shader_name];
+  let shader = emitter.builder.buildLoad(ptr, "");
+  glUseProgram(emitter, shader);
+
+  // Emit and bind the uniforms and attributes.
+  let subemitter = assign({}, emitter);
+  if (!subemitter.variant) {
+    subemitter.variant = variant;
+  }
+  let glue = emit_glue(subemitter, progid);
+  let ret: llvm.Value;
+  for (let g of glue) {
+    let value: llvm.Value;
+    if (g.value_name) {
+      // value = g.value_name;
+      let ptr = emitter.named_values2[g.value_name];
+      value = emitter.builder.buildLoad(ptr, "");
+    } else {
+      value = llvm_be.emit(subemitter, g.value_expr!);
+    }
+    ret = emit_param_binding(emitter, vertex_prog.id!, g.type, g.id, value, g.attribute, g.texture_index, variant);
+  }
+  return ret;
 }
 
 function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm.Value {
@@ -256,6 +572,7 @@ function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm
     // No variants.
     return emit_shader_binding_variant(emitter, progid, null);
   } else {
+    throw "not implemented yet";
     // Variants exist. Emit the selector.
     //return js.emit_variant_selector(
     //  emitter, emitter.ir.progs[progid], variants,
@@ -264,8 +581,6 @@ function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm
     //  }
     //);
   }
-
-  throw "not implemented yet";
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
