@@ -139,12 +139,6 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // build an environment structure that wraps around free vals
-  // let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
-  // let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
-  // let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
-  // emitter.builder.buildStore(env_struct, env_struct_ptr);
-  // let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, FUNC_ENV_TYPE, "vdptr");
-
   let undef_vals: llvm.Value[] = [];
   for (let type of free_types) {
     undef_vals.push(llvm.Value.getUndef(type));
@@ -166,10 +160,7 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // return struct that wraps the function and its environment
-  // return llvm.ConstStruct.create([func, env_void_ptr], true);
-
   let ret_struct: llvm.Value = llvm.ConstStruct.create([func, llvm.Value.getUndef(FUNC_ENV_TYPE)], true);
-  //ret_struct = emitter.builder.buildInsertValue(ret_struct, func, 0, "");
   return emitter.builder.buildInsertValue(ret_struct, env_void_ptr, 1, "");
 }
 
@@ -209,12 +200,6 @@ function emit_quote_func(emitter: LLVMEmitter, prog: Prog, tree: ast.SyntaxNode)
   }
   
   // build an environment structure that wraps around free vals
-  // let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
-  // let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
-  // let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
-  // emitter.builder.buildStore(env_struct, env_struct_ptr);
-  // let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, FUNC_ENV_TYPE, "vdptr");
-
   let undef_vals: llvm.Value[] = [];
   for (let type of free_types) {
     undef_vals.push(llvm.Value.getUndef(type));
@@ -236,10 +221,7 @@ function emit_quote_func(emitter: LLVMEmitter, prog: Prog, tree: ast.SyntaxNode)
   }
 
   // return struct that wraps the function and its environment
-  //return llvm.ConstStruct.create([func, env_void_ptr], true);
-
   let ret_struct: llvm.Value = llvm.ConstStruct.create([func, llvm.Value.getUndef(FUNC_ENV_TYPE)], true);
-  //ret_struct = emitter.builder.buildInsertValue(ret_struct, func, 0, "");
   return emitter.builder.buildInsertValue(ret_struct, env_void_ptr, 1, "");
 
 }
