@@ -409,6 +409,20 @@ function glEnableVertexAttribArray(emitter: llvm_be.LLVMEmitter, index: llvm.Val
 //////////////////////////////////////////
 
 /**
+ * Matrix multiplication
+ */
+function mat4mult(emitter: llvm_be.LLVMEmitter, left: llvm.Value, right: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("mat4mult");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.PointerType.create(llvm.IntType.int8(), 0);
+    let arg_types: llvm.Type[] = [llvm.PointerType.create(llvm.IntType.int8(), 0), llvm.PointerType.create(llvm.IntType.int8(), 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("mat4mult", func_type);
+  }
+  return emitter.builder.buildCall(func, [left, right], "");
+}
+
+/**
  * Call printf
  */
 function printf(emitter: llvm_be.LLVMEmitter, str: llvm.Value, args: llvm.Value[]): llvm.Value {
@@ -616,8 +630,7 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
         if (typ === FLOAT4X4) {
           let lhs = llvm_be.emit(emitter, tree.lhs);
           let rhs = llvm_be.emit(emitter, tree.rhs);
-          throw "not implemented yet";
-          //return `mat4mult(${lhs}, ${rhs})`;
+          return mat4mult(emitter, lhs, rhs);
         }
       }
 
