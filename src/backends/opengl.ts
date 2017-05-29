@@ -35,15 +35,15 @@ function get_code_length(id: number) {
 /**
  * llvm versions of various openGL types
  */
-let GLVOID: llvm.Type =     llvm.PointerType.create(llvm.IntType.int8(), 0);
-let GLCHAR: llvm.Type =     llvm.IntType.int8();
-let GLSTRING: llvm.Type =   llvm.PointerType.create(GLCHAR, 0);
-let GLBOOLEAN: llvm.Type =  llvm.IntType.int1(); 
-let GLINT: llvm.Type =      llvm.IntType.int32();
-let GLUINT: llvm.Type =     llvm.IntType.int32();
-let GLSIZEI: llvm.Type =    llvm.IntType.int32();
-let GLENUM: llvm.Type =     llvm.IntType.int32();
-let GLFLOAT: llvm.Type =    llvm.FloatType.float();
+let GLVOIDSTAR: llvm.Type =  llvm.PointerType.create(llvm.IntType.int8(), 0);
+let GLCHAR: llvm.Type =      llvm.IntType.int8();
+let GLSTRING: llvm.Type =    llvm.PointerType.create(GLCHAR, 0);
+let GLBOOLEAN: llvm.Type =   llvm.IntType.int1(); 
+let GLINT: llvm.Type =       llvm.IntType.int32();
+let GLUINT: llvm.Type =      llvm.IntType.int32();
+let GLSIZEI: llvm.Type =     llvm.IntType.int32();
+let GLENUM: llvm.Type =      llvm.IntType.int32();
+let GLFLOAT: llvm.Type =     llvm.FloatType.float();
 
 /**
  * Various constants
@@ -378,7 +378,7 @@ function glBindBuffer(emitter: llvm_be.LLVMEmitter, target: llvm.Value, buffer: 
 }
 
 /**
- * void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
+ * void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLVOIDSTAR * pointer);
  */
 function glVertexAttribPointer(emitter: llvm_be.LLVMEmitter, index: llvm.Value, size: llvm.Value, type: llvm.Value, 
   normalized: llvm.Value, stride: llvm.Value, pointer: llvm.Value): llvm.Value {
@@ -386,7 +386,7 @@ function glVertexAttribPointer(emitter: llvm_be.LLVMEmitter, index: llvm.Value, 
   let func: llvm.Function = emitter.mod.getFunction("glVertexAttribPointer");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [GLUINT, GLINT, GLENUM, GLBOOLEAN, GLSIZEI, GLVOID];
+    let arg_types: llvm.Type[] = [GLUINT, GLINT, GLENUM, GLBOOLEAN, GLSIZEI, GLVOIDSTAR];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glVertexAttribPointer", func_type);
   }
@@ -541,7 +541,7 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
 
       glBindBuffer(emitter, llvm.ConstInt.create(GL_ARRAY_BUFFER, GLENUM), value);
       glVertexAttribPointer(emitter, loc, llvm.ConstInt.create(dims, GLINT), llvm.ConstInt.create(eltype, GLENUM), 
-        llvm.ConstInt.create(0, GLBOOLEAN), llvm.ConstInt.create(0, GLSIZEI), ___ptr___); // TODO: handle this
+        llvm.ConstInt.create(0, GLBOOLEAN), llvm.ConstInt.create(0, GLSIZEI), llvm.Value.constNull(GLVOIDSTAR)); 
       return glEnableVertexAttribArray(emitter, loc);
     } else {
       throw "error: attributes must be primitive types";
