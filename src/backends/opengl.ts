@@ -108,6 +108,7 @@ function glCompileShader(emitter: llvm_be.LLVMEmitter, shader_type: llvm.Value):
  * void glGetShaderiv(  GLuint shader, GLenum pname, GLint *params)
  */
 function glGetShaderParameter(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, pname: llvm.Value): llvm.Value {
+  // TODO
   throw "not implemented yet";
 }
 
@@ -115,6 +116,7 @@ function glGetShaderParameter(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, 
  * void glGetShaderInfoLog(  GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
  */
 function glGetShaderInfoLog(emitter: llvm_be.LLVMEmitter): llvm.Value {
+  // TODO
   throw "not implemented yet";
 }
 
@@ -164,6 +166,7 @@ function glLinkProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.
  *void glGetProgramiv(  GLuint program, GLenum pname, GLint *params);
 */
 function glGetProgramParameter(emitter: llvm_be.LLVMEmitter): llvm.Value {
+  // TODO
   throw "not implemented yet";
 }
 
@@ -476,7 +479,6 @@ function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, ver
 function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type: Type, varid: number, value: llvm.Value, attribute: boolean, 
     texture_index: number | undefined, variant: Variant | null): llvm.Value {
 
-
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
@@ -526,7 +528,7 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
     }
   // Array types are bound as attributes.
   } else {
-    if (type instanceof PrimitiveType) { // The value is a WebGL buffer object.
+    if (type instanceof PrimitiveType) { // The value is a buffer object.
       // Location handle.
       let loc_expr: string = locsym(scopeid, varid) + variant_suffix(variant);
       let loc_ptr: llvm.Value = emitter.named_values2[loc_expr];
@@ -586,6 +588,7 @@ function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm
     // No variants.
     return emit_shader_binding_variant(emitter, progid, null);
   } else {
+    // TODO
     throw "not implemented yet";
     // Variants exist. Emit the selector.
     //return js.emit_variant_selector(
@@ -597,7 +600,6 @@ function emit_shader_binding(emitter: llvm_be.LLVMEmitter, progid: number): llvm
   }
 }
 
-// Extend the JavaScript compiler with some WebGL specifics.
 let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
   compose_visit(llvm_be.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
@@ -634,15 +636,15 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
         }
       }
 
-      // Otherwise, use the ordinary JavaScript backend.
+      // Otherwise, use the ordinary LLVM backend.
       return ast_visit(llvm_be.compile_rules, tree, emitter);
     },
   });
 
-// TODO: handle splices and things!!
 function emit_shader_code_ref(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant|null): llvm.Value {
   let code_expr: string = progsym(prog.id!) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
+    // TODO: handle splices and things!!
     throw "not implemented yet";
   }
   return emitter.builder.buildLoad(emitter.named_values2[code_expr], ""); 
@@ -721,7 +723,7 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
   return ptr;
 }
 
-// Compile the IR to a JavaScript program that uses WebGL and GLSL.
+// Compile to an LLVM program that uses OpenGL and GLSL.
 export function codegen(ir: CompilerIR): llvm.Module {
   llvm.initX86Target();
   // Set up the emitter, which includes the LLVM IR builder.
@@ -749,7 +751,7 @@ export function codegen(ir: CompilerIR): llvm.Module {
     emit_proc: llvm_be.emit_proc,
 
     emit_prog(emitter: llvm_be.LLVMEmitter, prog: Prog): llvm.Value {
-      // Choose between emitting JavaScript and GLSL.
+      // Choose between emitting LLVM and GLSL.
       if (prog.annotation === SHADER_ANNOTATION) {
         return emit_glsl_prog(emitter, prog, null);
       } else {
