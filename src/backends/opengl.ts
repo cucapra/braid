@@ -33,29 +33,29 @@ function get_code_length(id: number) {
 //////////////////////////////////////////
 
 /**
- * Methods for getting various llvm versions of openGL types
+ * llvm versions of various openGL types
  */
-function glvoid(): llvm.Type    {return llvm.PointerType.create(llvm.IntType.int8(), 0);}
-function glchar(): llvm.Type     {return llvm.IntType.int8();}
-function glstring(): llvm.Type   {return llvm.PointerType.create(glchar(), 0);}
-function glboolean(): llvm.Type  {return llvm.IntType.int1();}
-function glint(): llvm.Type      {return llvm.IntType.int32();}
-function gluint(): llvm.Type     {return llvm.IntType.int32();}
-function glsizei(): llvm.Type    {return llvm.IntType.int32();}
-function glenum(): llvm.Type     {return llvm.IntType.int32();}
-function glfloat(): llvm.Type    {return llvm.FloatType.float();}
+let GLVOID: llvm.Type =     llvm.PointerType.create(llvm.IntType.int8(), 0);
+let GLCHAR: llvm.Type =     llvm.IntType.int8();
+let GLSTRING: llvm.Type =   llvm.PointerType.create(GLCHAR, 0);
+let GLBOOLEAN: llvm.Type =  llvm.IntType.int1(); 
+let GLINT: llvm.Type =      llvm.IntType.int32();
+let GLUINT: llvm.Type =     llvm.IntType.int32();
+let GLSIZEI: llvm.Type =    llvm.IntType.int32();
+let GLENUM: llvm.Type =     llvm.IntType.int32();
+let GLFLOAT: llvm.Type =    llvm.FloatType.float();
 
 /**
  * Various constants
  */
-let GL_TEXTURE_2D = 0x0DE1;
-let GL_FLOAT = 0x1406;
-let GL_TEXTURE0 = 0x84C0;
-let GL_ARRAY_BUFFER = 0x8892; //TODO: check this one
-let GL_FRAGMENT_SHADER = 0x8B30;
-let GL_VERTEX_SHADER = 0x8B31;
-let GL_COMPILE_STATUS = 0x8B81;
-let GL_LINK_STATUS = 0x8B82;
+let GL_TEXTURE_2D =       0x0DE1;
+let GL_FLOAT =            0x1406;
+let GL_TEXTURE0 =         0x84C0;
+let GL_ARRAY_BUFFER =     0x8892; //TODO: check this one
+let GL_FRAGMENT_SHADER =  0x8B30;
+let GL_VERTEX_SHADER =    0x8B31;
+let GL_COMPILE_STATUS =   0x8B81;
+let GL_LINK_STATUS =      0x8B82;
 
 const GL_ATTRIBUTE_TYPES: { [_: string]: [number, number] } = {
   "Float2": [2, GL_FLOAT],
@@ -68,8 +68,8 @@ const GL_ATTRIBUTE_TYPES: { [_: string]: [number, number] } = {
 function glCreateShader(emitter: llvm_be.LLVMEmitter, shader_type: llvm.Value): llvm.Value {
   let func: llvm.Function = emitter.mod.getFunction("glCreateShader");
   if (func.ref.isNull()) {
-    let ret_type: llvm.Type = gluint();
-    let arg_types: llvm.Type[] = [glenum()];
+    let ret_type: llvm.Type = GLUINT;
+    let arg_types: llvm.Type[] = [GLENUM];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glCreateShader", func_type);
   }
@@ -83,7 +83,7 @@ function glShaderSource(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, count:
   let func: llvm.Function = emitter.mod.getFunction("glShaderSource");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint(), glsizei(), llvm.PointerType.create(glstring(), 0), llvm.PointerType.create(glint(), 0)];
+    let arg_types: llvm.Type[] = [GLUINT, GLSIZEI, llvm.PointerType.create(GLSTRING, 0), llvm.PointerType.create(GLINT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glShaderSource", func_type);
   } 
@@ -97,7 +97,7 @@ function glCompileShader(emitter: llvm_be.LLVMEmitter, shader_type: llvm.Value):
   let func: llvm.Function = emitter.mod.getFunction("glCompileShader");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint()];
+    let arg_types: llvm.Type[] = [GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glCompileShader", func_type);
   }
@@ -124,7 +124,7 @@ function glGetShaderInfoLog(emitter: llvm_be.LLVMEmitter): llvm.Value {
 function glCreateProgram(emitter: llvm_be.LLVMEmitter): llvm.Value {
   let func: llvm.Function = emitter.mod.getFunction("glCreateProgram");
   if (func.ref.isNull()) {
-    let ret_type: llvm.Type = gluint();
+    let ret_type: llvm.Type = GLUINT;
     let arg_types: llvm.Type[] = [];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glCreateProgram", func_type);
@@ -139,7 +139,7 @@ function glAttachShader(emitter: llvm_be.LLVMEmitter, program: llvm.Value, shade
   let func: llvm.Function = emitter.mod.getFunction("glAttachShader");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint(), gluint()];
+    let arg_types: llvm.Type[] = [GLUINT, GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glAttachShader", func_type);
   }
@@ -153,7 +153,7 @@ function glLinkProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.
   let func: llvm.Function = emitter.mod.getFunction("glLinkProgram");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint()];
+    let arg_types: llvm.Type[] = [GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glLinkProgram", func_type);
   }
@@ -174,7 +174,7 @@ function glGetProgramInfoLog(emitter: llvm_be.LLVMEmitter, program: llvm.Value, 
   let func: llvm.Function = emitter.mod.getFunction("glGetProgramInfoLog");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint(), glsizei(), llvm.PointerType.create(glsizei(),0), glstring()];
+    let arg_types: llvm.Type[] = [GLUINT, GLSIZEI, llvm.PointerType.create(GLSIZEI,0), GLSTRING];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glGetProgramInfoLog", func_type);
   }
@@ -187,8 +187,8 @@ function glGetProgramInfoLog(emitter: llvm_be.LLVMEmitter, program: llvm.Value, 
 function glGetAttribLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value, name: llvm.Value): llvm.Value {
   let func: llvm.Function = emitter.mod.getFunction("glGetAttribLocation");
   if (func.ref.isNull()) {
-    let ret_type: llvm.Type = glint();
-    let arg_types: llvm.Type[] = [gluint(), glstring()];
+    let ret_type: llvm.Type = GLINT;
+    let arg_types: llvm.Type[] = [GLUINT, GLSTRING];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glGetAttribLocation", func_type);
   }
@@ -201,8 +201,8 @@ function glGetAttribLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value, 
 function glGetUniformLocation(emitter: llvm_be.LLVMEmitter, program: llvm.Value, name: llvm.Value): llvm.Value {
   let func: llvm.Function = emitter.mod.getFunction("glGetUniformLocation");
   if (func.ref.isNull()) {
-    let ret_type: llvm.Type = glint();
-    let arg_types: llvm.Type[] = [gluint(), glstring()];
+    let ret_type: llvm.Type = GLINT;
+    let arg_types: llvm.Type[] = [GLUINT, GLSTRING];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glGetUniformLocation", func_type);
   }
@@ -216,7 +216,7 @@ function glUseProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.V
   let func: llvm.Function = emitter.mod.getFunction("glUseProgram");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint()];
+    let arg_types: llvm.Type[] = [GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUseProgram", func_type);
   }
@@ -230,7 +230,7 @@ function glActiveTexture(emitter: llvm_be.LLVMEmitter, texture: llvm.Value): llv
   let func: llvm.Function = emitter.mod.getFunction("glActiveTexture");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glenum()];
+    let arg_types: llvm.Type[] = [GLENUM];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glActiveTexture", func_type);
   }
@@ -244,7 +244,7 @@ function glBindTexture(emitter: llvm_be.LLVMEmitter, target: llvm.Value, texture
   let func: llvm.Function = emitter.mod.getFunction("glBindTexture");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glenum(), gluint()];
+    let arg_types: llvm.Type[] = [GLENUM, GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glBindTexture", func_type);
   }
@@ -258,7 +258,7 @@ function glUniform1i(emitter: llvm_be.LLVMEmitter, location: llvm.Value, v0: llv
   let func: llvm.Function = emitter.mod.getFunction("glUniform1i");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glint()];
+    let arg_types: llvm.Type[] = [GLINT, GLINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform1i", func_type);
   }
@@ -272,7 +272,7 @@ function glUniform3iv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count:
   let func: llvm.Function = emitter.mod.getFunction("glUniform3iv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glint(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, llvm.PointerType.create(GLINT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform3iv", func_type);
   }
@@ -286,7 +286,7 @@ function glUniform4iv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count:
   let func: llvm.Function = emitter.mod.getFunction("glUniform4iv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glint(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, llvm.PointerType.create(GLINT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform4iv", func_type);
   }
@@ -300,7 +300,7 @@ function glUniform1f(emitter: llvm_be.LLVMEmitter, location: llvm.Value, v0: llv
   let func: llvm.Function = emitter.mod.getFunction("glUniform1f");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glfloat()];
+    let arg_types: llvm.Type[] = [GLINT, GLFLOAT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform1f", func_type);
   }
@@ -314,7 +314,7 @@ function glUniform3fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count:
   let func: llvm.Function = emitter.mod.getFunction("glUniform3fv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glfloat(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, llvm.PointerType.create(GLFLOAT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform3fv", func_type);
   }
@@ -328,7 +328,7 @@ function glUniform4fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, count:
   let func: llvm.Function = emitter.mod.getFunction("glUniform4fv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), llvm.PointerType.create(glfloat(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, llvm.PointerType.create(GLFLOAT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform4fv", func_type);
   }
@@ -342,7 +342,7 @@ function glUniformMatrix3fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, 
   let func: llvm.Function = emitter.mod.getFunction("glUniform4fv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), glboolean(), llvm.PointerType.create(glfloat(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, GLBOOLEAN, llvm.PointerType.create(GLFLOAT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniform4fv", func_type);
   }
@@ -356,7 +356,7 @@ function glUniformMatrix4fv(emitter: llvm_be.LLVMEmitter, location: llvm.Value, 
   let func: llvm.Function = emitter.mod.getFunction("glUniformMatrix4fv");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glint(), glsizei(), glboolean(), llvm.PointerType.create(glfloat(), 0)];
+    let arg_types: llvm.Type[] = [GLINT, GLSIZEI, GLBOOLEAN, llvm.PointerType.create(GLFLOAT, 0)];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glUniformMatrix4fv", func_type);
   }
@@ -370,7 +370,7 @@ function glBindBuffer(emitter: llvm_be.LLVMEmitter, target: llvm.Value, buffer: 
   let func: llvm.Function = emitter.mod.getFunction("glBindBuffer");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [glenum(), gluint()];
+    let arg_types: llvm.Type[] = [GLENUM, GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glBindBuffer", func_type);
   }
@@ -386,7 +386,7 @@ function glVertexAttribPointer(emitter: llvm_be.LLVMEmitter, index: llvm.Value, 
   let func: llvm.Function = emitter.mod.getFunction("glVertexAttribPointer");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint(), glint(), glenum(), glboolean(), glsizei(), glvoid()];
+    let arg_types: llvm.Type[] = [GLUINT, GLINT, GLENUM, GLBOOLEAN, GLSIZEI, GLVOID];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glVertexAttribPointer", func_type);
   }
@@ -400,7 +400,7 @@ function glEnableVertexAttribArray(emitter: llvm_be.LLVMEmitter, index: llvm.Val
   let func: llvm.Function = emitter.mod.getFunction("glEnableVertexAttribArray");
   if (func.ref.isNull()) {
     let ret_type: llvm.Type = llvm.VoidType.create();
-    let arg_types: llvm.Type[] = [gluint()];
+    let arg_types: llvm.Type[] = [GLUINT];
     let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
     func = emitter.mod.addFunction("glEnableVertexAttribArray", func_type);
   }
@@ -439,11 +439,11 @@ function printf(emitter: llvm_be.LLVMEmitter, str: llvm.Value, args: llvm.Value[
 }
 
 function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source: llvm.Value, len: number): llvm.Value {
-  let shader: llvm.Value = glCreateShader(emitter, llvm.ConstInt.create(shader_type, glenum()));
+  let shader: llvm.Value = glCreateShader(emitter, llvm.ConstInt.create(shader_type, GLENUM));
   
-  let sources: llvm.ConstArray = llvm.ConstArray.create(glstring(), [source]);
-  let lengths: llvm.ConstArray = llvm.ConstArray.create(glint(), [llvm.ConstInt.create(len, glint())]);
-  glShaderSource(emitter, shader, llvm.ConstInt.create(1, glsizei()), sources, lengths);
+  let sources: llvm.ConstArray = llvm.ConstArray.create(GLSTRING, [source]);
+  let lengths: llvm.ConstArray = llvm.ConstArray.create(GLINT, [llvm.ConstInt.create(len, GLINT)]);
+  glShaderSource(emitter, shader, llvm.ConstInt.create(1, GLSIZEI), sources, lengths);
   glCompileShader(emitter, shader);
 
   // TODO
@@ -481,13 +481,13 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
       if (texture_index === undefined) {
         throw "missing texture index";
       }
-      glActiveTexture(emitter, llvm.ConstInt.create(GL_TEXTURE0 + texture_index, glenum()));
-      glBindTexture(emitter, llvm.ConstInt.create(GL_TEXTURE_2D, glenum()), value);
+      glActiveTexture(emitter, llvm.ConstInt.create(GL_TEXTURE0 + texture_index, GLENUM));
+      glBindTexture(emitter, llvm.ConstInt.create(GL_TEXTURE_2D, GLENUM), value);
       
       let locname = locsym(scopeid, varid) + variant_suffix(variant);
       let locptr = emitter.named_values2[locname];
       let loc = emitter.builder.buildLoad(locptr, "");
-      return glUniform1i(emitter, loc, llvm.ConstInt.create(texture_index, glint()));
+      return glUniform1i(emitter, loc, llvm.ConstInt.create(texture_index, GLINT));
     } else if (type instanceof PrimitiveType) {
       // Ordinary uniform.
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
@@ -502,19 +502,19 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
 
       switch (fname) {
         case "uniform3iv":
-          return glUniform3iv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+          return glUniform3iv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), value);
         case "uniform4iv":
-          return glUniform4iv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+          return glUniform4iv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), value);
         case "uniform1f":
           return glUniform1f(emitter, loc, value);
         case "uniform3fv":
-          return glUniform3fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+          return glUniform3fv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), value);
         case "uniform4fv":
-          return glUniform4fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), value);
+          return glUniform4fv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), value);
         case "uniformMatrix3fv":
-          return glUniformMatrix3fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), llvm.ConstInt.create(0, glboolean()), value);
+          return glUniformMatrix3fv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), llvm.ConstInt.create(0, GLBOOLEAN), value);
         case "uniformMatrix4fv":
-          return glUniformMatrix4fv(emitter, loc, llvm.ConstInt.create(1, glsizei()), llvm.ConstInt.create(0, glboolean()), value)
+          return glUniformMatrix4fv(emitter, loc, llvm.ConstInt.create(1, GLSIZEI), llvm.ConstInt.create(0, GLBOOLEAN), value)
         default:
           throw "Unsupported function name";
       }
@@ -539,9 +539,9 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
       }
       let [dims, eltype] = pair;
 
-      glBindBuffer(emitter, llvm.ConstInt.create(GL_ARRAY_BUFFER, glenum()), value);
-      glVertexAttribPointer(emitter, loc, llvm.ConstInt.create(dims, glint()), llvm.ConstInt.create(eltype, glenum()), 
-        llvm.ConstInt.create(0, glboolean()), llvm.ConstInt.create(0, glsizei()), ___ptr___); // TODO: handle this
+      glBindBuffer(emitter, llvm.ConstInt.create(GL_ARRAY_BUFFER, GLENUM), value);
+      glVertexAttribPointer(emitter, loc, llvm.ConstInt.create(dims, GLINT), llvm.ConstInt.create(eltype, GLENUM), 
+        llvm.ConstInt.create(0, GLBOOLEAN), llvm.ConstInt.create(0, GLSIZEI), ___ptr___); // TODO: handle this
       return glEnableVertexAttribArray(emitter, loc);
     } else {
       throw "error: attributes must be primitive types";
@@ -654,7 +654,7 @@ function emit_loc_var(emitter: llvm_be.LLVMEmitter, scopeid: number, attribute: 
   let program = emitter.builder.buildLoad(prog_ptr, "");
   
   let name = locsym(scopeid, varid) + variant_suffix(variant);
-  let ptr = emitter.builder.buildAlloca(glint(), name);
+  let ptr = emitter.builder.buildAlloca(GLINT, name);
   let value;
   if (attribute) {
     value = glGetAttribLocation(emitter, program, llvm.ConstString.create(name, true));
@@ -677,7 +677,7 @@ function emit_shader_setup(emitter: llvm_be.LLVMEmitter, progid: number, variant
   let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   
   let program = get_shader(emitter, vtx_code, get_code_length(vertex_prog.id!), frag_code, get_code_length(fragment_prog.id!)); 
-  let ptr = emitter.builder.buildAlloca(gluint(), name);
+  let ptr = emitter.builder.buildAlloca(GLUINT, name);
   emitter.builder.buildStore(program, ptr);
 
   emitter.named_values2[name] = ptr; 
