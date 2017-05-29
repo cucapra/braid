@@ -378,7 +378,7 @@ function glBindBuffer(emitter: llvm_be.LLVMEmitter, target: llvm.Value, buffer: 
 }
 
 /**
- * void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLVOIDSTAR * pointer);
+ * void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
  */
 function glVertexAttribPointer(emitter: llvm_be.LLVMEmitter, index: llvm.Value, size: llvm.Value, type: llvm.Value, 
   normalized: llvm.Value, stride: llvm.Value, pointer: llvm.Value): llvm.Value {
