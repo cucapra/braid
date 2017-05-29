@@ -21,7 +21,7 @@ let str_lens: {[id: string]: number} = {};
 
 /**
  * Function for getting string length.
- * All length lookups will be from here, so will just need to change this 
+ * TODO: All length lookups will be from here, so will just need to change this 
  * method when find better way to handle string lengths
  */
 function get_code_length(id: number) {
@@ -438,6 +438,7 @@ function printf(emitter: llvm_be.LLVMEmitter, str: llvm.Value, args: llvm.Value[
   return emitter.builder.buildCall(func, _args, "");
 }
 
+// TODO: create a compile_glsl function in LLVM IR instead of just inlining each call
 function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source: llvm.Value, len: number): llvm.Value {
   let shader: llvm.Value = glCreateShader(emitter, llvm.ConstInt.create(shader_type, GLENUM));
   
@@ -446,7 +447,7 @@ function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source:
   glShaderSource(emitter, shader, llvm.ConstInt.create(1, GLSIZEI), sources, lengths);
   glCompileShader(emitter, shader);
 
-  // TODO
+  // TODO: Error handling
   //if (error) {
     //do stuff
   //}
@@ -454,16 +455,17 @@ function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source:
   return shader;
 }
 
+// TODO: create a get_shader function in LLVM IR instead of just inlining each call
 function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, vertex_len: number, fragment_source: llvm.Value, fragment_len: number): llvm.Value {
-  let vert = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source, vertex_len);
-  let frag = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source, fragment_len);
+  let vert: llvm.Value = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source, vertex_len);
+  let frag: llvm.Value = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source, fragment_len);
   
-  let program = glCreateProgram(emitter);
+  let program: llvm.Value = glCreateProgram(emitter);
   glAttachShader(emitter, program, vert);
   glAttachShader(emitter, program, frag);
   glLinkProgram(emitter, program);
 
-  // TODO
+  // TODO: Error handling
   //if (error) {
     //do stuff  
   //}
@@ -484,21 +486,22 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
       glActiveTexture(emitter, llvm.ConstInt.create(GL_TEXTURE0 + texture_index, GLENUM));
       glBindTexture(emitter, llvm.ConstInt.create(GL_TEXTURE_2D, GLENUM), value);
       
-      let locname = locsym(scopeid, varid) + variant_suffix(variant);
-      let locptr = emitter.named_values2[locname];
-      let loc = emitter.builder.buildLoad(locptr, "");
+      let locname: string = locsym(scopeid, varid) + variant_suffix(variant);
+      let locptr: llvm.Value = emitter.named_values2[locname];
+      let loc: llvm.Value = emitter.builder.buildLoad(locptr, "");
+      
       return glUniform1i(emitter, loc, llvm.ConstInt.create(texture_index, GLINT));
     } else if (type instanceof PrimitiveType) {
       // Ordinary uniform.
-      let fname = GL_UNIFORM_FUNCTIONS[type.name];
+      let fname: string = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
         throw "error: unsupported uniform type " + type.name;
       }
 
       // Construct the call to gl.uniformX.
-      let locname = locsym(scopeid, varid) + variant_suffix(variant);
-      let locptr = emitter.named_values2[locname];
-      let loc = emitter.builder.buildLoad(locptr, "");
+      let locname: string = locsym(scopeid, varid) + variant_suffix(variant);
+      let locptr: llvm.Value = emitter.named_values2[locname];
+      let loc: llvm.Value = emitter.builder.buildLoad(locptr, "");
 
       switch (fname) {
         case "uniform3iv":
@@ -523,14 +526,11 @@ function emit_param_binding(emitter: llvm_be.LLVMEmitter, scopeid: number, type:
     }
   // Array types are bound as attributes.
   } else {
-    if (type instanceof PrimitiveType) {
-      // The value is a WebGL buffer object.
-      // let buf_expr = paren(value);
-
+    if (type instanceof PrimitiveType) { // The value is a WebGL buffer object.
       // Location handle.
-      let loc_expr = locsym(scopeid, varid) + variant_suffix(variant);
-      let loc_ptr = emitter.named_values2[loc_expr];
-      let loc = emitter.builder.buildLoad(loc_ptr, "");
+      let loc_expr: string = locsym(scopeid, varid) + variant_suffix(variant);
+      let loc_ptr: llvm.Value = emitter.named_values2[loc_expr];
+      let loc: llvm.Value = emitter.builder.buildLoad(loc_ptr, "");
 
       // Choose the `vertexAttribPointer` arguments based on the type.
       let pair = GL_ATTRIBUTE_TYPES[type.name];
@@ -553,9 +553,9 @@ function emit_shader_binding_variant(emitter: llvm_be.LLVMEmitter, progid: numbe
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
-  let shader_name = shadersym(vertex_prog.id!) + variant_suffix(variant);
-  let ptr = emitter.named_values2[shader_name];
-  let shader = emitter.builder.buildLoad(ptr, "");
+  let shader_name: string = shadersym(vertex_prog.id!) + variant_suffix(variant);
+  let ptr: llvm.Value = emitter.named_values2[shader_name];
+  let shader: llvm.Value = emitter.builder.buildLoad(ptr, "");
   glUseProgram(emitter, shader);
 
   // Emit and bind the uniforms and attributes.
@@ -569,7 +569,7 @@ function emit_shader_binding_variant(emitter: llvm_be.LLVMEmitter, progid: numbe
     let value: llvm.Value;
     if (g.value_name) {
       // value = g.value_name;
-      let ptr = emitter.named_values2[g.value_name];
+      let ptr: llvm.Value = emitter.named_values2[g.value_name];
       value = emitter.builder.buildLoad(ptr, "");
     } else {
       value = llvm_be.emit(subemitter, g.value_expr!);
@@ -628,8 +628,8 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
       if (tree.op === "*") {
         let [typ,] = emitter.ir.type_table[tree.id!];
         if (typ === FLOAT4X4) {
-          let lhs = llvm_be.emit(emitter, tree.lhs);
-          let rhs = llvm_be.emit(emitter, tree.rhs);
+          let lhs: llvm.Value = llvm_be.emit(emitter, tree.lhs);
+          let rhs: llvm.Value = llvm_be.emit(emitter, tree.rhs);
           return mat4mult(emitter, lhs, rhs);
         }
       }
@@ -641,7 +641,7 @@ let compile_rules: ASTVisit<llvm_be.LLVMEmitter, llvm.Value> =
 
 // TODO: handle splices and things!!
 function emit_shader_code_ref(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Variant|null): llvm.Value {
-  let code_expr = progsym(prog.id!) + variant_suffix(variant);
+  let code_expr: string = progsym(prog.id!) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
     throw "not implemented yet";
   }
@@ -649,13 +649,13 @@ function emit_shader_code_ref(emitter: llvm_be.LLVMEmitter, prog: Prog, variant:
 }
 
 function emit_loc_var(emitter: llvm_be.LLVMEmitter, scopeid: number, attribute: boolean, varname: string, varid: number, variant: Variant | null): llvm.Value {
-  let shader = shadersym(scopeid) + variant_suffix(variant);
-  let prog_ptr = emitter.named_values2[shader];
-  let program = emitter.builder.buildLoad(prog_ptr, "");
+  let shader: string = shadersym(scopeid) + variant_suffix(variant);
+  let prog_ptr: llvm.Value = emitter.named_values2[shader];
+  let program: llvm.Value = emitter.builder.buildLoad(prog_ptr, "");
   
-  let name = locsym(scopeid, varid) + variant_suffix(variant);
-  let ptr = emitter.builder.buildAlloca(GLINT, name);
-  let value;
+  let name: string = locsym(scopeid, varid) + variant_suffix(variant);
+  let ptr: llvm.Value = emitter.builder.buildAlloca(GLINT, name);
+  let value: llvm.Value;
   if (attribute) {
     value = glGetAttribLocation(emitter, program, llvm.ConstString.create(name, true));
   } else {
@@ -672,12 +672,12 @@ function emit_shader_setup(emitter: llvm_be.LLVMEmitter, progid: number, variant
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
-  let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
-  let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
-  let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
+  let vtx_code: llvm.Value = emit_shader_code_ref(emitter, vertex_prog, variant);
+  let frag_code: llvm.Value = emit_shader_code_ref(emitter, fragment_prog, variant);
+  let name: string = shadersym(vertex_prog.id!) + variant_suffix(variant);
   
-  let program = get_shader(emitter, vtx_code, get_code_length(vertex_prog.id!), frag_code, get_code_length(fragment_prog.id!)); 
-  let ptr = emitter.builder.buildAlloca(GLUINT, name);
+  let program: llvm.Value = get_shader(emitter, vtx_code, get_code_length(vertex_prog.id!), frag_code, get_code_length(fragment_prog.id!)); 
+  let ptr: llvm.Value = emitter.builder.buildAlloca(GLUINT, name);
   emitter.builder.buildStore(program, ptr);
 
   emitter.named_values2[name] = ptr; 
@@ -685,7 +685,7 @@ function emit_shader_setup(emitter: llvm_be.LLVMEmitter, progid: number, variant
   // Get the variable locations, for both explicit persists and for free
   // variables.
   let glue = emit_glue(emitter, vertex_prog.id!);
-  let val;
+  let val: llvm.Value;
   for (let g of glue) {
     val = emit_loc_var(emitter, vertex_prog.id!, g.attribute, g.name, g.id, variant);
   }
@@ -703,10 +703,10 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
   }
 
   // Emit the shader program.
-  let code = glsl.compile_prog(emitter, prog.id!);
-  let name = progsym(prog.id!) + variant_suffix(variant);
+  let code: string = glsl.compile_prog(emitter, prog.id!);
+  let name: string = progsym(prog.id!) + variant_suffix(variant);
 
-  let ptr = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), name);
+  let ptr: llvm.Value = emitter.builder.buildAlloca(llvm.PointerType.create(llvm.IntType.int8(), 0), name);
   emitter.builder.buildStore(llvm.ConstString.create(js.emit_string(code), false), ptr);
   
   emitter.named_values2[name] = ptr;
