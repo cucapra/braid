@@ -1,9 +1,13 @@
 import * as ast from '../ast';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
-import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
+import { INT, FLOAT, Type, OverloadedType, FunType, CodeType } from '../type';
 import { Proc, Prog, Variant, Scope, CompilerIR } from '../compile/ir'
 import * as llvm from '../../node_modules/llvmc/src/wrapped';
-import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emitutil';
+import { varsym, persistsym, procsym, progsym, variantsym, is_fun_type, useful_pred } from './emitutil';
+import { specialized_prog, specialized_proc } from './emitter';
+
+export let FUNC_ANNOTATION = "js";
+export let FUNC_ENV_TYPE = llvm.PointerType.create(llvm.IntType.int8(), 0);
 
 /**
  * Export the LLVM Module type, which is the result of LLVM compilation.
@@ -31,7 +35,9 @@ export interface LLVMEmitter {
   /**
    * Map from id's to Alloca ptr's
    */
+  // TODO: rectifiy named_values and named_values2
   named_values: llvm.Value[];
+  named_values2: {[key: string]: llvm.Value;};
 
   /**
    * Program we are compiling
@@ -42,7 +48,7 @@ export interface LLVMEmitter {
   // generating LLVM IR constructs.
   emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => llvm.Value;
   emit_proc: (emitter: LLVMEmitter, proc: Proc) => llvm.Value;
-  //emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
+  emit_prog: (emitter: LLVMEmitter, prog: Prog) => llvm.Value;
   //emit_prog_variant: (emitter: LLVMEmitter, variant: Variant, prog: Prog) => llvm.Value;
   variant: Variant|null;
 }
@@ -93,6 +99,25 @@ function emit_lookup(emitter: LLVMEmitter, emit_extern: (name: string, type: Typ
   }
 }
 
+function emit_quote(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
+  let prog = specialized_prog(emitter, tree.id!);
+
+  // For snippet quotes, just produce the ID. This is used by the pre-splicing
+  // optimization to look up the corresponding pre-spliced program.
+  if (prog.snippet_escape !== null) {
+    throw "not implemented yet";
+  }
+
+  // Check whether this is a pre-spliced quote (i.e., it has variants).
+  let variants = emitter.ir.presplice_variants[tree.id!];
+  if (variants == null) {
+    // No snippets to pre-splice.
+    return emit_quote_expr(emitter, prog, tree);
+  } else {
+    throw "Not implemented yet";
+  }
+}
+
 function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // get function
   let func: llvm.Function = emitter.mod.getFunction(procsym(tree.id!));
@@ -103,7 +128,6 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // construct pointer to func
   let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, func_as_proc.body.id!, func_as_proc.params);
   let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
-  let func_ptr: llvm.Value = emitter.builder.buildAlloca(func_type, "funcptr");
 
   // get values/types of free vars
   let free_ids: number[] = emitter.ir.procs[tree.id!].free;
@@ -115,11 +139,19 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // build an environment structure that wraps around free vals
-  let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
+  let undef_vals: llvm.Value[] = [];
+  for (let type of free_types) {
+    undef_vals.push(llvm.Value.getUndef(type));
+  }
+  let env_struct: llvm.Value = llvm.ConstStruct.create(undef_vals, true);
   let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
+
+  for (let i = 0; i < free_vals.length; i++) {
+    env_struct = emitter.builder.buildInsertValue(env_struct, free_vals[i], i, "");
+  }
   let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
   emitter.builder.buildStore(env_struct, env_struct_ptr);
-  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0), "vdptr");
+  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, FUNC_ENV_TYPE, "vdptr");
 
   // The function captures its closed-over references and any persists
   // used inside.
@@ -128,7 +160,8 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // return struct that wraps the function and its environment
-  return llvm.ConstStruct.create([func_ptr, env_void_ptr], true);
+  let ret_struct: llvm.Value = llvm.ConstStruct.create([func, llvm.Value.getUndef(FUNC_ENV_TYPE)], true);
+  return emitter.builder.buildInsertValue(ret_struct, env_void_ptr, 1, "");
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
@@ -145,11 +178,69 @@ function emit_extern(name: string, type: Type): llvm.Value {
 }
 
 // mostly a copy of emitter function
-function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
+export function emit(emitter: LLVMEmitter, tree: ast.SyntaxNode): llvm.Value {
   return emitter.emit_expr(tree, emitter);
 }
 
-function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value {
+// emit quote at function closurw
+function emit_quote_func(emitter: LLVMEmitter, prog: Prog, tree: ast.SyntaxNode): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction(progsym(tree.id!));
+
+  // construct pointer to func
+  let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, prog.body.id!, []);
+  let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
+
+  // get values/types of free vars
+  let free_ids: number[] = emitter.ir.progs[tree.id!].free;
+  let free_vals: llvm.Value[] = [];
+  let free_types: llvm.Type[] = [];
+  for (let id of free_ids) {
+    free_vals.push(emitter.builder.buildLoad(emitter.named_values[id], ""));
+    free_types.push(llvm_type(emitter.ir.type_table[id][0]));
+  }
+  
+  // build an environment structure that wraps around free vals
+  let undef_vals: llvm.Value[] = [];
+  for (let type of free_types) {
+    undef_vals.push(llvm.Value.getUndef(type));
+  }
+  let env_struct: llvm.Value = llvm.ConstStruct.create(undef_vals, true);
+  let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
+
+  for (let i = 0; i < free_vals.length; i++) {
+    env_struct = emitter.builder.buildInsertValue(env_struct, free_vals[i], i, "");
+  }
+  let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
+  emitter.builder.buildStore(env_struct, env_struct_ptr);
+  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, FUNC_ENV_TYPE, "vdptr");
+
+  // The function captures its closed-over references and any persists
+  // used inside.
+  for (let p of emitter.ir.progs[tree.id!].persist) {
+    throw "persists not implemented yet"
+  }
+
+  // return struct that wraps the function and its environment
+  let ret_struct: llvm.Value = llvm.ConstStruct.create([func, llvm.Value.getUndef(FUNC_ENV_TYPE)], true);
+  return emitter.builder.buildInsertValue(ret_struct, env_void_ptr, 1, "");
+
+}
+
+function emit_quote_eval(emitter: LLVMEmitter, prog: Prog, tree: ast.SyntaxNode): llvm.Value {
+  throw "not implemented yet";
+}
+
+function emit_quote_expr(emitter: LLVMEmitter, prog: Prog, tree: ast.SyntaxNode): llvm.Value {
+  if (prog.annotation === FUNC_ANNOTATION) {
+    // A function quote.
+    return emit_quote_func(emitter, prog, tree);
+  } else {
+    // An eval (string) quote.
+    return emit_quote_eval(emitter, prog, tree);
+  }
+}
+
+function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_ids: number[], local_ids: number[], body: ast.ExpressionNode): llvm.Value { 
   // create function
   let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, body.id!, arg_ids);
   let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
@@ -167,6 +258,9 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
   // save old namedValues map & reset
   let old_named_values: llvm.Value[] = emitter.named_values
   emitter.named_values = [];
+
+  let old_named_values2 = emitter.named_values2;
+  emitter.named_values2 = {};
 
   // make allocas for args
   for (let i = 0; i < arg_ids.length; i++) {
@@ -227,19 +321,9 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
   emitter.builder.free();
   emitter.builder = old_builder;
   emitter.named_values = old_named_values;
+  emitter.named_values2 = old_named_values2;
 
   return func;
-}
-
-/**
- * Get the current specialized version of a function.
- */
-export function specialized_proc(emitter: LLVMEmitter, procid: number) {
-  let variant = emitter.variant;
-  if (!variant) {
-    return emitter.ir.procs[procid];
-  }
-  return variant.procs[procid] || emitter.ir.procs[procid];
 }
 
 /*
@@ -252,10 +336,13 @@ function emit_scope(emitter: LLVMEmitter, scope: number) {
     return emitter.emit_proc(emitter, proc);
   }
 
-  // TODO prog
-  throw "cannot handle progs yet";
+  // Try a Prog.
+  let prog = specialized_prog(emitter, scope);
+  if (prog) {
+    return emit_prog(emitter, prog);
+  }
 
-  //throw "error: unknown scope id";
+  throw "error: unknown scope id";
 }
 
 // Compile all the Procs and progs who are children of a given scope.
@@ -283,7 +370,7 @@ function _emit_scope_func(emitter: LLVMEmitter, name: string, arg_ids: number[],
   return func;
 }
 
-function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
+export function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let arg_ids: number[] = [];
@@ -309,11 +396,55 @@ function emit_proc(emitter: LLVMEmitter, proc: Proc): llvm.Value {
   return _emit_scope_func(emitter, name, arg_ids, free_ids, proc);
 }
 
-function emit_prog() {
-
+// Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
+// Procs that appear inside this quotation.
+function emit_prog_eval(emitter: LLVMEmitter, prog: Prog, name: string): llvm.Value {
+  throw "not implemented yet";
 }
 
-function emit_prog_variant() {
+// Emit a program as a JavaScript function declaration. This works when the
+// program has no splices, and it avoids the overhead of `eval`.
+function emit_prog_func(emitter: LLVMEmitter, prog: Prog, name: string): llvm.Value {
+  // The must be no splices.
+  if (prog.owned_splice.length) {
+    throw "error: splices not allowed in a function quote";
+  }
+
+  // Free variables become parameters.
+  let free_ids: number[] = [];
+  for (let fv of prog.free) {
+    free_ids.push(fv);
+  }
+
+  // Same with the quote's persists.
+  for (let esc of prog.persist) {
+    throw "persists not implemented yet";
+  }
+
+  return _emit_scope_func(emitter, name, [], free_ids, prog);
+}
+
+// Emit a JavaScript Prog (a single variant). The backend depends on the
+// annotation.
+function emit_prog_decl(emitter: LLVMEmitter, prog: Prog, name: string): llvm.Value {
+  if (prog.annotation === FUNC_ANNOTATION) {
+    // A function quote.
+    return emit_prog_func(emitter, prog, name);
+  } else {
+    // An ordinary quote.
+    return emit_prog_eval(emitter, prog, name);
+  }
+}
+
+/**
+ * Emit a single-variant program.
+ */
+export function emit_prog(emitter: LLVMEmitter, prog: Prog): llvm.Value {
+  return emit_prog_decl(emitter, prog, progsym(prog.id!));
+}
+
+
+export function emit_prog_variant() {
 
 }
 
@@ -334,7 +465,7 @@ function llvm_type(type: Type): llvm.Type {
     let arg_types: llvm.Type[] = [];
     for (let arg of type.params)
       arg_types.push(llvm_type(arg));
-    arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0));
+    arg_types.push(FUNC_ENV_TYPE);
     let ret_type: llvm.Type = llvm_type(type.ret);
 
     // construct appropriate func type & wrap in ptr
@@ -342,8 +473,24 @@ function llvm_type(type: Type): llvm.Type {
     let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0);
 
     // create struct environment: {function, closure environment}
-    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0)], true);
+    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, FUNC_ENV_TYPE], true);
     return struct_type;
+  } else if (type instanceof CodeType) {
+      if (type.annotation == FUNC_ANNOTATION) {
+        // get arg_types and ret_type
+        let arg_types: llvm.Type[] =  [FUNC_ENV_TYPE];
+        let ret_type: llvm.Type = llvm_type(type.inner);
+
+        // construct appropriate func type & wrap in ptr
+        let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+        let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0); 
+
+        // create struct environment: {function, closure environment}
+        let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, FUNC_ENV_TYPE], true);
+        return struct_type;
+      } else {
+        throw "not implemented yet";
+      }
   } else {
     throw "Unsupported type in LLVM backend: " + type;
   }
@@ -357,7 +504,7 @@ function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]):
   let arg_types: llvm.Type[] = [];
   for (let id of arg_ids)
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0)); // closure environment struct ptr
+  arg_types.push(FUNC_ENV_TYPE); // closure environment struct ptr
   return [ret_type, arg_types];
 }
 
@@ -471,7 +618,7 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: LLVMEmitter): llvm.Value {
-    throw "visit quote not implemented";
+    return emit_quote(emitter, tree);
   },
 
   visit_escape(tree: ast.EscapeNode, emitter: LLVMEmitter): llvm.Value {
@@ -542,22 +689,24 @@ export function codegen(ir: CompilerIR): llvm.Module {
   // Create a module. This is where all the generated code will go.
   let mod: llvm.Module = llvm.Module.create("braidprogram");
 
-  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple();
+  // Set the target triple and data layout  
+  let target_triple: string = llvm.TargetMachine.getDefaultTargetTriple(); 
   let target = llvm.Target.getFromTriple(target_triple);
   let target_machine = llvm.TargetMachine.create(target, target_triple);
-  let data_layout = target_machine.createDataLayout().toString();
+  let data_layout = target_machine.getTargetMachineData().toString();
 
-  mod.setDataLayout(data_layout);
   mod.setTarget(target_triple);
-
+  mod.setDataLayout(data_layout);
+  
   let emitter: LLVMEmitter = {
     ir: ir,
     mod: mod,
     builder: builder,
     named_values: [],
+    named_values2: {},
     emit_expr: (tree: ast.SyntaxNode, emitter: LLVMEmitter) => ast_visit(compile_rules, tree, emitter),
     emit_proc: emit_proc,
-    //emit_prog: emit_prog,
+    emit_prog: emit_prog,
     //emit_prog_variant: emit_prog_variant,
     variant: null,
   };
@@ -575,6 +724,6 @@ export function codegen(ir: CompilerIR): llvm.Module {
  * Emit the main function (and all the functions it depends on, eventually)
  * into the specified LLVM module.
  */
-function emit_main(emitter: LLVMEmitter): llvm.Value {
+export function emit_main(emitter: LLVMEmitter): llvm.Value {
   return emit_proc(emitter, emitter.ir.main);
 }

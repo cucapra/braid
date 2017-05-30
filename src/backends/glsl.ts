@@ -10,6 +10,7 @@ import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
   emit_while, emit_body, paren, splicesym } from './emitutil';
 import { CompilerIR, nearest_quote, Variant } from '../compile/ir';
+import { LLVMEmitter } from './llvm'
 
 // Type checking for uniforms, which are automatically demoted from arrays to
 // individual values when they persist.
@@ -241,7 +242,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
 // Emitting the surrounding machinery for communicating between stages.
 
-export function compile_prog(parent_emitter: Emitter, progid: number): string
+export function compile_prog(parent_emitter: Emitter|LLVMEmitter, progid: number): string
 {
   let ir = parent_emitter.ir;
   let emitter: Emitter = {
