@@ -459,7 +459,7 @@ function printf(emitter: llvm_be.LLVMEmitter, str: llvm.Value, args: llvm.Value[
   return emitter.builder.buildCall(func, _args, "");
 }
 
-// TODO: create a compile_glsl function in LLVM IR instead of just inlining each call
+// TODO: maybe create a compile_glsl function in LLVM IR instead of just inlining each call
 function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source: llvm.Value, len: number): llvm.Value {
   let shader: llvm.Value = glCreateShader(emitter, llvm.ConstInt.create(shader_type, GLENUM));
   
@@ -476,7 +476,7 @@ function compile_glsl(emitter: llvm_be.LLVMEmitter, shader_type: number, source:
   return shader;
 }
 
-// TODO: create a get_shader function in LLVM IR instead of just inlining each call
+// TODO: maybe create a get_shader function in LLVM IR instead of just inlining each call
 function get_shader(emitter: llvm_be.LLVMEmitter, vertex_source: llvm.Value, vertex_len: number, fragment_source: llvm.Value, fragment_len: number): llvm.Value {
   let vert: llvm.Value = compile_glsl(emitter, GL_VERTEX_SHADER, vertex_source, vertex_len);
   let frag: llvm.Value = compile_glsl(emitter, GL_FRAGMENT_SHADER, fragment_source, fragment_len);
@@ -730,7 +730,7 @@ function emit_glsl_prog(emitter: llvm_be.LLVMEmitter, prog: Prog, variant: Varia
   emitter.builder.buildStore(llvm.ConstString.create(js.emit_string(code), false), ptr);
   
   emitter.named_values2[name] = ptr;
-  str_lens[name] = code.length; // TODO: str_lens
+  str_lens[name] = code.length; 
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
