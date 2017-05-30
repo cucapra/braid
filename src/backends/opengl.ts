@@ -107,17 +107,29 @@ function glCompileShader(emitter: llvm_be.LLVMEmitter, shader_type: llvm.Value):
 /**
  * void glGetShaderiv(  GLuint shader, GLenum pname, GLint *params)
  */
-function glGetShaderParameter(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, pname: llvm.Value): llvm.Value {
-  // TODO
-  throw "not implemented yet";
+function glGetShaderiv(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, pname: llvm.Value, params: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glGetShaderiv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [GLUINT, GLENUM, llvm.PointerType.create(GLINT, 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glGetShaderiv", func_type);
+  }
+  return emitter.builder.buildCall(func, [shader, pname, params], "");  
 }
 
 /**
  * void glGetShaderInfoLog(  GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
  */
-function glGetShaderInfoLog(emitter: llvm_be.LLVMEmitter): llvm.Value {
-  // TODO
-  throw "not implemented yet";
+function glGetShaderInfoLog(emitter: llvm_be.LLVMEmitter, shader: llvm.Value, max_len: llvm.Value, length: llvm.Value, info_log: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glGetShaderInfoLog");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [GLUINT, GLSIZEI, llvm.PointerType.create(GLSIZEI, 0), GLSTRING];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glGetShaderInfoLog", func_type);
+  }
+  return emitter.builder.buildCall(func, [shader, max_len, length, info_log], "");  
 }
 
 /**
@@ -163,11 +175,17 @@ function glLinkProgram(emitter: llvm_be.LLVMEmitter, program: llvm.Value): llvm.
 }
 
 /*
- *void glGetProgramiv(  GLuint program, GLenum pname, GLint *params);
-*/
-function glGetProgramParameter(emitter: llvm_be.LLVMEmitter): llvm.Value {
-  // TODO
-  throw "not implemented yet";
+ * void glGetProgramiv(  GLuint program, GLenum pname, GLint *params);
+ */
+function glGetProgramiv(emitter: llvm_be.LLVMEmitter, program: llvm.Value, pname: llvm.Value, params: llvm.Value): llvm.Value {
+  let func: llvm.Function = emitter.mod.getFunction("glGetProgramiv");
+  if (func.ref.isNull()) {
+    let ret_type: llvm.Type = llvm.VoidType.create();
+    let arg_types: llvm.Type[] = [GLUINT, GLENUM, llvm.PointerType.create(GLINT, 0)];
+    let func_type: llvm.FunctionType = llvm.FunctionType.create(ret_type, arg_types);
+    func = emitter.mod.addFunction("glGetProgramiv", func_type);
+  }
+  return emitter.builder.buildCall(func, [program, pname, params], "");
 }
 
 /**
