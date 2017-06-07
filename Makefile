@@ -72,6 +72,11 @@ test: $(CLI_JS)
 dump-gl: $(CLI_JS)
 	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.ss)
 
+# For type tests, also just dump output to check for compile.
+.PHONY: type-test
+type-test: $(CLI_JS)
+	@ node $(CLI_JS) -c $(wildcard test/type/*.ss)
+
 
 # An asset-munging tool.
 

@@ -1,6 +1,6 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, pretty_type, TypeVisit,
+  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
   TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
@@ -104,6 +104,9 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '-': _UNARY_BINARY_TYPE,
   '*': _BINARY_TYPE,
   '/': _BINARY_TYPE,
+  '~': new FunType([BOOLEAN], BOOLEAN),
+  '==': new FunType([INT, INT], BOOLEAN),
+  '!==': new FunType([INT, INT], BOOLEAN),
 };
 
 
@@ -115,6 +118,18 @@ export const BUILTIN_OPERATORS: TypeMap = {
 export type TypeCheck = (tree: ast.SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
 export let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
+    visit_root(tree: ast.RootNode, env: TypeEnv): [Type, TypeEnv] {
+      let t:Type | null = null;
+      let e:TypeEnv = env;
+      for (let child of tree.children) {
+        [t,e] = check(child, e);
+      }
+      if (t === null) {
+        throw "Error: Empty Root node";
+      }
+      return [t, e];
+    },
+
     visit_literal(tree: ast.LiteralNode, env: TypeEnv): [Type, TypeEnv] {
       if (tree.type === "int") {
         return [INT, env];
@@ -122,6 +137,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [FLOAT, env];
       } else if (tree.type === "string") {
         return [STRING, env];
+      } else if (tree.type === "boolean") {
+        return [BOOLEAN, env];
       } else {
         throw "error: unknown literal type";
       }
@@ -214,6 +231,28 @@ export let gen_check : Gen<TypeCheck> = function(check) {
             pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")" + 
             locationError(tree);
       }
+    },
+
+    visit_typealias(tree: ast.TypeAliasNode, env: TypeEnv): [Type, TypeEnv] {
+      // Check if name has been defined before
+      let t = env.named[tree.ident];
+      if (t !== undefined) {
+        throw "type error: Type Alias redefined" + locationError(tree);
+      }
+
+      // Get type from TypeNode
+      let type = get_type(tree.type, env.named);
+
+      // Add to TypeEnv
+      let new_named: TypeMap = env.named;
+      new_named[tree.ident] = type;
+
+      let e: TypeEnv = merge(env, {
+        named: new_named,
+      });
+
+      // Return void type
+      return [VOID, e];
     },
 
     visit_quote(tree: ast.QuoteNode, env: TypeEnv): [Type, TypeEnv] {
@@ -387,8 +426,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT && cond_type !== FLOAT) {
-        throw "type error: `if` condition must be Int or Float" + locationError(tree);
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `if` condition must be Boolean" + locationError(tree);
       }
 
       let [true_type,] = check(tree.truex, e);
@@ -403,8 +442,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT) {
-        throw "type error: `while` condition must be an integer" + locationError(tree);
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `while` condition must be boolean" + locationError(tree);
       }
 
       let [body_type,] = check(tree.body, e);
@@ -593,6 +632,12 @@ function compatible(ltype: Type, rtype: Type): boolean {
       ltype.snippet === rtype.snippet &&
       ltype.snippet_var === rtype.snippet_var;
 
+  } else if (ltype instanceof OverloadedType) {
+    for (let t of ltype.types) {
+      if (compatible(t, rtype)) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -697,6 +742,14 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
       throw "type error: unknown type constructor " + tree.name + locationError(tree);
     }
   },
+
+  visit_overloaded(tree: ast.OverloadedTypeNode, types: TypeMap) {
+    let ts = []
+    for (let t of tree.types) {
+      ts.push(get_type(t, types));
+    }
+    return new OverloadedType(ts);
+  },
 };
 
 function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
@@ -769,6 +822,11 @@ let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
   {
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
+  },
+  visit_overloaded(type: OverloadedType,
+      [tvar, targ]: [TypeVariable, any]): Type
+  {
+    return type;
   },
 }
 

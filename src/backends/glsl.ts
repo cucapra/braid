@@ -89,6 +89,10 @@ function nearest_prespliced_quote(ir: CompilerIR, id: number): number {
 }
 
 let compile_rules: ASTVisit<Emitter, string> = {
+  visit_root(tree: ast.RootNode, emitter: Emitter): string {
+    throw "unimplemented";
+  },
+
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     let [t,] = emitter.ir.type_table[tree.id!];
     if (t === INT) {
@@ -146,6 +150,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
     return paren(emit(emitter, tree.lhs)) + " " +
            tree.op + " " +
            paren(emit(emitter, tree.rhs));
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+    return "TODO GLSL (eric)";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {

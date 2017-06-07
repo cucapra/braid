@@ -7,6 +7,9 @@ import * as ast from '../../src/ast';
 import { ASTVisit, ast_visit } from '../../src/visit';
 
 let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
+  visit_root(tree: ast.RootNode, _: void): ast.SyntaxNode[] {
+    return tree.children;
+  },
   visit_literal(tree: ast.LiteralNode, _: void): ast.SyntaxNode[] {
     return [];
   },
@@ -65,6 +68,9 @@ export function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
 };
 
 let GetName: ASTVisit<void, string> = {
+  visit_root(tree: ast.RootNode, _: void): string {
+    return "root";
+  },
   visit_literal(tree: ast.LiteralNode, _: void): string {
     return tree.value.toString();
   },

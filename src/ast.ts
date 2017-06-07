@@ -10,6 +10,7 @@ export interface LocationData {
 export interface Location {
   start: LocationData;
   end: LocationData;
+  filename: string;
 }
 
 /**
@@ -35,6 +36,14 @@ export interface SyntaxNode {
 }
 
 /**
+ * A root AST node that acts as a parent for joining several source ASTs together
+ */
+ export interface RootNode extends SyntaxNode {
+   tag: "root";
+   children: ExpressionNode[];
+ }
+
+/**
  * An AST node that's an expression. This is almost everything---just not
  * parameters and types.
  */
@@ -43,8 +52,8 @@ export interface ExpressionNode extends SyntaxNode {
 
 export interface LiteralNode extends ExpressionNode {
   tag: "literal";
-  value: number | string;
-  type: "int" | "float" | "string";
+  value: number | string | boolean;
+  type: "int" | "float" | "string" | "boolean";
 }
 
 export interface SeqNode extends ExpressionNode {
@@ -147,6 +156,17 @@ export interface MacroCallNode extends ExpressionNode {
 }
 
 export interface TypeNode extends SyntaxNode {
+}
+
+export interface TypeAliasNode extends ExpressionNode {
+  tag: "type_alias";
+  ident: string;
+  type: TypeNode;
+}
+
+export interface OverloadedTypeNode extends TypeNode {
+  tag: "type_overloaded";
+  types: TypeNode[];
 }
 
 export interface PrimitiveTypeNode extends TypeNode {

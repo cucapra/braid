@@ -6,6 +6,7 @@
 
   function setLocation(obj) {
     obj.location = location();
+    obj.location.filename = options.filename;
     return obj;
   }
 }
@@ -18,7 +19,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign /
+  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign / TypeAlias /
   CCall / Call / MacroCall / TermExpr
 
 SeqExpr
@@ -26,8 +27,8 @@ SeqExpr
 
 // Expressions that usually don't need parenthesization.
 TermExpr
-  = Quote / CCall / Lookup / Escape / Run / FloatLiteral / IntLiteral /
-  StringLiteral / Paren
+  = Quote / CCall / Escape / Run / FloatLiteral / IntLiteral /
+  StringLiteral / BooleanLiteral / Paren / Lookup
 
 // Expressions that can be operands to binary/unary operators.
 Operand
@@ -50,6 +51,17 @@ FloatLiteral
   = n:float
   { return setLocation({tag: "literal", type: "float", value: n}); }
 
+BooleanLiteral
+  = BooleanLiteralTrue / BooleanLiteralFalse
+
+BooleanLiteralTrue
+  = b:boolean_true
+  { return setLocation({tag: "literal", type: "boolean", value: b}); }
+
+BooleanLiteralFalse
+  = b:boolean_false
+  { return setLocation({tag: "literal", type: "boolean", value: b}); }
+
 StringLiteral "string"
   = strquote chars:StringChar* strquote
   { return setLocation({tag: "literal", type: "string", value: chars.join("")}); }
@@ -71,12 +83,15 @@ Unary
   { return setLocation({tag: "unary", expr: e, op: op}); }
 
 Binary
-  = AddBinary / MulBinary
+  = CompareBinary / AddBinary / MulBinary
 AddBinary
   = lhs:(MulBinary / Operand) _ op:addbinop _ rhs:(Binary / Operand)
   { return setLocation({tag: "binary", lhs: lhs, op: op, rhs: rhs}); }
 MulBinary
   = lhs:Operand _ op:mulbinop _ rhs:(MulBinary / Operand)
+  { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
+CompareBinary
+  = lhs:Operand _ op:comparebinop _ rhs:Operand
   { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
 
 Quote
@@ -150,8 +165,20 @@ MacroCall
   { return setLocation({tag: "macrocall", macro: i, args: as}); }
 
 Extern
-  = extern _ i:ident _ typed _ t:Type e:ExternExpansion?
+  = extern _ i:ExternIdent _ typed _ t:Type e:ExternExpansion?
   { return setLocation({tag: "extern", name: i, type: t, expansion: e}); }
+
+ExternIdent
+  = ident / ExternIdentOperator
+
+ExternIdentOperator
+  = paren_open _ op:ExternOperator _ paren_close
+  { return op; }
+
+ExternOperator
+  = addbinop / mulbinop
+  { return text(); }
+
 ExternExpansion
   = _ eq _ s:string
   { return s; }
@@ -176,6 +203,9 @@ While
 // Type syntax.
 
 Type
+  = OverloadedType / FunType / InstanceType / TermType
+
+NonOverloadedType
   = FunType / InstanceType / TermType
 
 TermType
@@ -205,6 +235,17 @@ FunTypeParam
   = t:TermType _
   { return t; }
 
+OverloadedType
+  = t:NonOverloadedType _ other_types:(OverloadedTypeElement)+
+  { return setLocation({tag: "type_overloaded", types: [t].concat(other_types)}); }
+
+OverloadedTypeElement
+  = _ pipe_operator _ t:NonOverloadedType
+  { return t; }
+
+TypeAlias
+  = type _ i:ident _ eq _ t:Type
+  { return setLocation({tag: "type_alias", ident:i, type:t}); }
 
 // Tokens.
 
@@ -215,6 +256,14 @@ int "integer"
 float "float"
   = DIGIT+ [.] DIGIT+
   { return parseFloat(text()); }
+
+boolean_true "boolean_true"
+  = "true"
+  { return true; }
+
+boolean_false "boolean_false"
+  = "false"
+  { return false; }
 
 ident "identifier"
   = (ALPHA / [_]) (ALPHA / DIGIT / [_.])* SUFFIX*
@@ -237,9 +286,11 @@ addbinop
   = [+\-]
 mulbinop
   = [*/]
+comparebinop
+  = "==" / "!=="
 
 unop "unary operator"
-  = [+\-]
+  = [+\-\~]
 
 quote_open "quote start"
   = "<"
@@ -277,6 +328,9 @@ paren_open
 paren_close
   = ")"
 
+pipe_operator
+  = "|"
+
 extern
   = "extern"
 
@@ -294,6 +348,9 @@ if
 
 while
   = "while"
+
+type
+  = "type"
 
 macromark
   = "@"

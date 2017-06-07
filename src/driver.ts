@@ -1,4 +1,4 @@
-import { SyntaxNode } from './ast';
+import { SyntaxNode, RootNode, ExpressionNode } from './ast';
 import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
 import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
 import { desugar_cross_stage, desugar_macros } from './sugar';
@@ -79,36 +79,49 @@ function _check(config: Config): Gen<TypeCheck> {
   return check;
 }
 
-export function frontend(config: Config, source: string,
-    filename: string | null,
+export function frontend(config: Config, sources: string[],
+    filenames: string[] | null,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
-  // Parse.
-  let tree: SyntaxNode;
-  try {
-    tree = parser.parse(source);
-  } catch (e) {
-    if (e instanceof parser.SyntaxError) {
-      let loc = e.location.start;
-      let err = 'parse error at ';
-      if (filename) {
-        err += filename + ':';
+  let emptyExpressionNodeArray: ExpressionNode[] = [];
+  let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
+
+  for (var i = 0; i < sources.length; i++) {
+    let source: string = sources[i];
+    let filename: string | null = (filenames != null && i < sources.length) ? filenames[i] : null;
+
+    // Parse.
+    let tree: SyntaxNode;
+    try {
+      // Give the parser the filename
+      let options = { filename: filename };
+
+      tree = parser.parse(source, options);
+    } catch (e) {
+      if (e instanceof parser.SyntaxError) {
+        let loc = e.location.start;
+        let err = 'parse error at ';
+        if (filename) {
+          err += filename + ':';
+        }
+        err += loc.line + ',' + loc.column + ': ' + e.message;
+        config.error(err);
+        return;
+      } else {
+        throw e;
       }
-      err += loc.line + ',' + loc.column + ': ' + e.message;
-      config.error(err);
-      return;
-    } else {
-      throw e;
     }
+    config.log(tree);
+
+    root.children.push(tree);
   }
-  config.log(tree);
 
   // Check and elaborate types.
   let elaborated: SyntaxNode;
   let type_table: TypeTable;
   try {
     [elaborated, type_table] =
-      elaborate(tree, _intrinsics(config), _types(config),
+      elaborate(root, _intrinsics(config), _types(config),
           _check(config));
     let [type, _] = type_table[elaborated.id!];
     config.typed(pretty_type(type));

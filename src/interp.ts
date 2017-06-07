@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | string | Code | Fun | Extern;
+type Value = number | string | boolean | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -79,6 +79,18 @@ interface State {
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
 let Interp: ASTVisit<State, [Value, State]> = {
+  visit_root(tree: ast.RootNode, state: State): [Value, State] {
+    let v: Value | null = null;
+    let s: State = state;
+    for (let child of tree.children) {
+      [v, s] = interp(child, s);
+    }
+    if (v === null) {
+      throw 'Error: Empty Root node';
+    }
+    return [v, s];
+  },
+
   visit_literal(tree: ast.LiteralNode, state: State): [Value, State] {
     return [tree.value, state];
   },
@@ -162,6 +174,15 @@ let Interp: ASTVisit<State, [Value, State]> = {
           throw "error: unknown unary operator " + tree.op;
       }
       return [out, s];
+    } else if (typeof v === 'boolean') {
+      let out: Value;
+      switch (tree.op) {
+        case "~":
+          out = !v; break;
+        default:
+          throw "error: unknown unary operator " + tree.op;
+      }
+      return [out, s];
     } else {
       throw "error: non-numeric operand to unary operator";
     }
@@ -183,6 +204,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
           v = v1 * v2; break;
         case "/":
           v = v1 / v2; break;
+        case "==":
+          v = v1 == v2; break;
+        case "!==":
+          v = v1 != v2; break;
         default:
           throw "error: unknown binary operator " + tree.op;
       }
@@ -190,6 +215,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
     } else {
       throw "error: non-numeric operands to binary operator";
     }
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, state: State): [Value, State] {
+    return [42, state];
   },
 
   visit_fun(tree: ast.FunNode, state: State): [Value, State] {
@@ -397,6 +426,19 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   // The rest of the cases are boring: just copy the input tree and recurse
   // while threading through the stage and environment parameters.
   // TODO Use the Translate machinery from the desugaring step.
+  visit_root(tree: ast.RootNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let t:ast.SyntaxNode = tree;
+    let s:State = state;
+    let p:Pers = pers;
+    let trees:ast.SyntaxNode[] = [];
+    for (let child of tree.children) {
+      [t, s, p] = quote_interp(child, stage, s, p);
+      trees.push(t);
+    }
+    return [merge(tree, {children:trees}), s, p];
+  },
 
   visit_literal(tree: ast.LiteralNode,
       [stage, state, pers]: [number, State, Pers]):
@@ -445,6 +487,12 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     let [t1, s1, p1] = quote_interp(tree.lhs, stage, state, pers);
     let [t2, s2, p2] = quote_interp(tree.rhs, stage, s1, p1);
     return [merge(tree, { lhs: t1, rhs: t2 }), s2, p2];
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    return [merge(tree), state, pers];
   },
 
   visit_run(tree: ast.RunNode,
@@ -531,6 +579,8 @@ export function pretty_value(v: Value): string {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
+    return v.toString();
   } else if (v instanceof Code) {
     return v.annotation + "< " + pretty(v.expr) + " >";
   } else if (v instanceof Fun) {

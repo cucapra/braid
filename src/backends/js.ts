@@ -1,7 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
-import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
+import { varsym, indent, emit_seq, emit_exprs, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
-  emit_while, variantsym, is_fun_type } from './emitutil';
+  emit_while, variantsym, is_fun_type, check_header } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
   specialized_prog } from './emitter';
 import * as ast from '../ast';
@@ -148,6 +148,8 @@ export function pretty_value(v: any): string {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
+    return v.toString();
   } else if (v.proc !== undefined) {
     return "(fun)";
   } else if (v.prog !== undefined) {
@@ -163,6 +165,22 @@ export function pretty_value(v: any): string {
 // The core recursive compiler rules.
 
 export let compile_rules = {
+  visit_root(tree: ast.RootNode, emitter: Emitter): string {
+    let out = "";
+    // Do a special check for the first child (header), if there is more than one file
+    if (tree.children.length > 1) {
+      let header = tree.children[0];
+      // See if anything needs to be emitted at all
+      let header_emit = check_header(emitter, header, ",\n");
+      if (header_emit !== "") {
+        out += header_emit;
+        out += ",\n";
+      }
+      return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
+    }
+    return emit_exprs(emitter, tree.children, ",\n");
+  },
+
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     if (tree.type === "string") {
       return JSON.stringify(tree.value);
@@ -190,13 +208,21 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
-    return tree.op + paren(p);
+    let op = tree.op;
+    if (op === '~') {
+      op = '!';
+    }
+    return op + paren(p);
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
     let p1 = emit(emitter, tree.lhs);
     let p2 = emit(emitter, tree.rhs);
     return paren(p1) + " " + tree.op + " " + paren(p2);
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+    return "TODO JS (eric)";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
