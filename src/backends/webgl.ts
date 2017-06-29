@@ -72,8 +72,10 @@ function mat3multiplyScalar(a, b) {
   return out;
 }
 
-function vec4transformMat4(m, a) {
-  var out = mat4.create();
+// Transform the vec4 with a mat4
+// out = Mat4 * Vec4
+function vec4transformedByMat4(m, a) {
+  var out = vec4.create();
   vec4.transformMat4(out, a, m);
   return out;
 }
@@ -362,7 +364,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           }
         } else if (typ === FLOAT4) {
           if (typL == FLOAT4X4 && typR == FLOAT4) {
-            return `vec4transformMat4(${lhs}, ${rhs})`;
+            return `vec4transformedByMat4(${lhs}, ${rhs})`;
           }
         }
       }
