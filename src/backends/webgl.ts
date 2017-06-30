@@ -2,7 +2,8 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, FLOAT3X3, FLOAT4,SHADER_ANNOTATION, TEXTURE } from './gl';
+  FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2
+} from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType, FLOAT, INT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
@@ -45,38 +46,6 @@ function vec3(x, y, z) {
   out[0] = x || 0.0;
   out[1] = y || 0.0;
   out[2] = z || 0.0;
-  return out;
-}
-
-function mat4mult(a, b) {
-  var out = mat4.create();
-  mat4.multiply(out, a, b);
-  return out;
-}
-
-function mat3mult(a, b) {
-  var out = mat3.create();
-  mat3.multiply(out, a, b);
-  return out;
-}
-
-function mat4multiplyScalar(a, b) {
-  var out = mat4.create();
-  mat4.multiplyScalar(out, a, b);
-  return out;
-}
-
-function mat3multiplyScalar(a, b) {
-  var out = mat3.create();
-  mat3.multiplyScalar(out, a, b);
-  return out;
-}
-
-// Transform the vec4 with a mat4
-// out = Mat4 * Vec4
-function vec4transformedByMat4(m, a) {
-  var out = vec4.create();
-  vec4.transformMat4(out, a, m);
   return out;
 }
 `.trim();
@@ -347,28 +316,50 @@ let compile_rules: ASTVisit<Emitter, string> =
         let rhs = paren(emit(emitter, tree.rhs));
         if (typ === FLOAT4X4) {
           if (typL === FLOAT4X4 && typR === FLOAT4X4) {
-            return `mat4mult(${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
-            return `mat4multiplyScalar(${rhs}, ${lhs})`;
-          } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
-            return `mat4multiplyScalar(${lhs}, ${rhs})`;
+            return `mat4.multiply(mat4.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT4X4) {
+            return `mat4.multiplyScalar(mat4.create(), ${rhs}, ${lhs})`;
+          } else if (typL === FLOAT4X4 && typR === FLOAT) {
+            return `mat4.multiplyScalar(mat4.create(), ${lhs}, ${rhs})`;
           }
         } else if (typ === FLOAT3X3) {
-          // TODO: Cannot find mat3
           if (typL === FLOAT3X3 && typR === FLOAT3X3) {
-            return `mat3mult(${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
-            return `mat3multiplyScalar(${rhs}, ${lhs})`;
-          } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
-            return `mat3multiplyScalar(${lhs}, ${rhs})`;
+            return `mat3.multiply(mat3.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT3X3) {
+            return `mat3.multiplyScalar(mat3.create(), ${rhs}, ${lhs})`;
+          } else if (typL === FLOAT3X3 && typR === FLOAT) {
+            return `mat3.multiplyScalar(mat3.create(), ${lhs}, ${rhs})`;
           }
         } else if (typ === FLOAT4) {
-          if (typL == FLOAT4X4 && typR == FLOAT4) {
-            return `vec4transformedByMat4(${lhs}, ${rhs})`;
+          if (typL === FLOAT4 && typR === FLOAT4) {
+            return `vec4.multiply(vec4.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT4 && typR === FLOAT) {
+            return `vec4.scale(vec4.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT4) {
+            return `vec4.scale(vec4.create(), ${rhs}, ${lhs})`;
+          } else if (typL === FLOAT4X4 && typR === FLOAT4) {
+            return `vec4.transformMat4(vec4.create(), ${rhs}, ${lhs})`;
+          }
+        } else if (typ === FLOAT3) {
+          if (typL === FLOAT3 && typR === FLOAT3) {
+            return `vec3.multiply(vec3.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT3 && typR === FLOAT) {
+            return `vec3.scale(vec3.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT3) {
+            return `vec3.scale(vec3.create(), ${rhs}, ${lhs})`;
+          } else if (typL === FLOAT3X3 && typR === FLOAT3) {
+            return `vec3.transformMat3(vec3.create(), ${rhs}, ${lhs})`;
+          }
+        } else if (typ === FLOAT2) {
+          if (typL === FLOAT2 && typR === FLOAT2) {
+            return `vec2.multiply(vec2.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT2 && typR === FLOAT) {
+            return `vec2.scale(vec2.create(), ${lhs}, ${rhs})`;
+          } else if (typL === FLOAT && typR === FLOAT2) {
+            return `vec2.scale(vec2.create(), ${rhs}, ${lhs})`;
           }
         }
       }
-
       // Otherwise, use the ordinary JavaScript backend.
       return ast_visit(js.compile_rules, tree, emitter);
     },

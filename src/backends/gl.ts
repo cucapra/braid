@@ -108,6 +108,7 @@ const _GL_UNARY_BINARY_TYPE = new OverloadedType(
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
   new FunType([FLOAT3, FLOAT3], FLOAT3),
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
