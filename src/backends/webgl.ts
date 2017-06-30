@@ -307,13 +307,35 @@ let compile_rules: ASTVisit<Emitter, string> =
     },
 
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
-      // If this is a matrix/matrix multiply, emit a function call.
-      if (tree.op === "*") {
-        let [typ,] = emitter.ir.type_table[tree.id!];
-        let [typL,] = emitter.ir.type_table[tree.lhs.id!];
-        let [typR,] = emitter.ir.type_table[tree.rhs.id!];
-        let lhs = paren(emit(emitter, tree.lhs));
-        let rhs = paren(emit(emitter, tree.rhs));
+      let [typ,] = emitter.ir.type_table[tree.id!];
+      let [typL,] = emitter.ir.type_table[tree.lhs.id!];
+      let [typR,] = emitter.ir.type_table[tree.rhs.id!];
+      let lhs = paren(emit(emitter, tree.lhs));
+      let rhs = paren(emit(emitter, tree.rhs));
+      if (tree.op === "+" || tree.op === "-") { // TODO: how to do with vector by scalar in binary type
+        let op: string = (tree.op === "+" ? "add" : "subtract");
+        if (typ === FLOAT2) {
+          if (typL === FLOAT2 && typR === FLOAT2) {
+            return `vec2.${op}(vec2.create(), ${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT3) {
+          if (typL === FLOAT3 && typR === FLOAT3) {
+            return `vec3.${op}(vec3.create(), ${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT4) {
+          if (typL === FLOAT4 && typR === FLOAT4) {
+            return `vec4.${op}(vec4.create(), ${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT3X3) {
+          if (typL === FLOAT3X3 && typR === FLOAT3X3) {
+            return `mat3.${op}(mat3.create(), ${lhs}, ${rhs})`;
+          }
+        } else if (typ === FLOAT4X4) {
+          if (typL === FLOAT4X4 && typR === FLOAT4X4) {
+            return `mat4.${op}(mat4.create(), ${lhs}, ${rhs})`;
+          }
+        }
+      } else if (tree.op === "*") {
         if (typ === FLOAT4X4) {
           if (typL === FLOAT4X4 && typR === FLOAT4X4) {
             return `mat4.multiply(mat4.create(), ${lhs}, ${rhs})`;
