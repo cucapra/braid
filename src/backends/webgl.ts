@@ -1,7 +1,8 @@
 import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
-import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
+import {
+  Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2
 } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
@@ -91,7 +92,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 
   // Get the fragment program.
   if (vertex_prog.quote_children.length > 1 ||
-      vertex_prog.quote_children.length < 1) {
+    vertex_prog.quote_children.length < 1) {
     throw "error: vertex quote must have exactly one fragment quote";
   }
   let fragment_prog = ir.progs[vertex_prog.quote_children[0]];
@@ -103,8 +104,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-    varid: number, variant: Variant | null): string
-{
+  varid: number, variant: Variant | null): string {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid) + variant_suffix(variant);
   return js.emit_var(
@@ -132,8 +132,7 @@ function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant: Variant | n
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
 function emit_shader_setup(emitter: Emitter, progid: number,
-                           variant: Variant | null): string
-{
+  variant: Variant | null): string {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
@@ -150,7 +149,7 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   let glue = emit_glue(emitter, vertex_prog.id!);
   for (let g of glue) {
     out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
-                        variant) + "\n";
+      variant) + "\n";
   }
 
   return out;
@@ -160,9 +159,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean, texture_index: number | undefined,
-    variant: Variant | null): string
-{
+  value: string, attribute: boolean, texture_index: number | undefined,
+  variant: Variant | null): string {
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
@@ -197,7 +195,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       throw "error: uniforms must be primitive types";
     }
 
-  // Array types are bound as attributes.
+    // Array types are bound as attributes.
   } else {
     if (type instanceof PrimitiveType) {
       // The value is a WebGL buffer object.
@@ -217,7 +215,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       return [
         `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
         `gl.vertexAttribPointer(${loc_expr}, ${dims}, ${eltype}, `,
-          `false, 0, 0),\n`,
+        `false, 0, 0),\n`,
         `gl.enableVertexAttribArray(${loc_expr})`
       ].join('');
     } else {
@@ -232,7 +230,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
  * set up the uniforms and attributes.
  */
 function emit_shader_binding_variant(emitter: Emitter,
-    progid: number, variant: Variant | null) {
+  progid: number, variant: Variant | null) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
@@ -253,7 +251,7 @@ function emit_shader_binding_variant(emitter: Emitter,
       value = paren(emit(subemitter, g.value_expr!));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id!, g.type, g.id, value,
-        g.attribute, g.texture_index, variant);
+      g.attribute, g.texture_index, variant);
   }
 
   return out;
@@ -296,7 +294,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           throw "dynamic `vtx` calls unimplemented";
         }
 
-      // And our intrinsic for indicating the rendering stage.
+        // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Pass through the code argument.
         return emit(emitter, tree.args[0]);
@@ -381,6 +379,29 @@ let compile_rules: ASTVisit<Emitter, string> =
             return `vec2.scale(vec2.create(), ${rhs}, ${lhs})`;
           }
         }
+      } else if (tree.op === "/") {
+        if (typ === FLOAT2) {
+          if (typ === FLOAT2) {
+            if (typL === FLOAT2 && typR === FLOAT2) {
+              return `vec2.div(vec2.create(), ${lhs}, ${rhs})`;
+            } else if (typL === FLOAT2 && typR ===FLOAT) {
+              return `vec2.scale(vec2.create(), 1.0/(${rhs}))`;
+            }
+          } else if (typ === FLOAT3) {
+            if (typL === FLOAT3 && typR === FLOAT3) {
+              return `vec3.div(vec3.create(), ${lhs}, ${rhs})`;
+            } else if (typL === FLOAT3 && typR === FLOAT) {
+              return `vec3.scale(vec3.create(), 1.0/(${rhs}))`
+            }
+          } else if (typ === FLOAT4) {
+            if (typL === FLOAT4 && typR === FLOAT4) {
+              return `vec4.div(vec4.create(), ${lhs}, ${rhs})`;
+            } else if (typL === FLOAT4 && typR === FLOAT) {
+              return `vec4.scale(vec4.create(), 1.0/(${rhs}))`;
+            }
+          }
+          // TODO implement matrix division
+        }
       }
       // Otherwise, use the ordinary JavaScript backend.
       return ast_visit(js.compile_rules, tree, emitter);
@@ -388,7 +409,7 @@ let compile_rules: ASTVisit<Emitter, string> =
   });
 
 function emit_glsl_prog(emitter: Emitter, prog: Prog,
-                        variant: Variant | null): string {
+  variant: Variant | null): string {
   let out = "";
 
   // Emit subprograms.
