@@ -40,6 +40,7 @@ export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
   "Float3": FLOAT3,
   "Float4": FLOAT4,
+  "Vec2": FLOAT2,
   "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
   "Vec4": FLOAT4,
   "Float3x3": FLOAT3X3,
