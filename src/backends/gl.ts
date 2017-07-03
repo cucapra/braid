@@ -86,6 +86,7 @@ export const SHADER_ANNOTATION = "glsl";
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),  
   new FunType([FLOAT3], FLOAT3),
   new FunType([FLOAT4], FLOAT4),
 ]);
@@ -102,6 +103,15 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT2, FLOAT], FLOAT2),
   new FunType([FLOAT3, FLOAT], FLOAT3),
   new FunType([FLOAT4, FLOAT], FLOAT4),
+]);
+const _GL_ARITH_UNARY_TYPE = new OverloadedType([
+  new FunType([INT], INT),
+  new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),  
+  new FunType([FLOAT3], FLOAT3),
+  new FunType([FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4], FLOAT4X4),
 ]);
 const _GL_ARITH_BINARY_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
@@ -125,7 +135,7 @@ const _GL_ARITH_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
 ]);
 const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
-  _GL_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
+  _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),

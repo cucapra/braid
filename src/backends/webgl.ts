@@ -349,6 +349,32 @@ let compile_rules: ASTVisit<Emitter, string> =
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
+    visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
+      let [typ,] = emitter.ir.type_table[tree.id!];
+      let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
+      let expr = paren(emit(emitter, tree.expr));
+      // TODO: need to consider matrices?
+      if (tree.op === "+") {
+        if ((typ === FLOAT2 && typExpr === FLOAT2) || (typ === FLOAT3 && typExpr === FLOAT3) || (typ === FLOAT4 && typExpr === FLOAT4) || (typ === FLOAT3X3 && typExpr === FLOAT3X3) || (typ === FLOAT4X4 && typExpr === FLOAT4X4)) {
+          return expr;
+        }
+      } else if (tree.op === "-") {
+        if (typ === FLOAT2 && typExpr === FLOAT2) {
+          return `vec2.negate(vec2.create(), ${expr})`;
+        } else if (typ === FLOAT3 && typExpr === FLOAT3) {
+          return `vec3.negate(vec3.create(), ${expr})`;
+        } else if (typ === FLOAT4 && typExpr === FLOAT4) {
+          return `vec4.negate(vec4.create(), ${expr})`;
+        } else if (typ === FLOAT3X3 && typExpr === FLOAT3X3) {
+          return `mat3.multiplyScalar(${expr}, -1.0)`;
+        } else if (typ === FLOAT4X4 && typExpr === FLOAT4X4) {
+          return `mat4.multiplyScalar(${expr}, -1.0)`;
+        }
+      }
+
+      return ast_visit(js.compile_rules, tree, emitter);
+    },
+
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
       let [typ,] = emitter.ir.type_table[tree.id!];
       let [typL,] = emitter.ir.type_table[tree.lhs.id!];
@@ -449,7 +475,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           if (typL === FLOAT2 && typR === FLOAT2) {
             return `vec2.div(vec2.create(), ${lhs}, ${rhs})`;
           } else if (typL === FLOAT2 && (typR === FLOAT || typR === INT)) {
-            return `vec2.scale(vec2.create(), ${lhs}, 1.0/(${rhs}))`;
+            return `vec2.scale(vec2.create(), ${lhs}, 1.0/${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT2) {
             return `vec2.scale(vec2.create(), vec2.inverse(vec2.create(), ${rhs}), ${lhs})`;
           }
@@ -457,7 +483,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           if (typL === FLOAT3 && typR === FLOAT3) {
             return `vec3.div(vec3.create(), ${lhs}, ${rhs})`;
           } else if (typL === FLOAT3 && (typR === FLOAT || typR === INT)) {
-            return `vec3.scale(vec3.create(), ${lhs}, 1.0/(${rhs}))`;
+            return `vec3.scale(vec3.create(), ${lhs}, 1.0/${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3) {
             return `vec3.scale(vec3.create(), vec3.inverse(vec3.create(), ${rhs}), ${lhs})`;
           }
@@ -465,7 +491,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           if (typL === FLOAT4 && typR === FLOAT4) {
             return `vec4.div(vec4.create(), ${lhs}, ${rhs})`;
           } else if (typL === FLOAT4 && (typR === FLOAT || typR === INT)) {
-            return `vec4.scale(vec4.create(), ${lhs}, 1.0/(${rhs}))`;
+            return `vec4.scale(vec4.create(), ${lhs}, 1.0/${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4) {
             return `vec4.scale(vec4.create(), vec4.inverse(vec4.create(), ${rhs}), ${lhs})`;
           }
@@ -473,7 +499,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           if (typL === FLOAT3X3 && typR === FLOAT3X3) {
             return `mat3div(${lhs}, ${rhs})`;
           } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
-            return `mat3.multiplyScalar(${lhs}, 1.0/(${rhs}))`;
+            return `mat3.multiplyScalar(${lhs}, 1.0/${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
             return `mat3.multiplyScalar(mat3inverse(${rhs}), ${lhs})`;
           }
@@ -481,7 +507,7 @@ let compile_rules: ASTVisit<Emitter, string> =
           if (typL === FLOAT4X4 && typL === FLOAT4X4) {
             return `mat4div(${lhs}, ${rhs})`;
           } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
-            return `mat4.multiplyScalar(${lhs}, 1.0/(${rhs}))`;
+            return `mat4.multiplyScalar(${lhs}, 1.0/${rhs})`;
           } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
             return `mat4.multiplyScalar(mat4inverse(${rhs}), ${lhs})`;
           }
