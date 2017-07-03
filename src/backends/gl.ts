@@ -102,8 +102,29 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT3, FLOAT], FLOAT3),
   new FunType([FLOAT4, FLOAT], FLOAT4),
 ]);
-const _GL_UNARY_BINARY_TYPE = new OverloadedType(
-  _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
+const _GL_ARITH_BINARY_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector/Matrix by scalar
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
+  new FunType([FLOAT, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
+  new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+]);
+const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
+  _GL_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
@@ -177,10 +198,10 @@ export const INTRINSICS: TypeMap = {
   ]),
 
   // Binary operators.
-  '+': _GL_UNARY_BINARY_TYPE,
-  '-': _GL_UNARY_BINARY_TYPE,
+  '+': _GL_ARITH_UNARY_BINARY_TYPE,
+  '-': _GL_ARITH_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
-  '/': _GL_BINARY_TYPE,
+  '/': _GL_ARITH_BINARY_TYPE,
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
