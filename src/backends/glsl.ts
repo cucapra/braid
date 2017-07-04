@@ -153,7 +153,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
-    return "TODO GLSL (eric)";
+    return "0";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {

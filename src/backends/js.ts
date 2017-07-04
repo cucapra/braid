@@ -225,7 +225,7 @@ export let compile_rules = {
   },
 
   visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
-    return "TODO JS (eric)";
+    return "void 0";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
