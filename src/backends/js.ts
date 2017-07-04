@@ -208,10 +208,13 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
-    let op = tree.op;
+    let op: string = tree.op;
+
+    // We spell negation as ~, but JavaScript spells it !.
     if (op === '~') {
       op = '!';
     }
+
     return op + paren(p);
   },
 

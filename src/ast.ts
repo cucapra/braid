@@ -81,13 +81,13 @@ export interface LookupNode extends ExpressionNode {
 
 export interface UnaryNode extends ExpressionNode {
   tag: "unary";
-  op: string;
+  op: "+" | "-" | "~";
   expr: ExpressionNode;
 }
 
 export interface BinaryNode extends ExpressionNode {
   tag: "binary";
-  op: string;
+  op: "+" | "-" | "*" | "/" | "==" | "!==";
   lhs: ExpressionNode;
   rhs: ExpressionNode;
 }
