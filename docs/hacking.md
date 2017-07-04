@@ -1,12 +1,5 @@
-title: Braid Compiler Implementation
-[INCLUDE="docs.mdk"]
-
-[TITLE]
-
 This is the documentation for the static staging compiler (&proj;) implementation.
 You may also be interested in the [language documentation](index.html).
-
-[TOC]
 
 
 # Build and Run

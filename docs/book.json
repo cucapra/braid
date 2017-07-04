@@ -1,5 +1,5 @@
 {
     "title": "Braid",
     "author": "Adrian Sampson",
-    "plugins": ["katex"]
+    "plugins": ["katex", "typogr"]
 }

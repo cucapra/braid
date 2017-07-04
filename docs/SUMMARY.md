@@ -1,4 +1,5 @@
 * [Braid](README.md)
+* [Hacking](hacking.md)
 * [The Basics](basics.md)
 * [Multi-Stage Programming](msp.md)
 * [Metaprogramming](meta.md)
