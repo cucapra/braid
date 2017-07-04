@@ -106,7 +106,7 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '/': _BINARY_TYPE,
   '~': new FunType([BOOLEAN], BOOLEAN),
   '==': new FunType([INT, INT], BOOLEAN),
-  '!==': new FunType([INT, INT], BOOLEAN),
+  '!=': new FunType([INT, INT], BOOLEAN),
 };
 
 

@@ -287,7 +287,7 @@ addbinop
 mulbinop
   = [*/]
 comparebinop
-  = "==" / "!=="
+  = "==" / "!="
 
 unop "unary operator"
   = [+\-\~]
