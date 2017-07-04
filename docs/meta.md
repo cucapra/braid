@@ -161,11 +161,11 @@ Use the `-g` flag to the command-line tool to make it emit the *body* of a resid
 For example:
 
 ```sh
-$ echo 'var x = <5>; < [x] + 2>' | &tool;
+$ echo 'var x = <5>; < [x] + 2>' | ssc
 < 5 + 2 >
-$ echo 'var x = <5>; < [x] + 2>' | &tool; -g
+$ echo 'var x = <5>; < [x] + 2>' | ssc -g
 5 + 2
-$ echo 'var x = <5>; < [x] + 2>' | &tool; -g | &tool;
+$ echo 'var x = <5>; < [x] + 2>' | ssc -g | ssc
 7
 ```
 
@@ -173,7 +173,7 @@ The code must be residualizable: it must not contain any persists.
 For example, this will produce an error:
 
 ```sh
-$ echo 'var x = 5; < %[x] + 2>' | &tool; -g
+$ echo 'var x = 5; < %[x] + 2>' | ssc -g
 ```
 
 indicating that the resulting code value `< %0 + 2 >` can't be residualized.
@@ -183,9 +183,9 @@ You can execute this code by passing it into `node`, probably with the `-p` flag
 For example:
 
 ```sh
-$ echo 'var x = <5>; < [x] + 2>' | &tool; -cxg
+$ echo 'var x = <5>; < [x] + 2>' | ssc -cxg
 (... a bunch of JavaScript ...)
-$ echo 'var x = <5>; < [x] + 2>' | &tool; -cxg | node -p
+$ echo 'var x = <5>; < [x] + 2>' | ssc -cxg | node -p
 7
 ```
 

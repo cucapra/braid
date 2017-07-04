@@ -16,20 +16,20 @@ To get the compiler running, install [Node][] and [npm][]. Then, on Unix, just t
     $ npm install
     $ npm run build
 
-Then, you can install the `&tool;` command-line program by typing:
+Then, you can install the `ssc` command-line program by typing:
 
     $ npm link
 
 To make sure it's working, you can try running an example:
 
-    $ &tool; test/basic/add.ss
+    $ ssc test/basic/add.ss
 
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
 
 ## Command Line
 
-Type `&tool; -h` for usage. The most important options are:
+Type `ssc -h` for usage. The most important options are:
 
 * `-c`: Use the compiler to JavaScript. Otherwise, the interpreter is used instead. By default, this dumps the compiled JavaScript code to the standard output.
 - `-x`: When in compiler mode, run the resulting JavaScript code with `eval` and print the output. Together, `-cx` should give you the same output as running the interpreter (with no options at all).

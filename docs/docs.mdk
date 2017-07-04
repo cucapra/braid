@@ -1,7 +1,0 @@
-tool: ssc
-proj: SSC
-lang: Ssl
-lang-gl: Ssgl
-pre,code {
-  replace: "/\&tool\;/\(&tool;\)/g";
-}
