@@ -1,7 +1,7 @@
 This is an example-based introduction to programming with static staging.
 It describes the static staging compiler, its basic language Braid, and its graphics-centric extended language BraidGL.
 
-# The Basics { #basics }
+# The Basics {#basics}
 
 Braid has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, and define functions with `def`:
 
@@ -111,7 +111,7 @@ You'll get a type error if the annotations don't match:
       !c;
     runit(js<2>)
 
-## N-Level Escapes { #multiescape }
+## N-Level Escapes {#multiescape}
 
 Braid generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
 
@@ -329,7 +329,7 @@ $ echo 'var x = <5>; < [x] + 2>' | &tool; -cxg | node -p
 If you like, you can save this JavaScript code to a file to execute it later.
 
 
-# Graphics { data-mode=webgl }
+# Graphics
 
 Braid has a graphics-oriented extension called BraidGL. In BraidGL mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
 
