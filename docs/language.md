@@ -120,9 +120,9 @@ Braid generalizes escapes to move across multiple stages at once. You can write 
 
 The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote.
 
-At first glance, it might look like `n[e]` or `%n[e]` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
+At first glance, it might look like `n[e]` or `%n[e]` is just syntactic sugar for $$n$$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
 
-Take another look at the splicing example above. It uses a form like `< ... < 2[e] > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
+Take another look at the splicing example above. It uses a form like `< ... < 2[e] > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $$e$$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
 
     var c = <5>;
     < 2 + !< 8 * 2[c] > >
@@ -132,7 +132,7 @@ we'll see a splice-free nested program, `< 2 + !< 8 * 5 > >`. (You may need to s
     var c = <<5>>;
     < 2 + !< 8 * [[c]] > >
 
-which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5 into the inner quote when it eventually executes. Nesting a persist inside a splice, as in `[%[c]]`, has a similar drawback. In fact, it is impossible to implement $n$-level escapes as syntactic sugar: they are required to splice directly into nested quotes. We'll also see below that they model certain CPU--GPU communication channels that can skip stages.
+which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5 into the inner quote when it eventually executes. Nesting a persist inside a splice, as in `[%[c]]`, has a similar drawback. In fact, it is impossible to implement $$n$$-level escapes as syntactic sugar: they are required to splice directly into nested quotes. We'll also see below that they model certain CPU--GPU communication channels that can skip stages.
 
 
 # Metaprogramming
@@ -174,7 +174,7 @@ But for metaprogramming, scopes that span multiple quotes can be important. Say,
       >;
     !sphere(4.0, 1)
 
-You need to share the value of `r` between the outer quote and the first inner quote (to compute the volume as $\frac{4}{3} \pi r^3$).
+You need to share the value of `r` between the outer quote and the first inner quote (to compute the volume as $$\frac{4}{3} \pi r^3$$).
 
 To make this work, Braid supports special kinds of escape and quote that can preserve scopes. They're called *open code* quotes, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
 
@@ -405,7 +405,7 @@ While sharing data between stages is straightforward in Braid's homogeneous Java
 
 In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the `model` matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a [uniform variable][uniform], because the value is constant across invocations of the shader body. In the compiled code for the above example, you'll see several calls like `gl.uniformMatrix4fv(...)`. That's [the WebGL function for binding uniforms][uniformMatrix4fv] of the appropriate type.
 
-It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][#multiescape]. You can use explicit two-level escapes like `2[ e ]` or implicit cross-stage references to get this effect.
+It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$$n$$-level escapes][#multiescape]. You can use explicit two-level escapes like `2[ e ]` or implicit cross-stage references to get this effect.
 
 If different stages use the same uniform variable, BraidGL only needs to bind it once.
 
