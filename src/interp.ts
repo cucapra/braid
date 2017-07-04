@@ -207,7 +207,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
         case "==":
           v = v1 == v2; break;
         case "!==":
-          v = v1 != v2; break;
+          v = v1 !== v2; break;
         default:
           throw "error: unknown binary operator " + tree.op;
       }
