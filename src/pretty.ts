@@ -65,7 +65,7 @@ let Pretty: ASTVisit<void, string> = {
   },
 
   visit_typealias(tree: ast.TypeAliasNode, _: void): string {
-    return "TODO Pretty (eric)";
+    return `type ${tree.ident} = ${pretty_type_ast(tree.type)}`;
   },
 
   visit_quote(tree: ast.QuoteNode, _: void): string {
@@ -194,7 +194,7 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   },
 
   visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
-    return "TODO (eric)";
+    return tree.types.map(pretty_type_paren).join(" | ");
   },
 }
 
