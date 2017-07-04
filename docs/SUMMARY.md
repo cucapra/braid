@@ -1,2 +1,6 @@
 * [Braid](README.md)
-* [Language](language.md)
+* [The Basics](basics.md)
+* [Multi-Stage Programming](msp.md)
+* [Metaprogramming](meta.md)
+* [Graphics](gl.md)
+* [Loose Ends](status.md)

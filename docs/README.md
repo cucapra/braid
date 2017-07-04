@@ -1,5 +1,5 @@
 Braid
 =====
 
-This is the documentation for Braid, a programming language with static staging.
-It introduces the language itself and its application to real-time 3D rendering.
+This is an example-based introduction to programming with static staging.
+It describes the static staging compiler, its basic language Braid, and its graphics-centric extended language BraidGL.
