@@ -1,35 +1,5 @@
-title: Braid
-heading base: 2
-script: docs.js
-embed: 0
-section depth: 1
-toc depth: 2
-[INCLUDE="docs.mdk"]
-
-~Pre:
-  class=example
-
-<style>
-.example {
-  cursor: pointer;
-}
-.example:hover {
-  background: #eee;
-}
-.madoko p, .madoko li {
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
-  -ms-hyphens: auto;
-  hyphens: auto;
-}
-</style>
-
-[TITLE]
-
 This is an example-based introduction to programming with static staging.
 It describes the static staging compiler, its basic language Braid, and its graphics-centric extended language BraidGL.
-
-[TOC]
 
 # The Basics { #basics }
 
