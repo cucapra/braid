@@ -9,6 +9,22 @@
     obj.location.filename = options.filename;
     return obj;
   }
+
+  // From a "flat" list of components in a binary operation, build a nested
+  // tree of expressions using a left-associative style. `rhs` is an AST;
+  // `lhss` is a list of 3-tuples where the first element is an AST and the
+  // third element is an operator. (The second element is ignored.) The `lhss`
+  // list can be empty. The result has locations attached to each AST node.
+  function buildBinary(lhss, rhs) {
+    if (lhss.length === 0) {
+      return setLocation(rhs);
+    } else {
+      var last = lhss[lhss.length - 1];
+      var rest = lhss.slice(0, -1);
+      var lhs = buildBinary(rest, last[0]);
+      return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: last[2]});
+    }
+  }
 }
 
 Program
@@ -19,7 +35,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign / TypeAlias /
+  = Var / Extern / Fun / CDef / If / While / Assign / Binary / Unary / TypeAlias /
   CCall / Call / MacroCall / TermExpr
 
 SeqExpr
@@ -85,13 +101,13 @@ Unary
 Binary
   = CompareBinary / AddBinary / MulBinary
 AddBinary
-  = lhs:(MulBinary / Operand) _ op:addbinop _ rhs:(Binary / Operand)
-  { return setLocation({tag: "binary", lhs: lhs, op: op, rhs: rhs}); }
+  = lhss:(e:(MulBinary / Operand) _ op:addbinop)* _ rhs:(MulBinary / Operand)
+  { return buildBinary(lhss, rhs); }
 MulBinary
-  = lhs:Operand _ op:mulbinop _ rhs:(MulBinary / Operand)
-  { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
+  = lhss:(e:Operand _ op:mulbinop)* _ rhs:Operand
+  { return buildBinary(lhss, rhs); }
 CompareBinary
-  = lhs:Operand _ op:comparebinop _ rhs:Operand
+  = lhs:(AddBinary / Operand) _ op:comparebinop _ rhs:(AddBinary / Operand)
   { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
 
 Quote
