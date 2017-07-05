@@ -72,6 +72,11 @@ test: $(CLI_JS)
 dump-gl: $(CLI_JS)
 	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.ss)
 
+# For type tests, also just dump output to check for compile.
+.PHONY: type-test
+type-test: $(CLI_JS)
+	@ node $(CLI_JS) -c $(wildcard test/type/*.ss)
+
 
 # An asset-munging tool.
 
@@ -81,61 +86,33 @@ tool/munge.js: tool/munge.ts $(TSC)
 
 # Documentation.
 
-DOC_PAGES := index hacking
-DOC_BUILD := docs/build
-
-.PHONY: docs watch-docs
-docs: $(DOC_PAGES:%=$(DOC_BUILD)/%.html) $(DOC_BUILD)/docs.js
-
-watch-docs:
-	liveserve -h 0.0.0.0 -w docs -x 'make docs' -i $(DOC_BUILD) $(DOC_BUILD)
-
-$(DOC_BUILD)/%.html: docs/%.md $(call npmdep,madoko)
-	cd docs; $(call npmbin,madoko) --odir=build ../$<
-
-$(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
-	$(TSC) --out $@ $<
+.PHONY: docs
+docs:
+	cd $@ ; gitbook build
 
 
-# Deploy the dingus and docs to the gh-pages branch.
+# Put the dingus and docs together into a _web directory (and publish).
 
-.PHONY: site deploy home
+.PHONY: web deploy
 
-DEPLOY_DIR := _site
+DEPLOY_DIR := _web
 RSYNC := rsync -a --delete --prune-empty-dirs \
 	--exclude node_modules --exclude build
-site: dingus docs home
+web: dingus docs
 	mkdir -p $(DEPLOY_DIR)/docs
-	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
-		--include '*/' --exclude '*' \
-		docs/build/* $(DEPLOY_DIR)/docs
+	$(RSYNC) docs/_book/* $(DEPLOY_DIR)/docs
 	mkdir -p $(DEPLOY_DIR)/dingus
 	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
 		--exclude 'assets/*.zip' --include 'assets/*' --include 'assets/*/*' \
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
-	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
 	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
 
-DEPLOY_BRANCH := gh-pages
-deploy: site
-	git symbolic-ref HEAD refs/heads/$(DEPLOY_BRANCH)
-
-	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
-	git --work-tree $(DEPLOY_DIR) add --all
-	if git --work-tree $(DEPLOY_DIR) diff-index --quiet HEAD -- ; then \
-	  echo "no changes" ; \
-	else \
-	  git --work-tree $(DEPLOY_DIR) commit -m "deploy [ci skip]" ; \
-	  git push origin $(DEPLOY_BRANCH) ; \
-	fi
-
-	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
-	git reset --mixed
-
-home:
-	make -C site
-
+RSYNCARGS := --compress --recursive --checksum --itemize-changes \
+	--delete -e ssh
+DEST := dh:domains/adriansampson.net/braid
+deploy: web
+	rsync $(RSYNCARGS) _web/ $(DEST)
 
 
 # Lint.

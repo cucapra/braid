@@ -4,6 +4,10 @@
   "private": true,
 
   "dependencies": {
+    "open": "^0.0.5",
     "restify": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^7.0.13"
   }
 }

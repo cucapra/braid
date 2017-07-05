@@ -11,7 +11,7 @@ export type NameMap = { [name: string]: number };
 type NameStack = NameMap[];
 
 // Like overlay, but works on the top of a NameStack.
-function head_overlay <T> (a: T[]): T[] {
+function head_overlay <T extends Object> (a: T[]): T[] {
   let hm = overlay(hd(a));
   return cons(hm, tl(a));
 }

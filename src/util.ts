@@ -30,7 +30,7 @@ export function assign <T, U> (target: T, ...sources: U[]): T & U {
 
 // A bit of a hack that abuses prototypes to create overlay. Return a copy of
 // the argument where changing the new object won't affect the original.
-export function overlay<T>(base: T): T {
+export function overlay<T extends Object>(base: T): T {
   return <T> Object.create(base);
 }
 
@@ -172,7 +172,8 @@ export function location(node: ast.SyntaxNode): string {
   let start: ast.LocationData = node.location.start;
   let end: ast.LocationData = node.location.end;
   return "(" + start.line + "," + start.column + ") to (" 
-    + end.line + "," + end.column + ")";
+    + end.line + "," + end.column + ")"
+    + " in file " + node.location.filename;
 }
 
 export function locationError(node: ast.SyntaxNode): string {
