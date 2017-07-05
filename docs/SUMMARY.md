@@ -1,7 +1,9 @@
 * [Getting Started](README.md)
-* [Hacking](hacking.md)
-* [The Basics](basics.md)
-* [Multi-Stage Programming](msp.md)
-* [Metaprogramming](meta.md)
-* [Graphics](gl.md)
-* [Loose Ends](status.md)
+* Language Reference
+    * [The Basics](basics.md)
+    * [Multi-Stage Programming](msp.md)
+    * [Metaprogramming](meta.md)
+    * [Graphics](gl.md)
+* Internals
+    * [Compiler Architecture](hacking.md)
+    * [Loose Ends](status.md)
