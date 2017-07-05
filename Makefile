@@ -99,14 +99,13 @@ DEPLOY_DIR := _web
 RSYNC := rsync -a --delete --prune-empty-dirs \
 	--exclude node_modules --exclude build
 web: dingus docs
-	mkdir -p $(DEPLOY_DIR)/docs
-	$(RSYNC) docs/_book/* $(DEPLOY_DIR)/docs
+	rm -rf $(DEPLOY_DIR)/docs
+	cp -r docs/_book $(DEPLOY_DIR)/docs
+	rm -rf $(DEPLOY_DIR)/dingus
 	mkdir -p $(DEPLOY_DIR)/dingus
-	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
-		--exclude 'assets/*.zip' --include 'assets/*' --include 'assets/*/*' \
-		--include '*/' --exclude '*' \
-		dingus/* $(DEPLOY_DIR)/dingus
+	cp -r dingus/{assets,*.css,*.html,ssc.bundle.js} $(DEPLOY_DIR)/dingus
 	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
+	cp site/* _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \
 	--delete -e ssh
