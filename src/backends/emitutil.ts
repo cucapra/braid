@@ -94,14 +94,15 @@ export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
   return out;
 }
 
-// A helper for emitting children of root
+// A helper for emitting children of a root node.
 export function emit_exprs(emitter: Emitter, exprs: ast.ExpressionNode[], sep: string,
   pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
   let out = "";
-  for (var i = 0; i < exprs.length; i++) {
+  for (let i = 0; i < exprs.length; i++) {
     out += emit(emitter, exprs[i]);
-    if (i != exprs.length-1) out += sep;
+    if (i !== exprs.length - 1)
+      out += sep;
   }
   return out;
 }
@@ -202,7 +203,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
     }
   );
   return ast_visit(rules, tree, null);
-};
+}
 
 /**
  * A predicate for use with `emit_body` that decides whether an expression is
@@ -245,7 +246,7 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {
   let exprs: ast.ExpressionNode[] = [];
-  if (tree.tag == "root") {
+  if (tree.tag === "root") {
     for (let child of (tree as ast.RootNode).children) {
       exprs = exprs.concat(flatten_seq(child));
     }
