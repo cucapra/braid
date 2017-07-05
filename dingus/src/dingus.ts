@@ -62,7 +62,7 @@ function ssc_run(code: string, mode: string)
   let jscode: string | null = null;
   let ast: ast.SyntaxNode | null = null;
   let glcode: string | null = null;
-  driver.frontend(config, code, null, function (tree, types) {
+  driver.frontend(config, [code], null, function (tree, types) {
     ast = tree;
 
     if (mode === "interp") {
