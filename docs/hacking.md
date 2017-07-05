@@ -1,8 +1,6 @@
 # Compiler Architecture
 
-~ Figure { caption: "The primary data structures in &proj;." }
-![static staging compiler architecture](alltheworld.svg){ width: 400px; }
-~
+![static staging compiler architecture](alltheworld.svg)
 
 The main phases in the compiler are:
 
@@ -86,7 +84,7 @@ For example, `Glue` records the OpenGL name of the parameter to use for communic
 # Scope Lifting
 
 [Lambda lifting][] is the standard technique for compiling languages with closures.
-&proj; generalizes lambda lifting to apply to both functions and quotes simultaneously.
+Braid generalizes lambda lifting to apply to both functions and quotes simultaneously.
 The compiler calls the combined transformation *scope lifting*.
 
 The idea behind lambda lifting is to take every function and turn it into a *procedure* that doesn't close over any state---all of its parameters must be provided explicitly rather than picked up from the surrounding environment.
@@ -97,11 +95,11 @@ Quote lifting has a similar goal: extract all the quotes mixed into a program an
 (Think of them as strings embedded in the `.text` section of an executable binary.)
 Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment---the environment contains the materialized outer-stage values.
 
-General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. &proj;'s scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
+General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. Braid's scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
 
 ## Materialization Generalizes Free Variables
 
-To compile materialization escapes and free variables in quotes, &proj;'s quote-lifting analysis generalizes the concept of free variables in functions.
+To compile materialization escapes and free variables in quotes, Braid's quote-lifting analysis generalizes the concept of free variables in functions.
 As an example, this program uses a materialization inside of a function body:
 
     var y = 2;
@@ -110,7 +108,7 @@ As an example, this program uses a materialization inside of a function body:
       f 3
     >
 
-After scope lifting, we should have a function contained in a string literal. In &proj;'s JavaScript backend, this looks something like:
+After scope lifting, we should have a function contained in a string literal. In Braid's JavaScript backend, this looks something like:
 
     var prog1 =
     "function func1(x, persist1) {" +
@@ -183,7 +181,7 @@ There are three stages here: the outer stage and two nested quotes. The splicing
     ";
     eval(prog1.replace("__SPLICE__", "5"));
 
-In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the &proj; compiler would have):
+In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the Braid compiler would have):
 
     var prog1 = "eval(prog2)";
     var prog2 = "__SPLICE__ + 4";
@@ -192,7 +190,7 @@ because this would make it impossible to splice into `prog2`'s text when prepari
 
 Incidentally, the correct nesting for $n$-level escapes also makes it possible to *residualize* programs. Since a quote contains everything it needs to execute, it is possible to write the program to a file and execute it later.
 
-The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When &proj; eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
+The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When Braid eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
 
 
 # Emitting JavaScript
@@ -244,12 +242,12 @@ The `var` line pre-declares all the variables that we use in the code to make th
 
 ## `extern`
 
-To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your &proj; program. [For example:][extern]
+To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your Braid program. [For example:][extern]
 
     extern Math.pow: Int Int -> Int;
     Math.pow 7 2
 
-That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an &proj; closure value:
+That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an Braid closure value:
 
     var closure = ({ proc: Math.pow, env: [] });
     var args = [(7), (2)].concat(closure.env);
@@ -265,7 +263,7 @@ The compiler infrastructure also a has a notion of intrinsics, which are just ex
 
 generates code that actually assigns to the variable `gl_Color` defined in the target. (An ordinary mutation would update a new variable generated by the compiler.)
 
-## Function Quotes { #fquote }
+## Function Quotes {#fquote}
 
 When splicing is not required, `eval` shouldn't be required either---all the code can be emitted ahead of time.
 The compiler supports *function quotes*, annotated like `js< ... >`, that get compiled as plain JavaScript functions instead of strings.
@@ -289,7 +287,7 @@ The type system is also aware of annotations: for example, you will get an error
 
 ## Render Stage and Unmetaprogrammed Quotes
 
-The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging---clearly, the same issues of persistence and deferral arise. So we use a "render" stage, which must be a [`js<...>` function quote][#fquote] that emits JavaScript code that draws stuff.
+The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging---clearly, the same issues of persistence and deferral arise. So we use a "render" stage, which must be a [`js<...>` function quote](#fquote) that emits JavaScript code that draws stuff.
 
 ## Declaring In/Out Variables
 

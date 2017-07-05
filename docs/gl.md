@@ -49,7 +49,7 @@ There's a lot going on even in this small example. The next two sections will in
 
 ## WebGL and GLSL Intrinsics
 
-BraidGL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
+BraidGL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s](/basics.md) in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
 
 [preamble]: https://github.com/sampsyo/braid/blob/master/dingus/gl_preamble.ss
 
