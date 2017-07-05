@@ -42,14 +42,58 @@ function get_shader(gl, vertex_source, fragment_source) {
 }
 
 // WebGL equivalents of GLSL functions.
-function vec3(x, y, z) {
-  var out = new Float32Array(3);
-  out[0] = x || 0.0;
-  out[1] = y || 0.0;
-  out[2] = z || 0.0;
+// Create vec3 using vec4
+function vec3fromvec4(v4) {
+  var out = vec3.create();
+  out[0] = v4[0] || 0.0;
+  out[1] = v4[1] || 0.0;
+  out[2] = v4[2] || 0.0;
   return out;
 }
 
+// Create vec4 using vec3
+function vec4fromvec3(v3, x) {
+  var out = vec4.create();
+  out[0] = v3[0] || 0.0;
+  out[1] = v3[1] || 0.0;
+  out[2] = v3[2] || 0.0;
+  out[3] = x || 0.0; 
+  return out;
+}
+
+// vector element-wise absolute value
+function vecAbs(v) {
+  var out;
+  if (v.length === 2) {
+    out = vec2.create();
+  } else if (v.length === 3) {
+    out = vec3.create();
+  } else {
+    out = vec4.create();
+  }
+
+  for (var i = 0; i < v.length; i++) {
+    out[i] = Math.abs(v[i]);
+  }
+}
+
+// normalize a scalar
+// s > 0: s = 1
+// s = 0: s = 0
+// s < 0: s = -1
+function normalizeScalar(s) {
+  var out;
+  if (s > 0) {
+    out = 1;
+  } else if (s < 0) {
+    out = -1;
+  } else {
+    out = 0;
+  }
+  return out;
+}
+
+// mat3 element-wise division
 function mat3div(a, b) {
   var out = mat3.create();
   out[0] = a[0]/b[0];
@@ -64,6 +108,7 @@ function mat3div(a, b) {
   return out;
 }
 
+// mat3 element-wise division
 function mat4div(a, b) {
   var out = mat4.create();
   out[0] = a[0]/b[0];
@@ -85,11 +130,13 @@ function mat4div(a, b) {
   return out;
 }
 
+// mat3 element-wise inverse
 function mat3inverse(a) {
   var one = mat3.fromValues(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
   return mat3div(one, a);
 }
 
+// mat4 element-wise inverse
 function mat4inverse(a) {
   var one = mat4.fromValues(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
   return mat4div(one, a);
@@ -343,6 +390,58 @@ let compile_rules: ASTVisit<Emitter, string> =
       } else if (render_expr(tree)) {
         // Pass through the code argument.
         return emit(emitter, tree.args[0]);
+      } else if (tree.fun.tag === "lookup") {
+        // Emit arguments
+        var args : string[] = [];
+        for (let arg of tree.args) {
+          args.push(paren(emit(emitter, arg)));
+        }
+        var func = (tree.fun as ast.LookupNode).ident;
+
+        if (func === "vec2") {
+          if (args.length <= 1) {
+            return `vec2.fromValues(${args[0]}, ${args[0]})`;
+          } else {
+            return `vec2.fromValues(${args[0]}, ${args[1]})`;
+          }
+        } else if (func === "vec3") {
+          if (args.length <= 1) {
+            let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
+            if (typ0 === FLOAT || typ0 === INT) {
+              return `vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]})`;  
+            } else if (typ0 === FLOAT4) {
+              return `vec3fromvec4(${args[0]})`;
+            }
+          } else {
+            return `vec3.fromValues(${args[0]}, ${args[1]}, ${args[2]})`; 
+          }
+        } else if (func === "vec4") {
+          if (args.length <= 1) {
+            return `vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]})`;  
+          } else if (args.length == 2) {
+            return `vec4fromvec3(${args[0]}, ${args[1]})`;
+          } else {
+            return `vec4.fromValues(${args[0]}, ${args[1]}, ${args[2]}, ${args[3]})`; 
+          }
+        } else if (func === "abs") {
+          let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
+          if (typ0 === INT || typ0 === FLOAT) {
+            return `Math.abs(${args[0]})`;
+          } else {
+            return `vecAbs(${args[0]})`;
+          }
+        } else if (func === "normalize") {
+          let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
+          if (typ0 === INT || typ0 === FLOAT) {
+            return `normalizeScalar(${args[0]})`;
+          } else if (typ0 === FLOAT2) {
+            return `vec2.normalize(vec2.create(), ${args[0]})`;
+          } else if (typ0 === FLOAT3) {
+            return `vec3.normalize(vec3.create(), ${args[0]})`;
+          } else if (typ0 === FLOAT4) {
+            return `vec4.normalize(vec4.create(), ${args[0]})`;
+          }
+        }
       }
 
       // An ordinary function call.
@@ -353,7 +452,6 @@ let compile_rules: ASTVisit<Emitter, string> =
       let [typ,] = emitter.ir.type_table[tree.id!];
       let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
-      // TODO: need to consider matrices?
       if (tree.op === "+") {
         if ((typ === FLOAT2 && typExpr === FLOAT2) || (typ === FLOAT3 && typExpr === FLOAT3) || (typ === FLOAT4 && typExpr === FLOAT4) || (typ === FLOAT3X3 && typExpr === FLOAT3X3) || (typ === FLOAT4X4 && typExpr === FLOAT4X4)) {
           return expr;
@@ -371,7 +469,6 @@ let compile_rules: ASTVisit<Emitter, string> =
           return `mat4.multiplyScalar(${expr}, -1.0)`;
         }
       }
-
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
