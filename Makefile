@@ -9,7 +9,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ tool/munge.js node_modules
+	rm -rf parser.js build/ tool/munge.js node_modules _web/
 	make -C dingus clean
 
 include ts.mk

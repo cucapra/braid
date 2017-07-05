@@ -1,3 +1,5 @@
 collected
 latencies.json
 latencies.mdk
+bench/phong-stif-diffuse.ss
+bench/head-macro-nobump.ss
