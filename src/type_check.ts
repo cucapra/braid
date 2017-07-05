@@ -744,7 +744,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   },
 
   visit_overloaded(tree: ast.OverloadedTypeNode, types: TypeMap) {
-    let ts = []
+    let ts: Type[] = [];
     for (let t of tree.types) {
       ts.push(get_type(t, types));
     }
