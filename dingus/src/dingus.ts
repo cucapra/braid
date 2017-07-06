@@ -300,6 +300,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
 
         console.log(glcode);
+
+        // Set up the WebGL viewer context. This gives us a function we can
+        // use to update the program in the future.
         if (!update_gl) {
           update_gl = start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
             if (config.fpsCallback) {
@@ -311,9 +314,13 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
             }
           }, config.perfMode);
         }
+
+        // Inject the new code.
         console.log("Loading GL resources...");
         update_gl(glcode).then(() => {
           console.log("...loaded.");
+        }, (err) => {
+          console.error(err);
         });
       } else {
         // Just show the output value.

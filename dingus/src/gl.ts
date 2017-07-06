@@ -200,27 +200,26 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   // A callback to return a function that lets the client update the code.
   let assets: glrt.Assets = {};
   return (shfl_code?: string, dl?: boolean) => {
-    return new Promise((resolve, reject) => {
-      if (shfl_code) {
-        // Execute the compiled SHFL code in context.
-        let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
-                                    drawtime);
+    if (dl !== undefined) {
+      download_image = dl;
+    }
 
-        // Invoke the setup stage. The setup stage returns a function to invoke
-        // for the render stage.
-        glrt.load_and_run<any>(shfl_program).then((func) => {
-          shfl_render = func;
-          // The updater resolves once the program is actually in place to
-          // render.
-          resolve();
-        });
-      }
+    fit();
 
-      if (dl !== undefined) {
-        download_image = dl;
-      }
+    if (shfl_code) {
+      // Execute the compiled SHFL code in context.
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
+                                  drawtime);
 
-      fit();
-    });
+      // Invoke the setup stage. The setup stage returns a function to invoke
+      // for the render stage. It's asynchronous because we might need to load
+      // assets before we get the render code; our promise resolves when we're
+      // ready to render.
+      return glrt.load_and_run<any>(shfl_program).then((func) => {
+        shfl_render = func;
+      });
+    } else {
+      return Promise.resolve();
+    }
   };
 }
