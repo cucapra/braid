@@ -1,6 +1,6 @@
 # Multi-Stage Programming
 
-Braid, as the name implies, is a [multi-stage programming language][metaml]. This section introduces its constructs for deferring execution (quote), "un-deferring" expressions (escape), and executing deferred code (run).
+Braid is a [multi-stage programming language][metaml]. This section introduces its constructs for deferring execution (quote), "un-deferring" expressions (escape), and executing deferred code (run).
 
 [metaml]: http://dl.acm.org/citation.cfm?id=259019
 [metaocaml]: http://okmij.org/ftp/ML/MetaOCaml.html#implementing-staging

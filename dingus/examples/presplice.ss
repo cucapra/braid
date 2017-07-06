@@ -2,9 +2,10 @@
 # mode: compile
 # ---
 
-var flag = 1;
+# Try switching this between true and false.
+var flag = true;
 
-# Try annotating this quote with an `f`; it still works.
+# Try annotating this quote with `js`; it still works.
 !<
   var x = 4;
   var y = 5;

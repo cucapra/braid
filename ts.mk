@@ -11,9 +11,9 @@ npmbin = $(shell npm bin)/$(1)
 
 
 # Install tools and dependencies from npm. We assume the dependency is listed
-# in the project's package.json.
+# in the project's package.json so `npm install` will install it.
 
-node_modules/%/package.json: package.json
+node_modules/%/package.json:
 	npm install
 	touch $@
 

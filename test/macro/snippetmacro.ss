@@ -1,4 +1,4 @@
-var spif = fun c:<Boolean> t:$<Int> f:$<Int> -> if !c t f;
+var spif = fun c:<Bool> t:$<Int> f:$<Int> -> if !c t f;
 
 <
   var x = 2;

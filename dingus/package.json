@@ -1,32 +1,27 @@
 {
-  "name": "alltheworld",
+  "name": "braid-dingus",
   "version": "1.0.0",
   "private": true,
-
   "scripts": {
     "bundle": "webpack --output-library sscDingus build/dingus/src/dingus.js ssc.bundle.js",
     "build": "tsc && npm run bundle"
   },
-
   "dependencies": {
-    "canvas-orbit-camera": "^1.0.0",
-    "eye-vector": "^0.0.0",
-    "gl-matrix": "^2.3.2",
     "angle-normals": "^1.0.0",
-    "webgl-obj-loader": "^0.1.1",
-    "seedrandom": "^2.4.2",
-
-    "codemirror": "^5.12.0",
-    "d3": "^3.5.16"
+    "canvas-orbit-camera": "^1.0.0",
+    "codemirror": "^5.27.4",
+    "d3": "^3.5.16",
+    "eye-vector": "^1.0.0",
+    "gl-matrix": "^2.3.2",
+    "seedrandom": "^2.4.3",
+    "webgl-obj-loader": "^0.1.1"
   },
   "devDependencies": {
-    "browserify": "^11.2.0",
-    "webpack": "^1.12.14",
-
-    "typescript": "^2.0.3",
-    "pegjs": "^0.9.0",
-
-    "@types/codemirror": "^0.0.33",
-    "@types/d3": "^3.5.36"
+    "@types/codemirror": "^0.0.41",
+    "@types/d3": "^3.5.36",
+    "browserify": "^14.4.0",
+    "pegjs": "^0.10.0",
+    "typescript": "^2.4.1",
+    "webpack": "^3.0.0"
   }
 }

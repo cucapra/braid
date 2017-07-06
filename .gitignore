@@ -1,10 +1,9 @@
 node_modules
 typings
+yarn.lock
+package-lock.json
 
 build/
 parser.js
 tool/munge.js
 _web/
-
-*.js
-**/*.js

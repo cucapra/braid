@@ -7,3 +7,4 @@
 * Internals
     * [Compiler Architecture](hacking.md)
     * [Loose Ends](status.md)
+    * [OOPSLA Artifact](artifact.md)

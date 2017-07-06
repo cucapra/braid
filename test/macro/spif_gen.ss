@@ -6,7 +6,7 @@ var flag2 = <true>;
 
 # A conditional specialized `if`. If `s` is true, then this runs an `if`
 # immediately. If it's false, then we insert an `if` into the code.
-var spif? = fun s:<Boolean> c:<Boolean> t:<Int> f:<Int> ->
+var spif? = fun s:<Bool> c:<Bool> t:<Int> f:<Int> ->
     if !s (if !c t f) < if [c] [t] [f] >;
 
 # This is the program we're generating.

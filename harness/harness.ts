@@ -4,10 +4,11 @@
  * performance data to disk.
  */
 
-const restify = require('restify');
-const open_url = require('open');
-const querystring = require('querystring');
-const fs = require('fs');
+import open_url = require('open');
+import * as querystring from 'querystring';
+import * as fs from 'fs';
+import * as http from 'http';
+import { parse as url_parse } from 'url';
 
 /**
  * Read a file to a string.
@@ -25,47 +26,69 @@ function read_string(filename: string): Promise<string> {
 }
 
 /**
+ * Send a file from the filesystem as an HTTP response.
+ */
+export function sendfile(res: http.ServerResponse, path: string, mime='text/html') {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', mime);
+
+  let stream = fs.createReadStream(path);
+  stream.on('error', (e: any) => {
+    if (e.code === 'ENOENT') {
+      console.error(`static path ${path} not found`);
+      res.statusCode = 404;
+      res.end('not found');
+    } else {
+      console.error(`filesystem error: ${e}`);
+      res.statusCode = 500;
+      res.end('internal server error');
+    }
+  });
+  stream.pipe(res);
+}
+
+const MIME_TYPES: { [e: string]: string } = {
+  'js': 'application/javascript',
+  'css': 'text/css',
+};
+
+/**
  * Start the server and return its URL.
  */
 function serve(log: (msg: any) => any): Promise<string> {
-  let server = restify.createServer();
-  let qp = restify.queryParser({ mapParams: false });
+  // Create a Web server that serves the in-browser code and collects results.
+  let server = http.createServer((req, res) => {
+    let url = url_parse(req.url);
 
-  // Log messages to a file.
-  server.get('/log', qp, (req: any, res: any, next: any) => {
-    let out = log(JSON.parse(req.query['msg']));
-    res.send(out);
-    return next();
-  });
-
-  // Serve the main HTML and JS files.
-  server.get('/', restify.serveStatic({
-    // `directory: '.'` appears to be broken:
-    // https://github.com/restify/node-restify/issues/549
-    directory: '../harness',
-    file: 'index.html',
-    maxAge: 0,
-  }));
-  server.get('/client.js', restify.serveStatic({
-    directory: './build',
-    file: 'client.js',
-    maxAge: 0,
-  }));
-
-  // Serve the dingus assets.
-  server.get(/\/.*/, restify.serveStatic({
-    directory: '../dingus',
-    default: 'index.html',
-    maxAge: 0,
-  }));
-
-  // Show errors. This should be a Restify default.
-  server.on('uncaughtException', (req: any, res: any, route: any, err: any) => {
-    if (err.stack) {
-      console.error(err.stack);
-    } else {
-      console.error(err);
+    // Log messages to a file.
+    if (url.pathname === '/log') {
+      let out = log(JSON.parse(url.query['msg']));
+      res.end(out);
+      return;
     }
+
+    // Serve the main HTML and JS files.
+    if (url.pathname === '/') {
+      sendfile(res, 'index.html');
+      return;
+    }
+    if (url.pathname === '/client.js') {
+      sendfile(res, 'build/client.js', MIME_TYPES['js']);
+      return;
+    }
+
+    // Other paths: serve the dingus assets.
+    // TODO MIME?
+    let path = '../dingus' + url.pathname;
+    let mime = 'text/html';
+    for (let ext in MIME_TYPES) {
+      if (url.pathname.lastIndexOf('.' + ext) ===
+          url.pathname.length - ext.length - 1) {
+        mime = MIME_TYPES[ext];
+        break;
+      }
+    }
+    sendfile(res, path, mime);
   });
 
   // More filling in the blanks: log each request as it comes in.

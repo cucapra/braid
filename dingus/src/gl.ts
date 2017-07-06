@@ -65,45 +65,20 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 }
 
 /**
- * Load assets for the dingus.
- */
-function load_assets(): Promise<glrt.Assets> {
-  return glrt.load_assets([
-    "cube.obj",
-    "default.png",
-    "teapot.obj",
-    "bunny.obj",
-    "head.obj",
-    "lambertian.jpg",
-    "bump-lowRes.png",
-    "couch/couch.vtx.raw",
-    "couch/T_Leather_D.png",
-    "couch/T_Couch_AO.png",
-    "couch/T_Couch_Mask.png",
-    "couch/T_Leather_S.png",
-    "couch/T_Leather_N.png",
-    "couch/T_Couch_N.png",
-    "rock0.vtx.raw",
-    "rock1.vtx.raw",
-  ]);
-}
-
-/**
  * The type of a callback that handles performance information.
  */
 export type PerfHandler =
   (frames: number, ms: number, latencies: number[], draw_latencies: number[])
   => void;
 
-export type Update = (code?: string, dl?: boolean) => void;
+export type Update = (code?: string, dl?: boolean) => Promise<void>;
 
 /**
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
 export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
-                         perfMode?: boolean,
-                         enableAssets: boolean = true): Promise<Update>
+                         perfMode?: boolean): Update
 {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -223,29 +198,28 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   nextFrame();
 
   // A callback to return a function that lets the client update the code.
-  let start = (assets: glrt.Assets) => (shfl_code?: string, dl?: boolean) => {
-    console.log('starting with assets', assets);
-
-    if (shfl_code) {
-      // Execute the compiled SHFL code in context.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
-                                   drawtime);
-
-      // Invoke the setup stage.
-      shfl_render = shfl_program();
-    }
-
+  let assets: glrt.Assets = {};
+  return (shfl_code?: string, dl?: boolean) => {
     if (dl !== undefined) {
       download_image = dl;
     }
 
     fit();
-  };
 
-  // Load the assets (or pass empty assets if they're disabled).
-  if (enableAssets) {
-    return load_assets().then(start);
-  } else {
-    return Promise.resolve(start({}));
-  }
+    if (shfl_code) {
+      // Execute the compiled SHFL code in context.
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
+                                  drawtime);
+
+      // Invoke the setup stage. The setup stage returns a function to invoke
+      // for the render stage. It's asynchronous because we might need to load
+      // assets before we get the render code; our promise resolves when we're
+      // ready to render.
+      return glrt.load_and_run<any>(shfl_program).then((func) => {
+        shfl_render = func;
+      });
+    } else {
+      return Promise.resolve();
+    }
+  };
 }

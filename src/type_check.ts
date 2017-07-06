@@ -427,7 +427,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== BOOLEAN) {
-        throw "type error: `if` condition must be Boolean" + locationError(tree);
+        throw "type error: `if` condition must be a Bool" + locationError(tree);
       }
 
       let [true_type,] = check(tree.truex, e);
@@ -443,7 +443,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== BOOLEAN) {
-        throw "type error: `while` condition must be boolean" + locationError(tree);
+        throw "type error: `while` condition must be a Bool" + locationError(tree);
       }
 
       let [body_type,] = check(tree.body, e);

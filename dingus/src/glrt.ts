@@ -84,36 +84,19 @@ export type Asset = string | HTMLImageElement | ArrayBuffer;
 export type Assets = { [path: string]: Asset };
 
 /**
- * Get an asset string or throw an error.
+ * Get an asset string or throw a Loading exception.
  */
 function get_asset(assets: Assets, path: string) {
   let asset = assets[path];
   if (!asset) {
-    throw `asset not loaded: ${path}`;
+    console.log(`asset not loaded: ${path}`);
+    let promise = load_asset(path).then((asset) => {
+      console.log(`asset loaded.`);
+      assets[path] = asset;
+    });
+    throw new Loading(promise);
   }
   return asset;
-}
-
-/**
- * A little stateful wrapper for `seedrandom`.
- */
-class Random {
-  rng: any;
-
-  constructor() {
-    this.seed();
-  }
-
-  seed = (s = 'the seed') => {
-    this.rng = seedrandom(s);
-  }
-
-  /**
-   * Floating point boolean coin flip: returns either 1.0 or 0.0.
-   */
-  flip = () => {
-    return this.rng() > 0.5 ? 1.0 : 0.0;
-  }
 }
 
 /**
@@ -130,7 +113,12 @@ function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
         if (xhr.status === 200) {
           resolve(xhr);
         } else {
-          let err = "asset loading failed with status " + xhr.status;
+          let err = `error loading ${url}: `;
+          if (xhr.status === 404) {
+            err += `not found`;
+          } else {
+            err += `status ${xhr.status}`;
+          }
           console.error(err);
           reject(err);
         }
@@ -179,7 +167,7 @@ const IMAGE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif'];
 const BINARY_EXTENSIONS = ['.vtx', '.raw'];
 
 /**
- * Check whether a path seems to be an image.
+ * Check whether a path has a given extension.
  */
 function has_extension(path: string, extensions: string[]): boolean {
   for (let ext of extensions) {
@@ -192,33 +180,83 @@ function has_extension(path: string, extensions: string[]): boolean {
 }
 
 /**
- * Load some assets from the server.
+ * Load an asset from the server.
  */
-export function load_assets(paths: string[], baseurl="assets/"):
-  Promise<Assets>
+export function load_asset(path: string, baseurl="assets/"):
+  Promise<Asset>
 {
-  // Kick off async requests for all the assets.
-  let requests: Promise<Asset>[] = [];
-  for (let path of paths) {
-    // Fetch the URL either as an image, binary, or string file.
-    let url = baseurl + path;
-    if (has_extension(path, IMAGE_EXTENSIONS)) {
-      requests.push(image_get(url));
-    } else if (has_extension(path, BINARY_EXTENSIONS)) {
-      requests.push(ajax_get_binary(url));
+  // Fetch the URL either as an image, binary, or string file.
+  let url = baseurl + path;
+  if (has_extension(path, IMAGE_EXTENSIONS)) {
+    return image_get(url);
+  } else if (has_extension(path, BINARY_EXTENSIONS)) {
+    return ajax_get_binary(url);
+  } else {
+    return ajax_get(url);
+  }
+}
+
+/**
+ * An exception indicating that an asset is not ready yet.
+ * 
+ * The exception wraps a promise that resolves when the asset is finished
+ * loading.
+ */
+class Loading {
+  constructor(
+    public promise: Promise<void>
+  ) {};
+}
+
+/**
+ * Run a function repeatedly to load all the assets it needs.
+ * 
+ * This works by catching the `Loading` exception when it's raised, waiting
+ * for the load to complete, and then re-executing the function. The next
+ * time around, the asset *should* be loaded and the exception shouldn't
+ * happen again. I realize that this is extremely messy, but it's a minimally
+ * invasive way to add asynchronous loading to synchronous load calls.
+ */
+export function load_and_run<T>(func: () => T): Promise<T> {
+  let out: T;
+  try {
+    // Try running the function. Assets may not be loaded yet.
+    out = func();
+
+  } catch (e) {
+    if (e instanceof Loading) {
+      // If we're still loading, try again.
+      return e.promise.then(() => load_and_run(func));
     } else {
-      requests.push(ajax_get(url));
+      // Some other exception.
+      throw e;
     }
   }
 
-  // When all return, construct a map from the returned data strings.
-  return Promise.all(requests).then((contents) => {
-    let assets: Assets = {};
-    for (let i = 0; i < paths.length; ++i) {
-      assets[paths[i]] = contents[i];
-    }
-    return assets;
-  });
+  // If no exception occurred, everything is loaded and we're ready.
+  return Promise.resolve(out);
+}
+
+/**
+ * A little stateful wrapper for `seedrandom`.
+ */
+class Random {
+  rng: any;
+
+  constructor() {
+    this.seed();
+  }
+
+  seed = (s = 'the seed') => {
+    this.rng = seedrandom(s);
+  }
+
+  /**
+   * Floating point boolean coin flip: returns either 1.0 or 0.0.
+   */
+  flip = () => {
+    return this.rng() > 0.5 ? 1.0 : 0.0;
+  }
 }
 
 /**

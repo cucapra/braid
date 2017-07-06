@@ -37,3 +37,5 @@ There's also `-v` for debugging output and `-g` for program generation, as descr
 There's also an interactive browser frontend. On Unix, just type `make` in the `dingus` directory, or otherwise use the same `npm run build` dance. Then, open `index.html` in your browser.
 
 The dingus seems to work in current versions of Safari, Firefox, Chrome, and Microsoft Edge.
+
+The WebGL examples use some assets (meshes, textures, etc.). First, you can download (most of) these assets by going into the `dingus/assets` directory and typing `Make`. (See the `Makefile` for the URLs and instructions for expanding the files.) Then, because asset loading can't work on a `file:///` URL, you'll need to run a Web server. For example, you can go into the `dingus` directory and run `python3 -m http.server`.

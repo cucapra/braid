@@ -9,7 +9,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ tool/munge.js node_modules
+	rm -rf parser.js build/ tool/munge.js node_modules _web/
 	make -C dingus clean
 
 include ts.mk
@@ -18,7 +18,7 @@ include ts.mk
 # Build the parser from the grammar.
 
 parser.js: src/grammar.pegjs $(call npmdep,pegjs)
-	$(call npmbin,pegjs) --cache $< $@
+	npm run parser
 
 
 # The command-line Node tool.
@@ -42,7 +42,7 @@ TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
 	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss) \
-	$(wildcard test/error/*.ss)
+	$(wildcard test/error/*.ss) $(wildcard test/type/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
@@ -72,11 +72,6 @@ test: $(CLI_JS)
 dump-gl: $(CLI_JS)
 	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.ss)
 
-# For type tests, also just dump output to check for compile.
-.PHONY: type-test
-type-test: $(CLI_JS)
-	@ node $(CLI_JS) -c $(wildcard test/type/*.ss)
-
 
 # An asset-munging tool.
 
@@ -99,18 +94,16 @@ DEPLOY_DIR := _web
 RSYNC := rsync -a --delete --prune-empty-dirs \
 	--exclude node_modules --exclude build
 web: dingus docs
-	mkdir -p $(DEPLOY_DIR)/docs
-	$(RSYNC) docs/_book/* $(DEPLOY_DIR)/docs
+	rm -rf $(DEPLOY_DIR)/docs
+	cp -r docs/_book $(DEPLOY_DIR)/docs
+	rm -rf $(DEPLOY_DIR)/dingus
 	mkdir -p $(DEPLOY_DIR)/dingus
-	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
-		--exclude 'assets/*.zip' --include 'assets/*' --include 'assets/*/*' \
-		--include '*/' --exclude '*' \
-		dingus/* $(DEPLOY_DIR)/dingus
-	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
+	cp -r dingus/{assets,*.css,*.html,ssc.bundle.js} $(DEPLOY_DIR)/dingus
+	cp site/* _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \
-	--delete -e ssh
-DEST := dh:domains/adriansampson.net/braid
+	--delete -e ssh --perms --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r
+DEST := courses:coursewww/capra.cs.cornell.edu/htdocs/braid
 deploy: web
 	rsync $(RSYNCARGS) _web/ $(DEST)
 

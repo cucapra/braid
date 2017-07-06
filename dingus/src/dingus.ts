@@ -148,11 +148,6 @@ interface Config {
    * possible instead of respecting the host browser's render loop.
    */
   perfMode?: boolean;
-
-  /**
-   * Permit the dingus to load assets via AJAX.
-   */
-  assets?: boolean;
 };
 
 let DEFAULT: Config = {
@@ -160,7 +155,6 @@ let DEFAULT: Config = {
   lineNumbers: true,
   scrollbars: true,
   perfMode: false,
-  assets: true,
 };
 
 export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -230,7 +224,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   // Lazily constructed tools.
   let draw_tree: (tree_data: any) => void;
-  let update_gl: (code?: string, dl?: boolean) => void;
+  let update_gl: (code?: string, dl?: boolean) => Promise<void>;
 
   let last_mode: string | null = null;
   let custom_preamble = "";
@@ -273,7 +267,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
       } else {
         // Draw the syntax tree.
-        if (treebox) {
+        if (tree && treebox) {
           if (!draw_tree) {
             // Lazily initialize the drawing code to avoid D3 invocations when
             // we don't need them.
@@ -306,14 +300,11 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
 
         console.log(glcode);
-        if (update_gl) {
-          update_gl(glcode);
-        } else {
-          console.log("Loading GL resources...");
-          if (loadingmsg) {
-            loadingmsg.style.display = 'block';
-          }
-          start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
+
+        // Set up the WebGL viewer context. This gives us a function we can
+        // use to update the program in the future.
+        if (!update_gl) {
+          update_gl = start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
             if (config.fpsCallback) {
               config.fpsCallback(frames, ms, latencies, draw_latencies);
             }
@@ -321,15 +312,25 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          }, config.perfMode, config.assets).then((update) => {
-            update_gl = update;
-            console.log("...loaded.");
-            if (loadingmsg) {
-              loadingmsg.style.display = 'none';
-            }
-            update(glcode);
-          });
+          }, config.perfMode);
         }
+
+        // Inject the new code.
+        console.log("Loading GL resources...");
+        if (loadingmsg) {
+          loadingmsg.style.display = 'block';
+        }
+        update_gl(glcode).then(() => {
+          if (loadingmsg) {
+            loadingmsg.style.display = 'none';
+          }
+          console.log("...loaded.");
+        }, (err) => {
+          console.error(`error executing GL code: ${err}`);
+          if (errbox) {
+            show(err.toString(), errbox);
+          }
+        });
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';
