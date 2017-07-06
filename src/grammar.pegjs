@@ -35,8 +35,8 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / Fun / CDef / If / While / Assign / Binary / Unary / TypeAlias /
-  CCall / Call / MacroCall / TermExpr
+  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Binary /
+  Unary / CCall / Call / MacroCall / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -262,6 +262,7 @@ OverloadedTypeElement
 TypeAlias
   = type _ i:ident _ eq _ t:Type
   { return setLocation({tag: "type_alias", ident:i, type:t}); }
+
 
 // Tokens.
 
