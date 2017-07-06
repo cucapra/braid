@@ -2,12 +2,12 @@
   "name": "alltheworld-harness",
   "version": "1.0.0",
   "private": true,
-
   "dependencies": {
+    "@types/open": "^0.0.29",
     "open": "^0.0.5",
-    "restify": "^4.1.1"
+    "restify": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^7.0.13"
+    "@types/node": "^8.0.8"
   }
 }

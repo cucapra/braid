@@ -5,9 +5,9 @@
  */
 
 const restify = require('restify');
-const open_url = require('open');
-const querystring = require('querystring');
-const fs = require('fs');
+import open_url = require('open');
+import * as querystring from 'querystring';
+import * as fs from 'fs';
 
 /**
  * Read a file to a string.

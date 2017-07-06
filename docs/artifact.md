@@ -140,6 +140,10 @@ You can also run the performance evaluation we performed for the paper.
 
 ### Collect Performance Data
 
+The performance test harness works by launching a bunch of versions of Braid programs in a special version of the web dingus. The browser streams performance data back to the test harness server using HTTP requests, and the harness records the data on disk.
+
+This testing infrastructure requires Make and Python 3 in addition to Node.
+
 TK
 
 ### Draw Graphs
