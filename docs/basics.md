@@ -7,7 +7,9 @@ Braid has a tiny, imperative core language. You can assign to variables with `va
       mass * height * g;
     gpe(2.0, 3.0)
 
-This program evaluates to around 58.8. (Copy and paste any of these examples into the interactive dingus to see it working.)
+This program evaluates to around 58.8. (Copy and paste any of these examples into the interactive [dingus][] to see it working.)
+
+[dingus]: ../dingus
 
 There's also an ML-esque syntax for defining and invoking functions, which can occasionally be more appropriate:
 

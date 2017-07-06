@@ -108,8 +108,8 @@ web: dingus docs
 	cp site/* _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \
-	--delete -e ssh
-DEST := dh:domains/adriansampson.net/braid
+	--delete -e ssh --perms --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r
+DEST := courses:coursewww/capra.cs.cornell.edu/htdocs/braid
 deploy: web
 	rsync $(RSYNCARGS) _web/ $(DEST)
 
