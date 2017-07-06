@@ -26,7 +26,7 @@ All the other IRs in the compiler are based on variants of this JSON AST, and th
 [grammar]: https://github.com/sampsyo/braid/blob/master/src/grammar.pegjs
 [peg]: https://en.wikipedia.org/wiki/Parsing_expression_grammar
 [peg.js]: http://pegjs.org/
-[dingus]: https://sampsyo.github.io/staticstaging/dingus/
+[dingus]: ../dingus/
 
 ## Type Checking and Elaboration
 

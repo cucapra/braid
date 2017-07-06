@@ -111,4 +111,4 @@ This function, `solid`, takes the vertex position array and model-space matrix f
 
 Here's [a more complete example][example-objects] that uses a function-wrapped shader to draw two different objects.
 
-[example-objects]: https://microsoft.github.io/staticstaging/dingus/#example=objects
+[example-objects]: ../dingus/#example=objects
