@@ -1,7 +1,8 @@
 # The Basics
 
-Braid has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, and define functions with `def`:
+Braid has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, define functions with `def`, and write comments with `#`:
 
+    # Gravitational potential energy!
     var g = 9.8;
     def gpe(mass:Float, height:Float)
       mass * height * g;
@@ -38,6 +39,13 @@ Function types are written `ArgType1 ArgType2 -> RetType`. Here's a higher-order
     def twice(f:Int->Int, n:Int)
       f(f(n));
     twice(fun n:Int -> n + 3, 36)
+
+You can also create type aliases. The syntax is `type NewType = OldType`. Here's an example:
+
+    type Num = Float;
+    def add(n:Num, m:Float)
+      n + m;
+    add(12.0, 30.0)
 
 ## Interoperation via `extern` {#extern}
 
