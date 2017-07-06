@@ -84,12 +84,16 @@ export type Asset = string | HTMLImageElement | ArrayBuffer;
 export type Assets = { [path: string]: Asset };
 
 /**
- * Get an asset string or throw an error.
+ * Get an asset string or throw a Loading exception.
  */
 function get_asset(assets: Assets, path: string) {
   let asset = assets[path];
   if (!asset) {
-    throw `asset not loaded: ${path}`;
+    console.log(`asset not loaded: ${path}`);
+    let promise = load_asset(path).then((asset) => {
+      assets[path] = asset;
+    });
+    throw new Loading(promise);
   }
   return asset;
 }
@@ -192,33 +196,47 @@ function has_extension(path: string, extensions: string[]): boolean {
 }
 
 /**
- * Load some assets from the server.
+ * Load an asset from the server.
  */
-export function load_assets(paths: string[], baseurl="assets/"):
-  Promise<Assets>
+export function load_asset(path: string, baseurl="assets/"):
+  Promise<Asset>
 {
-  // Kick off async requests for all the assets.
-  let requests: Promise<Asset>[] = [];
-  for (let path of paths) {
-    // Fetch the URL either as an image, binary, or string file.
-    let url = baseurl + path;
-    if (has_extension(path, IMAGE_EXTENSIONS)) {
-      requests.push(image_get(url));
-    } else if (has_extension(path, BINARY_EXTENSIONS)) {
-      requests.push(ajax_get_binary(url));
+  // Fetch the URL either as an image, binary, or string file.
+  let url = baseurl + path;
+  if (has_extension(path, IMAGE_EXTENSIONS)) {
+    return image_get(url);
+  } else if (has_extension(path, BINARY_EXTENSIONS)) {
+    return ajax_get_binary(url);
+  } else {
+    return ajax_get(url);
+  }
+}
+
+class Loading {
+  constructor(
+    public promise: Promise<void>
+  ) {};
+}
+
+export function load_and_run<T>(func: () => T): Promise<T> {
+  let out: T;
+  try {
+    // Try running the function. Assets may not be loaded yet.
+    out = func();
+
+  } catch (e) {
+    if (e instanceof Loading) {
+      // If we're still loading, try again.
+      console.log(e);
+      return e.promise.then(() => load_and_run(func));
     } else {
-      requests.push(ajax_get(url));
+      // Some other exception.
+      throw e;
     }
   }
 
-  // When all return, construct a map from the returned data strings.
-  return Promise.all(requests).then((contents) => {
-    let assets: Assets = {};
-    for (let i = 0; i < paths.length; ++i) {
-      assets[paths[i]] = contents[i];
-    }
-    return assets;
-  });
+  // If no exception occurred, everything is loaded and we're ready.
+  return Promise.resolve(out);
 }
 
 /**
