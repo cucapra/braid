@@ -33,7 +33,11 @@ You can also write lambdas (a.k.a. anonymous functions) using `fun`:
 
 Braid has the basic types `Float`, `Int`, `Bool`, and `String` built in. There's also a `Void` type for functions that don't return anything and an `Any` type for unsound interactions with the outside world.
 
-Function types are written `ArgType1 ArgType2 -> RetType`.
+Function types are written `ArgType1 ArgType2 -> RetType`. Here's a higher-order function, for example:
+
+    def twice(f:Int->Int, n:Int)
+      f(f(n));
+    twice(fun n:Int -> n + 3, 36)
 
 ## Interoperation via `extern` {#extern}
 
