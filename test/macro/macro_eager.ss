@@ -1,4 +1,4 @@
-def spif(c:Boolean, t:$<Int>, f:$<Int>)
+def spif(c:Bool, t:$<Int>, f:$<Int>)
   if c t f;
 
 var z = true;

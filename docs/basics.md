@@ -29,6 +29,12 @@ You can also write lambdas (a.k.a. anonymous functions) using `fun`:
 
     (fun x:Int -> x * 2)(21)
 
+## Types
+
+Braid has the basic types `Float`, `Int`, `Bool`, and `String` built in. There's also a `Void` type for functions that don't return anything and an `Any` type for unsound interactions with the outside world.
+
+Function types are written `ArgType1 ArgType2 -> RetType`.
+
 ## Interoperation via `extern` {#extern}
 
 The language can also interoperate with JavaScript. Use `extern` to declare something from JavaScript land:

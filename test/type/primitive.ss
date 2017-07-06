@@ -12,7 +12,7 @@ def num_test(v1:Float, v2:Int)
   var z = v1 + v2 / v1 * v2 - v1;
 num_test(x, y);
 
-def bool_test(b1: Boolean)
+def bool_test(b1: Bool)
   ~b1;
 bool_test(b);
 

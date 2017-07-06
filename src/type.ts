@@ -122,13 +122,13 @@ export interface TypeMap {
 export const INT = new PrimitiveType("Int");
 export const FLOAT = new PrimitiveType("Float");
 export const STRING = new PrimitiveType("String");
-export const BOOLEAN = new PrimitiveType("Boolean");
+export const BOOLEAN = new PrimitiveType("Bool");
 export const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
   "Void": VOID,
   "String": STRING,
-  "Boolean": BOOLEAN,
+  "Bool": BOOLEAN,
   "Any": ANY,
 };
 
