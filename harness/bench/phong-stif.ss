@@ -49,13 +49,13 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
 # A triply-nested loop to draw lots of objects in a grid.
 def grid(count: Int, f:(Int Int Int -> Void)) (
   var x = count;
-  while (x) (
+  while (x != 0) (
     x = x - 1;
     var y = count;
-    while (y) (
+    while (y != 0) (
       y = y - 1;
       var z = count;
-      while (z) (
+      while (z != 0) (
         z = z - 1;
         f(x, y, z);
       )
