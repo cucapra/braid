@@ -58,7 +58,7 @@ const MIME_TYPES: { [e: string]: string } = {
 function serve(log: (msg: any) => any): Promise<string> {
   // Create a Web server that serves the in-browser code and collects results.
   let server = http.createServer((req, res) => {
-    let url = url_parse(req.url);
+    let url = url_parse(req.url, true);
 
     // Log messages to a file.
     if (url.pathname === '/log') {
