@@ -317,10 +317,19 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
         // Inject the new code.
         console.log("Loading GL resources...");
+        if (loadingmsg) {
+          loadingmsg.style.display = 'block';
+        }
         update_gl(glcode).then(() => {
+          if (loadingmsg) {
+            loadingmsg.style.display = 'none';
+          }
           console.log("...loaded.");
         }, (err) => {
-          console.error(err);
+          console.error(`error executing GL code: ${err}`);
+          if (errbox) {
+            show(err.toString(), errbox);
+          }
         });
       } else {
         // Just show the output value.

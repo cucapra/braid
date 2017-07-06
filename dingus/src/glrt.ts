@@ -113,7 +113,12 @@ function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
         if (xhr.status === 200) {
           resolve(xhr);
         } else {
-          let err = "asset loading failed with status " + xhr.status;
+          let err = `error loading ${url}: `;
+          if (xhr.status === 404) {
+            err += `not found`;
+          } else {
+            err += `status ${xhr.status}`;
+          }
           console.error(err);
           reject(err);
         }
