@@ -4,8 +4,7 @@
   "private": true,
   "dependencies": {
     "@types/open": "^0.0.29",
-    "open": "^0.0.5",
-    "restify": "^5.0.0"
+    "open": "^0.0.5"
   },
   "devDependencies": {
     "@types/node": "^8.0.8"
