@@ -100,7 +100,7 @@ Unary
 
 // Binary arithmetic: + and - bind more loosely than * and /.
 Binary
-  = lhss:(e:(MulBinary / Operand) _ op:addbinop)* _ rhs:(MulBinary / Operand)
+  = lhss:(e:MulBinary _ op:addbinop)* _ rhs:MulBinary
   { return buildBinary(lhss, rhs); }
 MulBinary
   = lhss:(e:Operand _ op:mulbinop)* _ rhs:Operand
