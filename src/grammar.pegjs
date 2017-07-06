@@ -35,8 +35,8 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Binary /
-  Unary / CCall / Call / MacroCall / TermExpr
+  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Compare /
+  Binary / Unary / CCall / Call / MacroCall / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -98,16 +98,16 @@ Unary
   = op:unop _ e:Operand
   { return setLocation({tag: "unary", expr: e, op: op}); }
 
+// Binary arithmetic: + and - bind more loosely than * and /.
 Binary
-  = CompareBinary / AddBinary / MulBinary
-AddBinary
   = lhss:(e:(MulBinary / Operand) _ op:addbinop)* _ rhs:(MulBinary / Operand)
   { return buildBinary(lhss, rhs); }
 MulBinary
   = lhss:(e:Operand _ op:mulbinop)* _ rhs:Operand
   { return buildBinary(lhss, rhs); }
-CompareBinary
-  = lhs:(AddBinary / Operand) _ op:comparebinop _ rhs:(AddBinary / Operand)
+
+Compare
+  = lhs:TermExpr _ op:comparebinop _ rhs:TermExpr
   { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
 
 Quote
