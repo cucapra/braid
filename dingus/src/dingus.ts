@@ -41,6 +41,7 @@ function ssc_run(code: string, mode: string)
       (console.log as any)(...msg);
     },
     error (e: string) {
+      console.error(e);
       error = e;
     },
 
