@@ -5,7 +5,7 @@
 export default function (config: CodeMirror.EditorConfiguration, pconfig: any):
   CodeMirror.Mode<any>
 {
-  const keywords = ["var", "def", "fun", "extern", "if", "while"];
+  const keywords = ["var", "def", "fun", "extern", "if", "while", "type"];
   const brackets = "<>[]()";
   const punctuation = [":", "->"];
   const operators = ["+", "-", "*", "/", "=", "!"];
