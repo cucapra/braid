@@ -144,8 +144,36 @@ The performance test harness works by launching a bunch of versions of Braid pro
 
 This testing infrastructure requires Make and Python 3 in addition to Node.
 
-TK
+To collect the performance data for one program, try this:
 
-### Draw Graphs
+    $ node build/harness.js bench/solid.ss
 
-TK
+This will open your default Web browser, load a test scene, take some measurements over a period of about ten seconds, and then shut down. Here are a couple of notes on the performance measurements:
+
+* While the main, interactive dingus has its framerate limited by the browser to a [reasonable animation speed][raf], this test harness does not. It draws frame *as fast as it can*.
+* The benchmarks all draw a grid consisting of many copies of the same object to stress-test the animation loop. Some of the scenes can get quite computationally intensive.
+
+See the evaluation section of the paper for more details on the methodology.
+
+To collect performance data for *all* the benchmarks, type:
+
+    $ make latencies.json
+
+This will collect raw performance logs into the `collected` directory and then use a Python script to summarize the results into one JSON file.
+
+[raf]: https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+
+### Draw Plots
+
+You can draw the performance charts from the paper using the collected data. The plotting tool is [Vega-Lite][], so you will need to install that. It's usually as easy as:
+
+    $ npm install -g vega-lite
+
+Then you can run:
+
+    $ make plots
+
+to construct SVG and PDF plots. Conversion from SVG to PDF uses `rsvg-convert`, which you can get by installing the [rsvg][] package on your system.
+
+[rsvg]: https://en.wikipedia.org/wiki/Librsvg
+[Vega-Lite]: https://vega.github.io/vega-lite/
