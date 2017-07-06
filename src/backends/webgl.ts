@@ -11,6 +11,7 @@ import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import { assign } from '../util';
 import * as ast from '../ast';
+import { getFunc } from './fun';
 
 // Run-time functions invoked by generated code. These could eventually be
 // moved to the `glrt` library.
@@ -392,55 +393,19 @@ let compile_rules: ASTVisit<Emitter, string> =
         return emit(emitter, tree.args[0]);
       } else if (tree.fun.tag === "lookup") {
         // Emit arguments
-        var args : string[] = [];
+        let args: string[] = [];
+        let argsType: Type[] = [];
         for (let arg of tree.args) {
           args.push(paren(emit(emitter, arg)));
+          let [typ,] = emitter.ir.type_table[arg.id!];
+          argsType.push(typ);
         }
-        var func = (tree.fun as ast.LookupNode).ident;
+        let func = (tree.fun as ast.LookupNode).ident;
 
-        if (func === "vec2") {
-          if (args.length <= 1) {
-            return `vec2.fromValues(${args[0]}, ${args[0]})`;
-          } else {
-            return `vec2.fromValues(${args[0]}, ${args[1]})`;
-          }
-        } else if (func === "vec3") {
-          if (args.length <= 1) {
-            let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
-            if (typ0 === FLOAT || typ0 === INT) {
-              return `vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]})`;  
-            } else if (typ0 === FLOAT4) {
-              return `vec3fromvec4(${args[0]})`;
-            }
-          } else {
-            return `vec3.fromValues(${args[0]}, ${args[1]}, ${args[2]})`; 
-          }
-        } else if (func === "vec4") {
-          if (args.length <= 1) {
-            return `vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]})`;  
-          } else if (args.length == 2) {
-            return `vec4fromvec3(${args[0]}, ${args[1]})`;
-          } else {
-            return `vec4.fromValues(${args[0]}, ${args[1]}, ${args[2]}, ${args[3]})`; 
-          }
-        } else if (func === "abs") {
-          let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
-          if (typ0 === INT || typ0 === FLOAT) {
-            return `Math.abs(${args[0]})`;
-          } else {
-            return `vecAbs(${args[0]})`;
-          }
-        } else if (func === "normalize") {
-          let [typ0,] = emitter.ir.type_table[tree.args[0].id!];
-          if (typ0 === INT || typ0 === FLOAT) {
-            return `normalizeScalar(${args[0]})`;
-          } else if (typ0 === FLOAT2) {
-            return `vec2.normalize(vec2.create(), ${args[0]})`;
-          } else if (typ0 === FLOAT3) {
-            return `vec3.normalize(vec3.create(), ${args[0]})`;
-          } else if (typ0 === FLOAT4) {
-            return `vec4.normalize(vec4.create(), ${args[0]})`;
-          }
+        let res = getFunc(func, argsType);
+        
+        if (res !== null) {
+          return `${res}(${args.join(", ")})`;
         }
       }
 
@@ -449,167 +414,28 @@ let compile_rules: ASTVisit<Emitter, string> =
     },
 
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
-      let [typ,] = emitter.ir.type_table[tree.id!];
       let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
-      if (tree.op === "+") {
-        if ((typ === FLOAT2 && typExpr === FLOAT2) || (typ === FLOAT3 && typExpr === FLOAT3) || (typ === FLOAT4 && typExpr === FLOAT4) || (typ === FLOAT3X3 && typExpr === FLOAT3X3) || (typ === FLOAT4X4 && typExpr === FLOAT4X4)) {
-          return expr;
-        }
-      } else if (tree.op === "-") {
-        if (typ === FLOAT2 && typExpr === FLOAT2) {
-          return `vec2.negate(vec2.create(), ${expr})`;
-        } else if (typ === FLOAT3 && typExpr === FLOAT3) {
-          return `vec3.negate(vec3.create(), ${expr})`;
-        } else if (typ === FLOAT4 && typExpr === FLOAT4) {
-          return `vec4.negate(vec4.create(), ${expr})`;
-        } else if (typ === FLOAT3X3 && typExpr === FLOAT3X3) {
-          return `mat3.multiplyScalar(${expr}, -1.0)`;
-        } else if (typ === FLOAT4X4 && typExpr === FLOAT4X4) {
-          return `mat4.multiplyScalar(${expr}, -1.0)`;
-        }
+      let res = getFunc(tree.op, [typExpr]);
+
+      if (res !== null) {
+        return `${res}(${expr})`;
       }
+
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
-      let [typ,] = emitter.ir.type_table[tree.id!];
       let [typL,] = emitter.ir.type_table[tree.lhs.id!];
       let [typR,] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
-      if (tree.op === "+" || tree.op === "-") {
-        let op: string = (tree.op === "+" ? "add" : "subtract");
-        if (typ === FLOAT2) {
-          if (typL === FLOAT2 && typR === FLOAT2) {
-            return `vec2.${op}(vec2.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT2 && (typR === FLOAT || typR === INT)) {
-            return `vec2.${op}(vec2.create(), ${lhs}, vec2.fromValues(${rhs}, ${rhs}))`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT2) {
-            return `vec2.${op}(vec2.create(), vec2.fromValues(${lhs}, ${lhs}), ${rhs})`;
-          }
-        } else if (typ === FLOAT3) {
-          if (typL === FLOAT3 && typR === FLOAT3) {
-            return `vec3.${op}(vec3.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT3 && (typR === FLOAT || typR === INT)) {
-            return `vec3.${op}(vec3.create(), ${lhs}, vec3.fromValues(${rhs}, ${rhs}, ${rhs}))`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3) {
-            return `vec3.${op}(vec3.create(), vec3.fromValues(${lhs}, ${lhs}, ${lhs}), ${rhs})`;
-          }
-        } else if (typ === FLOAT4) {
-          if (typL === FLOAT4 && typR === FLOAT4) {
-            return `vec4.${op}(vec4.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT4 && (typR === FLOAT || typR === INT)) {
-            return `vec4.${op}(vec4.create(), ${lhs}, vec4.fromValues(${rhs}, ${rhs}, ${rhs}, ${rhs}))`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4) {
-            return `vec4.${op}(vec4.create(), vec4.fromValues(${lhs}, ${lhs}, ${lhs}, ${lhs}), ${rhs})`;
-          }
-        } else if (typ === FLOAT3X3) {
-          if (typL === FLOAT3X3 && typR === FLOAT3X3) {
-            return `mat3.${op}(mat3.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
-            return `mat3.${op}(mat3.create(), ${lhs}, mat3.fromValues(${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}))`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
-            return `mat3.${op}(mat3.create(), mat3.fromValues(${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}), ${rhs})`;
-          }
-        } else if (typ === FLOAT4X4) {
-          if (typL === FLOAT4X4 && typR === FLOAT4X4) {
-            return `mat4.${op}(mat4.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
-            return `mat4.${op}(mat4.create(), ${lhs}, mat4.fromValues(${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}, ${rhs}))`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
-            return `mat4.${op}(mat4.create(), mat4.fromValues(${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}, ${lhs}), ${rhs})`;
-          }
-        }
-      } else if (tree.op === "*") {
-        if (typ === FLOAT4X4) {
-          if (typL === FLOAT4X4 && typR === FLOAT4X4) {
-            return `mat4.multiply(mat4.create(), ${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
-            return `mat4.multiplyScalar(mat4.create(), ${rhs}, ${lhs})`;
-          } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
-            return `mat4.multiplyScalar(mat4.create(), ${lhs}, ${rhs})`;
-          }
-        } else if (typ === FLOAT3X3) {
-          if (typL === FLOAT3X3 && typR === FLOAT3X3) {
-            return `mat3.multiply(mat3.create(), ${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
-            return `mat3.multiplyScalar(mat3.create(), ${rhs}, ${lhs})`;
-          } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
-            return `mat3.multiplyScalar(mat3.create(), ${lhs}, ${rhs})`;
-          }
-        } else if (typ === FLOAT4) {
-          if (typL === FLOAT4 && typR === FLOAT4) {
-            return `vec4.multiply(vec4.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT4 && (typR === FLOAT || typR === INT)) {
-            return `vec4.scale(vec4.create(), ${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4) {
-            return `vec4.scale(vec4.create(), ${rhs}, ${lhs})`;
-          } else if (typL === FLOAT4X4 && typR === FLOAT4) {
-            return `vec4.transformMat4(vec4.create(), ${rhs}, ${lhs})`;
-          }
-        } else if (typ === FLOAT3) {
-          if (typL === FLOAT3 && typR === FLOAT3) {
-            return `vec3.multiply(vec3.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT3 && (typR === FLOAT || typR === INT)) {
-            return `vec3.scale(vec3.create(), ${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3) {
-            return `vec3.scale(vec3.create(), ${rhs}, ${lhs})`;
-          } else if (typL === FLOAT3X3 && typR === FLOAT3) {
-            return `vec3.transformMat3(vec3.create(), ${rhs}, ${lhs})`;
-          }
-        } else if (typ === FLOAT2) {
-          if (typL === FLOAT2 && typR === FLOAT2) {
-            return `vec2.multiply(vec2.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT2 && (typR === FLOAT || typR === INT)) {
-            return `vec2.scale(vec2.create(), ${lhs}, ${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT2) {
-            return `vec2.scale(vec2.create(), ${rhs}, ${lhs})`;
-          }
-        }
-      } else if (tree.op === "/") {
-        if (typ === FLOAT2) {
-          if (typL === FLOAT2 && typR === FLOAT2) {
-            return `vec2.div(vec2.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT2 && (typR === FLOAT || typR === INT)) {
-            return `vec2.scale(vec2.create(), ${lhs}, 1.0/${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT2) {
-            return `vec2.scale(vec2.create(), vec2.inverse(vec2.create(), ${rhs}), ${lhs})`;
-          }
-        } else if (typ === FLOAT3) {
-          if (typL === FLOAT3 && typR === FLOAT3) {
-            return `vec3.div(vec3.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT3 && (typR === FLOAT || typR === INT)) {
-            return `vec3.scale(vec3.create(), ${lhs}, 1.0/${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3) {
-            return `vec3.scale(vec3.create(), vec3.inverse(vec3.create(), ${rhs}), ${lhs})`;
-          }
-        } else if (typ === FLOAT4) {
-          if (typL === FLOAT4 && typR === FLOAT4) {
-            return `vec4.div(vec4.create(), ${lhs}, ${rhs})`;
-          } else if (typL === FLOAT4 && (typR === FLOAT || typR === INT)) {
-            return `vec4.scale(vec4.create(), ${lhs}, 1.0/${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4) {
-            return `vec4.scale(vec4.create(), vec4.inverse(vec4.create(), ${rhs}), ${lhs})`;
-          }
-        } else if (typ === FLOAT3X3) {
-          if (typL === FLOAT3X3 && typR === FLOAT3X3) {
-            return `mat3div(${lhs}, ${rhs})`;
-          } else if (typL === FLOAT3X3 && (typR === FLOAT || typR === INT)) {
-            return `mat3.multiplyScalar(${lhs}, 1.0/${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT3X3) {
-            return `mat3.multiplyScalar(mat3inverse(${rhs}), ${lhs})`;
-          }
-        } else if (typ === FLOAT4X4) {
-          if (typL === FLOAT4X4 && typL === FLOAT4X4) {
-            return `mat4div(${lhs}, ${rhs})`;
-          } else if (typL === FLOAT4X4 && (typR === FLOAT || typR === INT)) {
-            return `mat4.multiplyScalar(${lhs}, 1.0/${rhs})`;
-          } else if ((typL === FLOAT || typL === INT) && typR === FLOAT4X4) {
-            return `mat4.multiplyScalar(mat4inverse(${rhs}), ${lhs})`;
-          }
-        }
+      let res = getFunc(tree.op, [typL, typR]);
+
+      if (res !== null) {
+        return `${res}(${lhs}, ${rhs})`;
       }
+
       // Otherwise, use the ordinary JavaScript backend.
       return ast_visit(js.compile_rules, tree, emitter);
     },
