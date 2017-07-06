@@ -11,7 +11,8 @@ import {
   FLOAT,
   ANY,
   VOID,
-  STRING
+  STRING,
+  BOOLEAN
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -174,6 +175,11 @@ export const INTRINSICS: TypeMap = {
   '-': _GL_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
   '/': _GL_BINARY_TYPE,
+
+  // Boolean binary operators inherited from core.
+  '~': new FunType([BOOLEAN], BOOLEAN),
+  '==': new FunType([INT, INT], BOOLEAN),
+  '!=': new FunType([INT, INT], BOOLEAN),
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),

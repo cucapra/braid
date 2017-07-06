@@ -78,7 +78,6 @@ function serve(log: (msg: any) => any): Promise<string> {
     }
 
     // Other paths: serve the dingus assets.
-    // TODO MIME?
     let path = '../dingus' + url.pathname;
     let mime = 'text/html';
     for (let ext in MIME_TYPES) {

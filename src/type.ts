@@ -222,7 +222,7 @@ let pretty_type_rules: TypeVisit<void, string> = {
     let out:string = "";
     for (var i = 0; i < type.types.length; i++) {
       out += pretty_type(type.types[i]);
-      if (i != type.types.length - 1) out += " | ";
+      if (i !== type.types.length - 1) out += " | ";
     }
     return out;
   },
