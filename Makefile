@@ -42,7 +42,7 @@ TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
 	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss) \
-	$(wildcard test/error/*.ss)
+	$(wildcard test/error/*.ss) $(wildcard test/type/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
@@ -71,11 +71,6 @@ test: $(CLI_JS)
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
 	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.ss)
-
-# For type tests, also just dump output to check for compile.
-.PHONY: type-test
-type-test: $(CLI_JS)
-	@ node $(CLI_JS) -c $(wildcard test/type/*.ss)
 
 
 # An asset-munging tool.

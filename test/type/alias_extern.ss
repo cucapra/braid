@@ -3,4 +3,5 @@ type s = String;
 
 extern parseInt: s -> t;
 
-parseInt("3");
+parseInt("3")
+# -> 3
