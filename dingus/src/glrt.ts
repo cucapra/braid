@@ -91,33 +91,12 @@ function get_asset(assets: Assets, path: string) {
   if (!asset) {
     console.log(`asset not loaded: ${path}`);
     let promise = load_asset(path).then((asset) => {
+      console.log(`asset loaded.`);
       assets[path] = asset;
     });
     throw new Loading(promise);
   }
   return asset;
-}
-
-/**
- * A little stateful wrapper for `seedrandom`.
- */
-class Random {
-  rng: any;
-
-  constructor() {
-    this.seed();
-  }
-
-  seed = (s = 'the seed') => {
-    this.rng = seedrandom(s);
-  }
-
-  /**
-   * Floating point boolean coin flip: returns either 1.0 or 0.0.
-   */
-  flip = () => {
-    return this.rng() > 0.5 ? 1.0 : 0.0;
-  }
 }
 
 /**
@@ -183,7 +162,7 @@ const IMAGE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif'];
 const BINARY_EXTENSIONS = ['.vtx', '.raw'];
 
 /**
- * Check whether a path seems to be an image.
+ * Check whether a path has a given extension.
  */
 function has_extension(path: string, extensions: string[]): boolean {
   for (let ext of extensions) {
@@ -212,12 +191,27 @@ export function load_asset(path: string, baseurl="assets/"):
   }
 }
 
+/**
+ * An exception indicating that an asset is not ready yet.
+ * 
+ * The exception wraps a promise that resolves when the asset is finished
+ * loading.
+ */
 class Loading {
   constructor(
     public promise: Promise<void>
   ) {};
 }
 
+/**
+ * Run a function repeatedly to load all the assets it needs.
+ * 
+ * This works by catching the `Loading` exception when it's raised, waiting
+ * for the load to complete, and then re-executing the function. The next
+ * time around, the asset *should* be loaded and the exception shouldn't
+ * happen again. I realize that this is extremely messy, but it's a minimally
+ * invasive way to add asynchronous loading to synchronous load calls.
+ */
 export function load_and_run<T>(func: () => T): Promise<T> {
   let out: T;
   try {
@@ -227,7 +221,6 @@ export function load_and_run<T>(func: () => T): Promise<T> {
   } catch (e) {
     if (e instanceof Loading) {
       // If we're still loading, try again.
-      console.log(e);
       return e.promise.then(() => load_and_run(func));
     } else {
       // Some other exception.
@@ -237,6 +230,28 @@ export function load_and_run<T>(func: () => T): Promise<T> {
 
   // If no exception occurred, everything is loaded and we're ready.
   return Promise.resolve(out);
+}
+
+/**
+ * A little stateful wrapper for `seedrandom`.
+ */
+class Random {
+  rng: any;
+
+  constructor() {
+    this.seed();
+  }
+
+  seed = (s = 'the seed') => {
+    this.rng = seedrandom(s);
+  }
+
+  /**
+   * Floating point boolean coin flip: returns either 1.0 or 0.0.
+   */
+  flip = () => {
+    return this.rng() > 0.5 ? 1.0 : 0.0;
+  }
 }
 
 /**
