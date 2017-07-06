@@ -17,7 +17,7 @@
     "ssc": "build/ssc.js"
   },
   "scripts": {
-    "parser": "pegjs --cache src/grammar.pegjs parser.js",
+    "parser": "pegjs --cache -o parser.js src/grammar.pegjs",
     "compile": "tsc",
     "build": "npm run parser && npm run compile"
   }
