@@ -19,3 +19,4 @@ bool_test(b);
 def string_test(s1: String)
   s1;
 string_test(s);
+# -> "hello world"
