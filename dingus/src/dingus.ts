@@ -267,7 +267,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
       } else {
         // Draw the syntax tree.
-        if (treebox) {
+        if (tree && treebox) {
           if (!draw_tree) {
             // Lazily initialize the drawing code to avoid D3 invocations when
             // we don't need them.
