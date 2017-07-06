@@ -104,7 +104,6 @@ web: dingus docs
 	rm -rf $(DEPLOY_DIR)/dingus
 	mkdir -p $(DEPLOY_DIR)/dingus
 	cp -r dingus/{assets,*.css,*.html,ssc.bundle.js} $(DEPLOY_DIR)/dingus
-	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
 	cp site/* _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \
