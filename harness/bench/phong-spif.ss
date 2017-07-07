@@ -1,5 +1,5 @@
 # Specializing if.
-def spif(c:Float, t:$<Float3>, f:$<Float3>)
+def spif(c:Bool t:$<Float3>, f:$<Float3>)
   if c t f;
 
 # Phong shader.
