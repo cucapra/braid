@@ -3,7 +3,7 @@
 # ---
 
 # Compile-time parameters.
-var use_bumpmapping = (1);  # knob: 0
+var use_bumpmapping = (true);  # knob: false
 
 def bump?(bumpnorm: $<Vec3>, default: $<Vec3>)
   if use_bumpmapping
