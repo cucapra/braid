@@ -308,7 +308,8 @@ This will collect raw performance logs into the `collected` directory and then u
 
 You can draw the performance charts from the paper using the collected data. The plotting tool is [Vega-Lite][], so you will need to install that. It's usually as easy as:
 
-    $ npm install -g vega-lite
+    $ npm install -g vega@2.6.1
+    $ npm install -g vega-lite@1.0.15
 
 Then you can run:
 
