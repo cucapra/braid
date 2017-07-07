@@ -15,6 +15,10 @@ declare function require(name: string): any;
 
 const eye = require('eye-vector');
 const mat4 = require('gl-matrix').mat4;
+const mat3 = require('gl-matrix').mat3;
+const vec4 = require('gl-matrix').vec4;
+const vec3 = require('gl-matrix').vec3;
+const vec2 = require('gl-matrix').vec2;
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
@@ -555,6 +559,21 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
         averages[i] = totals[i] / 255 / count;
       }
       return averages;
+    },
+
+    // webgl helper function
+    mat3fromOneValue(x: number) {
+      var out = mat3.fromValues(x, x, x,
+                                x, x, x,
+                                x, x, x);
+      return out;
+    },
+
+    mat4fromOneValue(x: number) {
+      var out = mat3.fromValues(x, x, x, x,
+                                x, x, x, x,
+                                x, x, x, x);
+      return out;
     },
 
     /**

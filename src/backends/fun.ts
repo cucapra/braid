@@ -64,80 +64,80 @@ let funcMapList: FuncMapType[] = [
         ret: (args) => `vec4.add(vec4.create(), vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT3X3, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.add(mat3.create(), ${args[0]}, mat3fromOneValue(${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT3X3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.add(mat3.create(), mat3fromOneValue(${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT4X4, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.add(mat4.create(), ${args[0]}, mat4fromOneValue(${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT4X4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.add(mat4.create(), mat4fromOneValue(${args[0]}), ${args[1]})`,
       },
     ]
   }, {
     func: "-", paramsList: [
       {
         params: [FLOAT2],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec2.negate(vec2.create(), ${args[0]})`,
       }, {
         params: [FLOAT3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec3.negate(vec3.create(), ${args[0]})`,
       }, {
         params: [FLOAT4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec4.negate(vec4.create(), ${args[0]})`,
       }, {
         params: [FLOAT3X3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.multiplyScalar(mat3.create(), ${args[0]}, -1.0)`,
       }, {
         params: [FLOAT4X4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.multiplyScalar(mat4.create(), ${args[0]}, -1.0)`,
       }, {
         params: [FLOAT2, FLOAT2],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec2.subtract(vec2.create(), ${args[0]}, ${args[1]})`,
       }, {
         params: [FLOAT3, FLOAT3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec3.subtract(vec3.create(), ${args[0]}, ${args[1]})`,
       }, {
         params: [FLOAT4, FLOAT4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec4.subtract(vec4.create(), ${args[0]}, ${args[1]})`,
       }, {
         params: [FLOAT3X3, FLOAT3X3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.subtract(mat3.create(), ${args[0]}, ${args[1]})`,
       }, {
         params: [FLOAT4X4, FLOAT4X4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.subtract(mat4.create(), ${args[0]}, ${args[1]})`,
       }, {
         params: [FLOAT2, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec2.subtract(vec2.create(), ${args[0]}, vec2.fromValues(${args[1]}, ${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT2],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec2.subtract(vec2.create(), vec2.fromValues(${args[0]}, ${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT3, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec3.subtract(vec3.create(), ${args[0]}, vec3.fromValues(${args[1]}, ${args[1]}, ${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec3.subtract(vec3.create(), vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT4, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec4.subtract(vec4.create(), ${args[0]}, vec4.fromValues(${args[1]}, ${args[1]}, ${args[1]}, ${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `vec4.subtract(vec4.create(), vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT3X3, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.subtract(mat3.create(), ${args[0]}, mat3fromOneValue(${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT3X3],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat3.subtract(mat3.create(), mat3fromOneValue(${args[0]}), ${args[1]})`,
       }, {
         params: [FLOAT4X4, FLOAT],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.subtract(mat4.create(), ${args[0]}, mat4fromOneValue(${args[1]}))`,
       }, {
         params: [FLOAT, FLOAT4X4],
-        ret: (args) => `TODO:`,
+        ret: (args) => `mat4.subtract(mat4.create(), mat4fromOneValue(${args[0]}), ${args[1]})`,
       },
     ]
   }, {
