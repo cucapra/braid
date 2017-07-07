@@ -132,13 +132,81 @@ There is an exhaustive [language manual][docs] available online with complete de
 
 To get a feel for the [basic language structure][basics], load the `basics` example in the web dingus. This example shows you how to use variables, basic arithmetic, and functions in Braid. There's nothing all that interesting here, but play around here to see how the boring parts work.
 
-The dingus shows the final result in the right-hand pane. You're currently in interpreter mode; the code gets type-checked and interpreted as you type.
+The dingus shows the final result in the right-hand pane. You're currently in *interpreter mode*. The code gets type-checked and interpreted as you type.
+
+You can also skip ahead to the `externs` example, which shows you how to use values from the JavaScript standard library.
 
 [basics]: https://github.com/sampsyo/braid/blob/master/docs/basics.md
 
-### Staging
+### Simple Multi-Stage Programming
 
-TK
+Switch to the `quote and splice` example. This tiny program shows you the syntax for quoting code between `<>` brackets, executing code with `!`, and splicing together code with `[]`. These constructs appear in Section 3.1 of the paper submission.
+
+To explore, try deleting the `!` on the second line---i.e., run this program:
+
+    var x = <5>;
+    < 37 + [x] >
+
+Braid will just output `<quote>`, which isn't terribly helpful. This is because you're now in *compiler mode*, which is incapable of pretty-printing code by design. In a sense, this is the essence of static staging: we generate all code, for all stages, ahead of time, so there is no AST to pretty-print at run time.
+
+Switch to interpreter mode using the left-hand pop-up menu to see that the result value is the code `< 37 + 5 >`, as you might expect. The interpreter *does* have a run-time AST representation, which is nice for debugging.
+
+If you switch back to compiler mode, you can also inspect the generated JavaScript code. You'll see two (concatenated series of) string literals. These correspond to the two quotes, `<5>` and `<37+[x]>`, in your program. The second has a magic `__SPLICE_XX__` token to represent the splice brackets, `[x]`. There's a call to a `splice` runtime function in the main code that replaces this magic token with the code for the `<5>` program. If you use `!`, you'll see another runtime function, `run`: this is a wrapper around JavaScript's `eval`.
+
+Another important feature in any multi-stage language is type checking. It should be impossible to mix up code and other values, for example. Try deleting the angle brackets around 5---i.e., run this program:
+
+    var x = 5;
+    !< 37 + [x] >
+
+Braid should tell you something like:
+
+    type error: splice escape produced non-code value
+
+The type checker is complaining that, in the splice brackets `[x]`, the value `x` has type `Int`, not the code type `<Int>`. (You can read `<Int>` as *code which, when run, will produce an `Int`*.) You're not allowed to splice real values into code---doing so would require synthesizing code to represent the value. Instead, you need to use a *materialization* expression, which we'll see in the next section.
+
+### Materialization
+
+Switch to the example called `persist`. This little program uses a different kind of brackets, written `%[...]`, in place of the plain splice brackets. This time, it *is* legal to take a plain `Int` and communicate it into the quote. You can read more about materialization in Section 3.2 of the submitted paper.
+
+This example shows that you can also implicitly refer to variables from earlier stages. This is (close to) syntactic sugar for explicitly using `%[...]` expressions.
+
+The main takeaway here is in the generated JavaScript code. Notice that there is no `__SPLICE_XX__` nonsense in either of the string literals. Instead, the code refers to plain JavaScript variables to retrieve the materialized (a.k.a. "persisted") values. These values are never turned into strings; they just stay in memory. This is the key difference between splicing and materialization, of which traditional multi-stage languages only support the former.
+
+You can also try switching back to interpreter mode again and removing the `!` on the final quote. The interpreter represents materialized values with opaque tokens, so you'll see this:
+
+    < 37 + %0 >
+
+where `%0` takes the place of the materialization. That's in contrast to the `< 37 + 5 >` we got when we spliced in code in that position.
+
+Also take a quick look at the example called `w/o metaprogramming`. This example shows an *annotated* quote that starts with `js`. This annotation instructs Braid that the quote will not use splicing at all, so it's OK to avoid using strings and `eval` for the quote. Instead, the program gets emitted as a plain JavaScript function.
+
+### Open Code and Pre-Splicing
+
+Section 3.4 in the submission describes *open code*. Open code is an optional mode for writing quotes in Braid that introduces new powers and new restrictions. The new power is the ability to re-use a scope from a containing quote inside a splice. This program is illegal, for example:
+
+    <
+      var x = 5;
+      [ <x> ]
+    >
+
+because Braid can't guarantee, in general, that `x` will be in scope when the inner quote runs. Open code relaxes this restriction. To use open code, you can annotate splice and quote brackets with a `$` character:
+
+    <
+      var x = 5;
+      $[ $<x> ]
+    >
+
+This example is legal. Try it out in interpreter mode to see what it generates.
+
+To make open code safe, Braid needs to know *statically* where a given quote will be spliced. This means that you can't pass `$<...>` quotes around arbitrarily.
+
+For a more complete program, load the `pre-splicing` example in the dingus. This little program has a stage-1 variable called `flag` that controls how the stage-2 code behaves. Try toggling this variable between `true` and `false`.
+
+The generated code reveals that an important optimization is taking place. Pre-splicing (Section 3.4.1) avoids any run-time splice operations by enumerating all possible resolutions of open-code escapes and just choosing between them at run time. There are no `__SPLICE_XX__` tokens here either, even though we're clearly using splicing.
+
+### Staging-Based Macros
+
+Switch to the `macros` example to see an example of Braid's macro syntax. Macro invocations like `@spif` in this example are just syntactic sugar for escaped function invocations. Read more about the macro system in Section 3.5 of the paper.
 
 ### Graphics
 
@@ -190,4 +258,4 @@ to construct SVG and PDF plots. Conversion from SVG to PDF uses `rsvg-convert`, 
 We expect the absolute numbers for the performance results to vary significantly from GPU to GPU and from browser to browser, but the same rough trends shown in the paper should be visible on your machine.
 
 [rsvg]: https://en.wikipedia.org/wiki/Librsvg
-[Vega-Lite]: https://vega.github.io/vega-lite/
+k[Vega-Lite]: https://vega.github.io/vega-lite/

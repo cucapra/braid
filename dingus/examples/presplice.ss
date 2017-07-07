@@ -10,9 +10,9 @@ var flag = true;
   var x = 4;
   var y = 5;
 
-  # The $ stands for "$nippet" and avoids run-time splicing.
+  # The $ indicates open code.
   $[ if flag $<2> $<3> ] +
 
-  # It also lets you share the enclosing scope.
+  # It lets you share the enclosing scope.
   $[ if flag $<x> $<y> ]
 >
