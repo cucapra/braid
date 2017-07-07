@@ -96,6 +96,10 @@ const _BINARY_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
 ]);
+const _COMPARE_TYPE = new OverloadedType([
+  new FunType([INT, INT], BOOLEAN),
+  new FunType([FLOAT, FLOAT], BOOLEAN),
+]);
 const _UNARY_BINARY_TYPE = new OverloadedType(
   _UNARY_TYPE.types.concat(_BINARY_TYPE.types)
 );
@@ -105,8 +109,8 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '*': _BINARY_TYPE,
   '/': _BINARY_TYPE,
   '~': new FunType([BOOLEAN], BOOLEAN),
-  '==': new FunType([INT, INT], BOOLEAN),
-  '!=': new FunType([INT, INT], BOOLEAN),
+  '==': _COMPARE_TYPE,
+  '!=': _COMPARE_TYPE,
 };
 
 
