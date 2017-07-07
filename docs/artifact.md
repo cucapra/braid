@@ -128,6 +128,14 @@ There is an exhaustive [language manual][docs] available online with complete de
 
 [docs]: https://capra.cs.cornell.edu/braid/docs/
 
+### Basic Language
+
+To get a feel for the [basic language structure][basics], load the `basics` example in the web dingus. This example shows you how to use variables, basic arithmetic, and functions in Braid. There's nothing all that interesting here, but play around here to see how the boring parts work.
+
+The dingus shows the final result in the right-hand pane. You're currently in interpreter mode; the code gets type-checked and interpreted as you type.
+
+[basics]: https://github.com/sampsyo/braid/blob/master/docs/basics.md
+
 ### Staging
 
 TK
