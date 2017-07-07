@@ -210,7 +210,31 @@ Switch to the `macros` example to see an example of Braid's macro syntax. Macro 
 
 ### Graphics
 
-TK
+At last, we're ready to see an example that uses Braid's WebGL capabilities. Switch to the `basic shader` example. This little graphics program is not too different from the example in the paper's Section 2, which introduces the graphics pipeline and WebGL.
+
+In WebGL mode, the compiler supports a bunch of graphics-specific intrinsics. For example, the `load_obj` function loads a mesh data file from the server. There are also special data types; for example, the `mat4.create()` call in this example creates a matrix value of type `Float4x4`.
+
+The main interesting bit here is the triply-nested set of staging quotes marked with the intrinsics `render`, `vertex`, and `fragment`. Respectively, these indicate code that runs per frame on the CPU, in the vertex shader stage of the GPU graphics pipeline, and in the fragment (pixel) shader stage. The stages are nested in this way because data can flow from the earlier stages to the later stages, inward through the hierarchy. Each stage has a specific responsibility:
+
+* The render stage should call `draw_mesh` at least once to kick off the rendering pipeline.
+* The vertex stage should assign to `gl_Position` to determine the position, in 3D space, of every vertex in the mesh.
+* The fragment stage should assign to `gl_FragColor` to determine the color of a pixel on the surface interpolated between the vertices.
+
+For a slightly more complicated example, switch to `two objects` in the dingus. This one demonstrates:
+
+* How to wrap vertex/fragment shader pairs in functions so they can be reused.
+* How to call `draw_mesh` multiple times to draw more than one object.
+* Using `extern`s like `Math.sin` and `Date.now` to do simple animation.
+
+So far, these two examples have been trivial demos. Let's try a real 3D effect. Load the `phong lighting` example to see a shiny bunny. The vertex and fragment shaders are a bit more sophisticated here.
+
+BraidGL also supports texture mapping. Load up the `texture` example to see calls to:
+
+* `load_image`, which can fetch any major image type from the server;
+* `texture`, which converts DOM image data into a WebGL texture object;
+* and `texture2D` in the fragment shader, which looks up a color in a texture.
+
+For the two most complex graphics examples, try `head` and `couch`. There are no fundamentally new features here, but you can see all the pieces composed in useful ways. There is a bit more background on these examples in the evaluation section of the paper.
 
 
 Reproducing the Results
@@ -258,4 +282,4 @@ to construct SVG and PDF plots. Conversion from SVG to PDF uses `rsvg-convert`, 
 We expect the absolute numbers for the performance results to vary significantly from GPU to GPU and from browser to browser, but the same rough trends shown in the paper should be visible on your machine.
 
 [rsvg]: https://en.wikipedia.org/wiki/Librsvg
-k[Vega-Lite]: https://vega.github.io/vega-lite/
+[Vega-Lite]: https://vega.github.io/vega-lite/
