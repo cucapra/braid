@@ -124,6 +124,8 @@ Using the Language
 
 In this segment, we will take a tour through the language via a few examples. The idea is to convince you that the implementation actually supports the language features described in the paper. You can follow along using the Braid dingus.
 
+TK link to main language docs
+
 ### Staging
 
 TK

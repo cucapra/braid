@@ -63,7 +63,7 @@ function serve(log: (msg: any) => any): Promise<string> {
     // Log messages to a file.
     if (url.pathname === '/log') {
       let out = log(JSON.parse(url.query['msg']));
-      res.end(out);
+      res.end(JSON.stringify(out));
       return;
     }
 
