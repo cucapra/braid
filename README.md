@@ -12,8 +12,8 @@ Check out the [code documentation][hacking] for an introduction to the compiler'
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
 [TypeScript]: http://www.typescriptlang.org/
-[docs]: http://microsoft.github.io/staticstaging/docs/
-[hacking]: http://microsoft.github.io/staticstaging/docs/hacking.html
+[docs]: https://capra.cs.cornell.edu/braid/docs/
+[hacking]: https://capra.cs.cornell.edu/braid/docs/hacking.html
 
 ## Using and Hacking
 
