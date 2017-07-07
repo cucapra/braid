@@ -1,5 +1,5 @@
 # Static `if`.
-def stif(c:Int, t:$<Float3>, f:$<Float3>)
+def stif(c:Bool, t:$<Float3>, f:$<Float3>)
   if c t f;
 
 # Compile-time parameters.
