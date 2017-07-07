@@ -237,6 +237,41 @@ BraidGL also supports texture mapping. Load up the `texture` example to see call
 For the two most complex graphics examples, try `head` and `couch`. There are no fundamentally new features here, but you can see all the pieces composed in useful ways. There is a bit more background on these examples in the evaluation section of the paper.
 
 
+Browsing the Code
+-----------------
+
+If you're interested, you can have a look around the TypeScript source code for the Braid implementation. There is an excruciating level of detail available [in the documentation section on the compiler architecture][hacking], but here's are a few highlights of what's available in the source:
+
+* `src/`: The main language implementation source.
+    * `driver.ts`: Coordinates the pieces and runs the whole thing. Both the command-line tool and the web dingus start here.
+    * `grammar.pegjs`: The [PEG.js][] parser generator source.
+    * `ast.ts` and `type.ts`: The AST and type data structures.
+    * `type_check.ts`: The type checker for the base language. This uses a generic visitor interface for ASTs defined in `visit.ts`. In `type_elaborate.ts`, there's a bit of bookkeeping for storing the deduced type for every expression in an AST.
+    * `interp.ts`: The interpreter, which uses the pretty-printer in `pretty.ts`.
+    * `sugar.ts`: Desugaring passes for macros and (in interpreter mode) cross-stage variable references.
+    * `compile/`: The middle-end tools for analyzing Braid ASTs.
+        * `ir.ts`: The data structures for all the analysis information produced by these tools. Start with the main `CompilerIR` interface.
+        * `defuse.ts`: Definition/use analysis.
+        * `lift.ts`: Analysis for lambda lifting (closure conversion) and the analogous operation for quotes.
+    * `backends/`: Code generation.
+        * `js.ts`: The main JavaScript code generation rules.
+        * `glsl.ts`: Similarly, the code generation rules for producing GLSL soruce.
+        * `webgl.ts`: An extended version of the JavaScript backend with a bunch of intrinsics for writing WebGL.
+        * `gl.ts`: Shared resources for both the shader and host side of WebGL programs. This includes new type definitions for vectors and matrices, for example.
+* `ssc.ts`: The entry point for the command-line tool.
+* `dingus/`:  The Web dingus source and assets.
+    * `src/`: The TypeScript source for the dingus.
+    * `examples/`: All the example programs that show up in the dingus pop-up menu.
+* `docs/`: The documentation, including this artifact instruction document. The documentation is rendered with [Gitbook][].
+
+If you're interested in browsing TypeScript source code, I recommend using [Visual Studio Code][vscode].
+
+[vscode]: https://code.visualstudio.com
+[PEG.js]: https://github.com/pegjs/pegjs
+[Gitbook]: https://www.gitbook.com
+[hacking]: https://github.com/sampsyo/braid/blob/master/docs/hacking.md
+
+
 Reproducing the Results
 -----------------------
 
