@@ -402,10 +402,10 @@ let compile_rules: ASTVisit<Emitter, string> =
         }
         let func = (tree.fun as ast.LookupNode).ident;
 
-        let res = getFunc(func, argsType);
+        let res = getFunc(func, argsType, args);
         
         if (res !== null) {
-          return `${res}(${args.join(", ")})`;
+          return res;
         }
       }
 
@@ -416,10 +416,10 @@ let compile_rules: ASTVisit<Emitter, string> =
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
       let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
-      let res = getFunc(tree.op, [typExpr]);
+      let res = getFunc(tree.op, [typExpr], [expr]);
 
       if (res !== null) {
-        return `${res}(${expr})`;
+        return res;
       }
 
       return ast_visit(js.compile_rules, tree, emitter);
@@ -430,10 +430,10 @@ let compile_rules: ASTVisit<Emitter, string> =
       let [typR,] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
-      let res = getFunc(tree.op, [typL, typR]);
+      let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
 
       if (res !== null) {
-        return `${res}(${lhs}, ${rhs})`;
+        return res;
       }
 
       // Otherwise, use the ordinary JavaScript backend.
