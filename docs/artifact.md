@@ -112,9 +112,9 @@ That will start a server on port 8000. Go to <http://0.0.0.0:8000/> in your brow
 
 You should see `42` appear on the right-hand side. Below the code, the interface should say "Int", which is the type of the program.
 
-Now, try switching the dingus from interpreter mode to compiler mode. Below the text box, the first popup chooses the mode. If you switch to compiler mode, the right-hand side should still say `42`, but the interface should also show you the compiled JavaScript code too.
+Now, try switching the dingus from interpreter mode to compiler mode. Below the text box, the first pop-up menu chooses the mode. If you switch to compiler mode, the right-hand side should still say `42`, but the interface should also show you the compiled JavaScript code too.
 
-Next, try using the built-in examples. The second popup menu has a list. Try choosing each of them in order. We'll explain what's going on in the code a bit later, but feel free to explore.
+Next, try using the built-in examples. The second pop-up menu has a list. Try choosing each of them in order. We'll explain what's going on in the code a bit later, but feel free to explore.
 
 You will find that the later examples switch the dingus into WebGL mode; the textual output is then replaced with a 3D rendering. You can interact with this view with your mouse. Click and drag to rotate the scene; scroll to zoom; and hold the "control" key while dragging to pan. If you ever get lost, just reload the page to reset; the code should not get erase.
 
@@ -124,7 +124,9 @@ Using the Language
 
 In this segment, we will take a tour through the language via a few examples. The idea is to convince you that the implementation actually supports the language features described in the paper. You can follow along using the Braid dingus.
 
-TK link to main language docs
+There is an exhaustive [language manual][docs] available online with complete details, but you should not need to read that to evaluate this artifact.
+
+[docs]: https://capra.cs.cornell.edu/braid/docs/
 
 ### Staging
 
@@ -176,6 +178,8 @@ Then you can run:
     $ make plots
 
 to construct SVG and PDF plots. Conversion from SVG to PDF uses `rsvg-convert`, which you can get by installing the [rsvg][] package on your system.
+
+We expect the absolute numbers for the performance results to vary significantly from GPU to GPU and from browser to browser, but the same rough trends shown in the paper should be visible on your machine.
 
 [rsvg]: https://en.wikipedia.org/wiki/Librsvg
 [Vega-Lite]: https://vega.github.io/vega-lite/
