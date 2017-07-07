@@ -27,7 +27,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       );
 
       # Add specular component if the object is not matte.
-      var out = @spif matte diffuse (diffuse +
+      var out = @spif (matte != 0.0) diffuse (diffuse +
         (
           var angle = normalize(view_dir_world + light_direction);
           var spec_comp_b = max(0.0, dot(normal_world, angle));
