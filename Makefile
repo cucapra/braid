@@ -95,10 +95,14 @@ RSYNC := rsync -a --delete --prune-empty-dirs \
 	--exclude node_modules --exclude build
 web: dingus docs
 	rm -rf $(DEPLOY_DIR)/docs
+	mkdir -p $(DEPLOY_DIR)
 	cp -r docs/_book $(DEPLOY_DIR)/docs
 	rm -rf $(DEPLOY_DIR)/dingus
 	mkdir -p $(DEPLOY_DIR)/dingus
-	cp -r dingus/{assets,*.css,*.html,ssc.bundle.js} $(DEPLOY_DIR)/dingus
+	cp -r dingus/assets $(DEPLOY_DIR)/dingus
+	cp dingus/*.css $(DEPLOY_DIR)/dingus
+	cp dingus/*.html $(DEPLOY_DIR)/dingus
+	cp dingus/ssc.bundle.js $(DEPLOY_DIR)/dingus
 	cp site/* _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \

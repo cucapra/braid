@@ -19,6 +19,8 @@ There are ways to use this artifact: "from scratch" via a [source checkout][repo
 
 The rest of this guide will assume you're using the recommended option 2. If you choose option 1, you can follow the [setup docs][readme] to get things running. If you choose option 3, you can skip the next section.
 
+For the virtual machine image, the user is called `oopsla` and the password is the same. There's a directory called `braid` in the home directory.
+
 [readme]: https://github.com/sampsyo/braid/blob/master/docs/README.md
 [repo]: https://github.com/sampsyo/braid
 [Node]: https://nodejs.org/
