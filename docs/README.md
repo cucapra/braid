@@ -34,7 +34,9 @@ There's also `-v` for debugging output and `-g` for program generation, as descr
 
 ### Web Dingus
 
-There's also an interactive browser frontend. On Unix, just type `make` in the `dingus` directory, or otherwise use the same `npm run build` dance. Then, open `index.html` in your browser.
+There's also an interactive browser frontend. On Unix, just type `make` in the `dingus` directory. This recipe also requires [sassc][] to compile the CSS for the dingus. Then, open `index.html` in your browser.
+
+[sassc]: https://github.com/sass/sassc
 
 The dingus seems to work in current versions of Safari, Firefox, Chrome, and Microsoft Edge.
 
