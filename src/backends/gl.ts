@@ -178,8 +178,14 @@ export const INTRINSICS: TypeMap = {
 
   // Boolean binary operators inherited from core.
   '~': new FunType([BOOLEAN], BOOLEAN),
-  '==': new FunType([INT, INT], BOOLEAN),
-  '!=': new FunType([INT, INT], BOOLEAN),
+  '==': new OverloadedType([
+    new FunType([INT, INT], BOOLEAN),
+    new FunType([FLOAT, FLOAT], BOOLEAN),
+  ]),
+  '!=': new OverloadedType([
+    new FunType([INT, INT], BOOLEAN),
+    new FunType([FLOAT, FLOAT], BOOLEAN),
+  ]),
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
