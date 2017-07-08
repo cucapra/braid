@@ -1,13 +1,10 @@
 {
-  // From the PEG.js examples.
-  function build_list(first, rest, index) {
-    return [first].concat(extractList(rest, index));
-  }
-
-  function setLocation(obj) {
-    obj.location = location();
-    obj.location.filename = options.filename;
-    return obj;
+  // Add the current parser location to a generated AST node. This should be
+  // called on *every* AST node that we produce.
+  function loc(node) {
+    node.location = location();
+    node.location.filename = options.filename;
+    return node;
   }
 
   // From a "flat" list of components in a binary operation, build a nested
@@ -17,12 +14,12 @@
   // list can be empty. The result has locations attached to each AST node.
   function buildBinary(lhss, rhs) {
     if (lhss.length === 0) {
-      return setLocation(rhs);
+      return loc(rhs);
     } else {
       var last = lhss[lhss.length - 1];
       var rest = lhss.slice(0, -1);
       var lhs = buildBinary(rest, last[0]);
-      return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: last[2]});
+      return loc({tag: "binary", lhs: lhs, rhs: rhs, op: last[2]});
     }
   }
 }
@@ -61,26 +58,26 @@ HalfSeq
 
 IntLiteral
   = n:int
-  { return setLocation({tag: "literal", type: "int", value: n}); }
+  { return loc({tag: "literal", type: "int", value: n}); }
 
 FloatLiteral
   = n:float
-  { return setLocation({tag: "literal", type: "float", value: n}); }
+  { return loc({tag: "literal", type: "float", value: n}); }
 
 BooleanLiteral
   = BooleanLiteralTrue / BooleanLiteralFalse
 
 BooleanLiteralTrue
   = b:boolean_true
-  { return setLocation({tag: "literal", type: "boolean", value: b}); }
+  { return loc({tag: "literal", type: "boolean", value: b}); }
 
 BooleanLiteralFalse
   = b:boolean_false
-  { return setLocation({tag: "literal", type: "boolean", value: b}); }
+  { return loc({tag: "literal", type: "boolean", value: b}); }
 
 StringLiteral "string"
   = strquote chars:StringChar* strquote
-  { return setLocation({tag: "literal", type: "string", value: chars.join("")}); }
+  { return loc({tag: "literal", type: "string", value: chars.join("")}); }
 
 StringChar
   = !strquote .
@@ -88,15 +85,15 @@ StringChar
 
 Lookup
   = i:ident
-  { return setLocation({tag: "lookup", ident: i}); }
+  { return loc({tag: "lookup", ident: i}); }
 
 Var
   = var _ i:ident _ eq _ e:Expr
-  { return setLocation({tag: "let", ident: i, expr: e}); }
+  { return loc({tag: "let", ident: i, expr: e}); }
 
 Unary
   = op:unop _ e:Operand
-  { return setLocation({tag: "unary", expr: e, op: op}); }
+  { return loc({tag: "unary", expr: e, op: op}); }
 
 // Binary arithmetic: + and - bind more loosely than * and /.
 Binary
@@ -108,39 +105,43 @@ MulBinary
 
 Compare
   = lhs:TermExpr _ op:comparebinop _ rhs:TermExpr
-  { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
+  { return loc({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
 
 Quote
   = s:snippet_marker? a:ident? quote_open _ e:SeqExpr _ quote_close
-  { return setLocation({tag: "quote", expr: e, annotation: a || "", snippet: !!s}); }
+  { return loc({tag: "quote", expr: e, annotation: a || "", snippet: !!s}); }
 
 // Our three kinds of escapes.
 Escape
   = Splice / Persist / Snippet
 Splice "splice escape"
   = n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
-  { return setLocation({tag: "escape", expr: e, count: n || sn || 1, kind: "splice"}); }
+  { return loc({tag: "escape", expr: e, count: n || sn || 1,
+        kind: "splice"}); }
 Persist "persist escape"
   = persist_marker n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
-  { return setLocation({tag: "escape", expr: e, count: n || sn || 1, kind: "persist"}); }
+  { return loc({tag: "escape", expr: e, count: n || sn || 1,
+        kind: "persist"}); }
 Snippet "snippet escape"
   = snippet_marker n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
-  { return setLocation({tag: "escape", expr: e, count: n || sn || 1, kind: "snippet"}); }
+  { return loc({tag: "escape", expr: e, count: n || sn || 1,
+        kind: "snippet"}); }
 
 Run
   = run _ e:TermExpr
-  { return setLocation({tag: "run", expr: e}); }
+  { return loc({tag: "run", expr: e}); }
 
 Fun
   = fun _ ps:Param* _ arrow _ e:Expr
-  { return setLocation({tag: "fun", params: ps, body: e}); }
+  { return loc({tag: "fun", params: ps, body: e}); }
 Param
   = i:ident _ typed _ t:TermType _
-  { return setLocation({tag: "param", name: i, type: t}); }
+  { return loc({tag: "param", name: i, type: t}); }
 
 CDef
   = def _ i:ident _ paren_open _ ps:CParamList _ paren_close _ e:Expr
-  { return setLocation({tag: "let", ident: i, expr: {tag: "fun", params: ps, body: e} }); }
+  { return loc({tag: "let", ident: i,
+        expr: {tag: "fun", params: ps, body: e} }); }
 CParamList
   = first:CParam rest:CParamMore*
   { return [first].concat(rest); }
@@ -149,7 +150,7 @@ CParamMore
   { return p; }
 CParam
   = i:ident _ typed _ t:Type _
-  { return setLocation({tag: "param", name: i, type: t}); }
+  { return loc({tag: "param", name: i, type: t}); }
 
 // This is a little hacky, but we currently require whitespace when the callee
 // is an identifier (a lookup). This resolves a grammar ambiguity with quote
@@ -158,17 +159,17 @@ Call
   = OtherCall / IdentCall
 IdentCall
   = i:Lookup ws _ as:Arg+
-  { return setLocation({tag: "call", fun: i, args: as}); }
+  { return loc({tag: "call", fun: i, args: as}); }
 OtherCall
   = i:(CCall / Escape / Run / Paren) _ as:Arg+
-  { return setLocation({tag: "call", fun: i, args: as}); }
+  { return loc({tag: "call", fun: i, args: as}); }
 Arg
   = e:TermExpr _
   { return e; }
 
 CCall
   = i:Lookup paren_open _ as:CArgList? _ paren_close
-  { return setLocation({tag: "call", fun: i, args: as || []}); }
+  { return loc({tag: "call", fun: i, args: as || []}); }
 CArgList
   = first:Expr rest:CArgMore*
   { return [first].concat(rest); }
@@ -178,11 +179,11 @@ CArgMore
 
 MacroCall
   = macromark i:ident _ as:Arg+
-  { return setLocation({tag: "macrocall", macro: i, args: as}); }
+  { return loc({tag: "macrocall", macro: i, args: as}); }
 
 Extern
   = extern _ i:ExternIdent _ typed _ t:Type e:ExternExpansion?
-  { return setLocation({tag: "extern", name: i, type: t, expansion: e}); }
+  { return loc({tag: "extern", name: i, type: t, expansion: e}); }
 
 ExternIdent
   = ident / ExternIdentOperator
@@ -205,15 +206,15 @@ Paren
 
 Assign
   = i:ident _ eq _ e:Expr
-  { return setLocation({tag: "assign", ident: i, expr: e}); }
+  { return loc({tag: "assign", ident: i, expr: e}); }
 
 If
   = if _ c:TermExpr _ t:TermExpr _ f:TermExpr
-  { return setLocation({tag: "if", cond: c, truex: t, falsex: f}); }
+  { return loc({tag: "if", cond: c, truex: t, falsex: f}); }
 
 While
   = while _ c:TermExpr _ b:TermExpr
-  { return setLocation({tag: "while", cond: c, body: b}); }
+  { return loc({tag: "while", cond: c, body: b}); }
 
 
 // Type syntax.
@@ -229,11 +230,11 @@ TermType
 
 PrimitiveType
   = i:ident
-  { return setLocation({tag: "type_primitive", name: i}); }
+  { return loc({tag: "type_primitive", name: i}); }
 
 InstanceType
   = t:TermType _ i:ident
-  { return setLocation({tag: "type_instance", name: i, arg: t}); }
+  { return loc({tag: "type_instance", name: i, arg: t}); }
 
 ParenType
   = paren_open _ t:Type _ paren_close
@@ -241,11 +242,12 @@ ParenType
 
 FunType
   = p:FunTypeParam* arrow _ r:TermType
-  { return setLocation({tag: "type_fun", params: p, ret: r}); }
+  { return loc({tag: "type_fun", params: p, ret: r}); }
 
 CodeType
   = s:snippet_marker? a:ident? quote_open _ t:Type _ quote_close
-  { return setLocation({tag: "type_code", inner: t, annotation: a || "", snippet: !!s}); }
+  { return loc({tag: "type_code", inner: t, annotation: a || "",
+        snippet: !!s}); }
 
 FunTypeParam
   = t:TermType _
@@ -253,7 +255,7 @@ FunTypeParam
 
 OverloadedType
   = t:NonOverloadedType _ other_types:(OverloadedTypeElement)+
-  { return setLocation({tag: "type_overloaded", types: [t].concat(other_types)}); }
+  { return loc({tag: "type_overloaded", types: [t].concat(other_types)}); }
 
 OverloadedTypeElement
   = _ pipe_operator _ t:NonOverloadedType
@@ -261,7 +263,7 @@ OverloadedTypeElement
 
 TypeAlias
   = type _ i:ident _ eq _ t:Type
-  { return setLocation({tag: "type_alias", ident:i, type:t}); }
+  { return loc({tag: "type_alias", ident:i, type:t}); }
 
 
 // Tokens.
