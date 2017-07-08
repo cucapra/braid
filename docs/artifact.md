@@ -118,7 +118,7 @@ Now, try switching the dingus from interpreter mode to compiler mode. Below the 
 
 Next, try using the built-in examples. The second pop-up menu has a list. Try choosing each of them in order. We'll explain what's going on in the code a bit later, but feel free to explore.
 
-You will find that the later examples switch the dingus into WebGL mode; the textual output is then replaced with a 3D rendering. You can interact with this view with your mouse. Click and drag to rotate the scene; scroll to zoom; and hold the "control" key while dragging to pan. If you ever get lost, just reload the page to reset; the code should not get erase.
+You will find that the later examples switch the dingus into WebGL mode; the textual output is then replaced with a 3D rendering. You can interact with this view with your mouse. Click and drag to rotate the scene; scroll to zoom; and hold the "control" key while dragging to pan. If you ever get lost, just reload the page to reset; the code should not get erased.
 
 
 Using the Language
