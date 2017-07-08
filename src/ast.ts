@@ -1,16 +1,10 @@
 /**
- * Information about one location in the source file
+ * The character position in a source file.
  */
-export interface LocationData {
+export interface Position {
   offset: number;
   line: number;
   column: number;
-}
-
-export interface Location {
-  start: LocationData;
-  end: LocationData;
-  filename: string;
 }
 
 /**
@@ -32,7 +26,14 @@ export interface SyntaxNode {
    */
   id?: number;
 
-  location?: Location;
+  /**
+   * The source file position of this AST node.
+   */
+  location?: {
+    start: Position;
+    end: Position;
+    filename: string;
+  };
 }
 
 /**

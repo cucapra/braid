@@ -169,8 +169,8 @@ export function location(node: ast.SyntaxNode): string {
   if (node.location === undefined) {
     return "No location found";
   }
-  let start: ast.LocationData = node.location.start;
-  let end: ast.LocationData = node.location.end;
+  let start = node.location.start;
+  let end = node.location.end;
   return "(" + start.line + "," + start.column + ") to (" 
     + end.line + "," + end.column + ")"
     + " in file " + node.location.filename;
