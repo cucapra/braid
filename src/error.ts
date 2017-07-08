@@ -6,12 +6,7 @@ import * as ast from './ast';
  * This uses the GNU guidelines for error messages:
  * https://www.gnu.org/prep/standards/html_node/Errors.html
  */
-export function location(node: ast.SyntaxNode): string {
-  let loc = node.location;
-  if (!loc) {
-    return "?";
-  }
-
+export function locString(loc: ast.Location): string {
   let out = `${loc.filename}:${loc.start.line}.${loc.start.column}-`;
   if (loc.end.line !== loc.start.line) {
     out += `${loc.end.line}.`;
@@ -35,6 +30,10 @@ export class Error {
     public kind: ErrorKind,
     public message: string,
   ) {}
+
+  toString() {
+    return `${locString(this.location)}: ${this.kind} error: ${this.message}`;
+  }
 }
 
 /**
@@ -42,8 +41,4 @@ export class Error {
  */
 export function error(node: ast.SyntaxNode, kind: ErrorKind, message: string) {
   return new Error(node.location!, kind, message);
-}
-
-export function locationError(node: ast.SyntaxNode): string {
-  return " at " + location(node);
 }

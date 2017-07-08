@@ -13,6 +13,7 @@ import { CompilerIR } from './compile/ir';
 import { semantically_analyze } from './compile/compile';
 import parser = require('../parser');
 import { pretty } from './pretty';
+import * as error from './error';
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
@@ -126,8 +127,12 @@ export function frontend(config: Config, sources: string[],
     let [type, _] = type_table[elaborated.id!];
     config.typed(pretty_type(type));
   } catch (e) {
-    config.error(e);
-    return;
+    if (e instanceof error.Error) {
+      config.error(e.toString());
+      return;
+    } else {
+      throw e;
+    }
   }
   config.log('type table', type_table);
 
