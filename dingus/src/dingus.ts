@@ -42,7 +42,7 @@ function ssc_run(code: string, mode: string)
       (console.log as any)(...msg);
     },
     error: e => {
-      console.warn(e);
+      console.warn(e.toString());
       error = e;
     },
 
@@ -252,8 +252,8 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         ssc_run(custom_preamble + code, mode!);
 
       // Show error message (if any) and the program's type.
-      if (errbox && err) {
-        show(err.toString(), errbox);
+      if (errbox) {
+        show(err ? err.toString() : null, errbox);
       }
       if (typebox) {
         show(typ, typebox);
