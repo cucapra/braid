@@ -1,5 +1,3 @@
-import * as ast from './ast';
-
 // Create a copy of an object `obj`, optionally with its fields updated
 // according to `values`.
 // TODO Opportunistically avoid copying identical expressions? This would work
@@ -162,29 +160,4 @@ export function scope_eval(code: string): any {
   return (function () {
     return eval("'use strict'; " + code);
   })();
-}
-
-/**
- * Represent an AST node's location as a string.
- *
- * This uses the GNU guidelines for error messages:
- * https://www.gnu.org/prep/standards/html_node/Errors.html
- */
-export function location(node: ast.SyntaxNode): string {
-  let loc = node.location;
-  if (!loc) {
-    return "?";
-  }
-
-  let out = `${loc.filename}:${loc.start.line}.${loc.start.column}-`;
-  if (loc.end.line !== loc.start.line) {
-    out += `${loc.end.line}.`;
-  }
-  out += `${loc.end.column}`;
-
-  return out;
-}
-
-export function locationError(node: ast.SyntaxNode): string {
-  return " at " + location(node);
 }

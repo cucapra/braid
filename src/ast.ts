@@ -8,6 +8,15 @@ export interface Position {
 }
 
 /**
+ * The source location for an AST node.
+ */
+export interface Location {
+  start: Position;
+  end: Position;
+  filename: string;
+}
+
+/**
  * The base type for all nodes in the AST.
  */
 export interface SyntaxNode {
@@ -29,11 +38,7 @@ export interface SyntaxNode {
   /**
    * The source file position of this AST node.
    */
-  location?: {
-    start: Position;
-    end: Position;
-    filename: string;
-  };
+  location?: Location;
 }
 
 /**
