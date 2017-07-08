@@ -106,7 +106,7 @@ export function frontend(config: Config, sources: string[],
           end: e.location.end,
         };
         let err = new error.Error(loc, "parse", e.message);
-        config.error(err.toString());
+        config.error(err);
         return;
       } else {
         throw e;
@@ -128,7 +128,7 @@ export function frontend(config: Config, sources: string[],
     config.typed(pretty_type(type));
   } catch (e) {
     if (e instanceof error.Error) {
-      config.error(e.toString());
+      config.error(e);
       return;
     } else {
       throw e;

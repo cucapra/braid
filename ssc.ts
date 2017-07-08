@@ -69,7 +69,7 @@ function run(filename: string, source: string, webgl: boolean,
         if (test) {
           success = check_output(filename, source, e.toString());
         } else {
-          console.error(e);
+          console.error(e.toString());
           success = false;
         }
       },

@@ -42,7 +42,7 @@ function ssc_run(code: string, mode: string)
       (console.log as any)(...msg);
     },
     error: e => {
-      console.error(e);
+      console.warn(e);
       error = e;
     },
 
@@ -251,7 +251,8 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       let [err, tree, typ, compiled, res, glcode] =
         ssc_run(custom_preamble + code, mode!);
 
-      if (errbox) {
+      // Show error message (if any) and the program's type.
+      if (errbox && err) {
         show(err.toString(), errbox);
       }
       if (typebox) {
@@ -283,6 +284,22 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
           show(null, compiledbox);
         }
       }
+
+      // Mark an error, if there is one, in the editor.
+      if (codemirror) {
+        let doc = codemirror.getDoc();
+        for (let mark of doc.getAllMarks()) {
+          mark.clear();
+        }
+        console.log("xxx", err);
+        if (err instanceof error.Error) {
+          let mark = doc.markText(
+            { line: err.location.start.line, ch: err.location.start.column },
+            { line: err.location.end.line, ch: err.location.end.column },
+          );
+          console.log(mark);
+        }
+      } 
 
       // Show the output, either as text or in the WebGL viewer.
       if (mode === "webgl" && glcode) {
