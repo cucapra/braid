@@ -2,9 +2,13 @@
 	"files.exclude": {
         "build": true,
 		"dingus/build": true,
-		"docs/build": true,
-        "typings": true,
-        "node_modules": true
+		"docs/_book": true,
+		"harness/build": true,
+        "**/node_modules": true,
+		"**/package-lock.json": true,
+		"**/yarn.lock": true,
+		"_web": true,
+		"parser.js": true
 	},
 	"editor.wordWrap": "bounded",
 	"editor.wordWrapColumn": 80,
