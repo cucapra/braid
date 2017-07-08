@@ -100,13 +100,13 @@ export function frontend(config: Config, sources: string[],
       tree = parser.parse(source, options);
     } catch (e) {
       if (e instanceof parser.SyntaxError) {
-        let loc = e.location.start;
-        let err = 'parse error at ';
-        if (filename) {
-          err += filename + ':';
-        }
-        err += loc.line + ',' + loc.column + ': ' + e.message;
-        config.error(err);
+        let loc = {
+          filename: filename || '?',
+          start: e.location.start,
+          end: e.location.end,
+        };
+        let err = new error.Error(loc, "parse", e.message);
+        config.error(err.toString());
         return;
       } else {
         throw e;
