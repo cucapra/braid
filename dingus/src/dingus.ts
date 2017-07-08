@@ -291,11 +291,14 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         for (let mark of doc.getAllMarks()) {
           mark.clear();
         }
-        console.log("xxx", err);
         if (err instanceof error.Error) {
           let mark = doc.markText(
             { line: err.location.start.line, ch: err.location.start.column },
             { line: err.location.end.line, ch: err.location.end.column },
+            {
+              className: 'syntax-error',
+              title: err.message,
+            },
           );
           console.log(mark);
         }
