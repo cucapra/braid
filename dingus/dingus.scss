@@ -33,6 +33,10 @@ pre, textarea {
 #code, .CodeMirror {
     width: calc(100% - 2em);
     height: 60ex;
+
+    .syntax-error {
+        background-color: #f69;
+    }
 }
 @media (min-width: 900px) {
     .input, .output {

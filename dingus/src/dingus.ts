@@ -304,7 +304,6 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
             {
               className: 'syntax-error',
               title: err.message,
-              css: 'background: #f00'
             },
           );
         }
