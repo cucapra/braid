@@ -164,16 +164,25 @@ export function scope_eval(code: string): any {
   })();
 }
 
-// toString for an AST SyntaxNode's location
+/**
+ * Represent an AST node's location as a string.
+ *
+ * This uses the GNU guidelines for error messages:
+ * https://www.gnu.org/prep/standards/html_node/Errors.html
+ */
 export function location(node: ast.SyntaxNode): string {
-  if (node.location === undefined) {
-    return "No location found";
+  let loc = node.location;
+  if (!loc) {
+    return "?";
   }
-  let start = node.location.start;
-  let end = node.location.end;
-  return "(" + start.line + "," + start.column + ") to (" 
-    + end.line + "," + end.column + ")"
-    + " in file " + node.location.filename;
+
+  let out = `${loc.filename}:${loc.start.line}.${loc.start.column}-`;
+  if (loc.end.line !== loc.start.line) {
+    out += `${loc.end.line}.`;
+  }
+  out += `${loc.end.column}`;
+
+  return out;
 }
 
 export function locationError(node: ast.SyntaxNode): string {
