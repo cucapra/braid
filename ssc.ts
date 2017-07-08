@@ -65,9 +65,9 @@ function run(filename: string, source: string, webgl: boolean,
       generate: generate,
 
       log: log,
-      error (e: string) {
+      error: e => {
         if (test) {
-          success = check_output(filename, source, e);
+          success = check_output(filename, source, e.toString());
         } else {
           console.error(e);
           success = false;

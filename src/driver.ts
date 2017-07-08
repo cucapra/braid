@@ -39,7 +39,7 @@ export interface Config {
 
   parsed: (tree: SyntaxNode) => void;
   typed: (type: string) => void;
-  error: (err: string) => void;
+  error: (err: error.Error | string) => void;
   log: (...msg: any[]) => void;
 
   /**

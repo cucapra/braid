@@ -1,5 +1,6 @@
 import * as driver from '../../src/driver';
 import * as ast from '../../src/ast';
+import * as error from '../../src/error';
 
 import { tree_canvas } from './tree';
 import { get_children, get_name } from './astsumm';
@@ -26,10 +27,10 @@ const RUN_DELAY_MS = 200;
  * The mode can be "interp", "compile", or "webgl".
  */
 function ssc_run(code: string, mode: string)
-  : [string, ast.SyntaxNode, string, string, string, string]
+  : [string | error.Error, ast.SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
-  let error: string | null = null;
+  let error: string | error.Error | null = null;
   let type: string | null = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
@@ -40,7 +41,7 @@ function ssc_run(code: string, mode: string)
       // https://github.com/Microsoft/TypeScript/issues/4759
       (console.log as any)(...msg);
     },
-    error (e: string) {
+    error: e => {
       console.error(e);
       error = e;
     },
@@ -251,7 +252,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         ssc_run(custom_preamble + code, mode!);
 
       if (errbox) {
-        show(err, errbox);
+        show(err.toString(), errbox);
       }
       if (typebox) {
         show(typ, typebox);
