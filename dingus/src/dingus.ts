@@ -55,8 +55,9 @@ function ssc_run(code: string, mode: string)
   };
 
   // Add the preamble, if this is WebGL mode.
+  let code_pieces = [code];
   if (mode === "webgl") {
-    code = PREAMBLES[0]['body'] + code;
+    code_pieces.unshift(PREAMBLES[0]['body']);
   }
 
   // Run the driver.
@@ -64,7 +65,7 @@ function ssc_run(code: string, mode: string)
   let jscode: string | null = null;
   let ast: ast.SyntaxNode | null = null;
   let glcode: string | null = null;
-  driver.frontend(config, [code], null, function (tree, types) {
+  driver.frontend(config, code_pieces, null, function (tree, types) {
     ast = tree;
 
     if (mode === "interp") {
