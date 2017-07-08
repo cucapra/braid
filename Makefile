@@ -92,7 +92,7 @@ docs:
 
 DEPLOY_DIR := _web
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude build
+	--exclude .DS_Store
 web: dingus docs
 	rm -rf $(DEPLOY_DIR)/docs
 	mkdir -p $(DEPLOY_DIR)
