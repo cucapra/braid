@@ -37,7 +37,7 @@ function check_output(filename: string, source: string, result: string):
 
   let match: boolean;
   if (expected === "type error") {
-    match = result.indexOf(expected) === 0;
+    match = result.indexOf(expected) !== -1;
   } else {
     match = expected === result;
   }
