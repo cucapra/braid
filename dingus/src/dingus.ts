@@ -293,14 +293,20 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
         if (err instanceof error.Error) {
           let mark = doc.markText(
-            { line: err.location.start.line, ch: err.location.start.column },
-            { line: err.location.end.line, ch: err.location.end.column },
+            {
+              line: err.location.start.line - 1,
+              ch: err.location.start.column - 1,
+            },
+            {
+              line: err.location.end.line - 1,
+              ch: err.location.end.column - 1,
+            },
             {
               className: 'syntax-error',
               title: err.message,
+              css: 'background: #f00'
             },
           );
-          console.log(mark);
         }
       } 
 
