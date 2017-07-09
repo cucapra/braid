@@ -563,17 +563,85 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     // webgl helper function
     mat3fromOneValue(x: number) {
-      var out = mat3.fromValues(x, x, x,
+      let out = mat3.fromValues(x, x, x,
                                 x, x, x,
                                 x, x, x);
       return out;
     },
 
     mat4fromOneValue(x: number) {
-      var out = mat3.fromValues(x, x, x, x,
+      let out = mat3.fromValues(x, x, x, x,
                                 x, x, x, x,
                                 x, x, x, x);
       return out;
+    },
+
+    mat3div(a: number[], b: number[]) {
+      let out = mat3.create();
+      out[0] = a[0]/b[0];
+      out[1] = a[1]/b[1];
+      out[2] = a[2]/b[2];
+      out[3] = a[3]/b[3];
+      out[4] = a[4]/b[4];
+      out[5] = a[5]/b[5];
+      out[6] = a[6]/b[6];
+      out[7] = a[7]/b[7];
+      out[8] = a[8]/b[8];
+      return out;
+    },
+
+    mat4div(a: number[], b: number[]) {
+      let out = mat4.create();
+      out[0] = a[0]/b[0];
+      out[1] = a[1]/b[1];
+      out[2] = a[2]/b[2];
+      out[3] = a[3]/b[3];
+      out[4] = a[4]/b[4];
+      out[5] = a[5]/b[5];
+      out[6] = a[6]/b[6];
+      out[7] = a[7]/b[7];
+      out[8] = a[8]/b[8];
+      out[9] = a[9]/b[9];
+      out[10] = a[10]/b[10];
+      out[11] = a[11]/b[11];
+      out[12] = a[12]/b[12];
+      out[13] = a[13]/b[13];
+      out[14] = a[14]/b[14];
+      out[15] = a[15]/b[15];
+      return out;
+    },
+
+    // Create vec3 using vec4
+    vec3fromvec4(v4: number[]) {
+      let out = vec3.create();
+      out[0] = v4[0] || 0.0;
+      out[1] = v4[1] || 0.0;
+      out[2] = v4[2] || 0.0;
+      return out;
+    },
+
+    // Create vec4 using vec3
+    vec4fromvec3(v3: number[], x: number) {
+      let out = vec4.create();
+      out[0] = v3[0] || 0.0;
+      out[1] = v3[1] || 0.0;
+      out[2] = v3[2] || 0.0;
+      out[3] = x || 0.0; 
+      return out;
+    },
+
+    // normalize a scalar
+    // s > 0: s = 1
+    // s = 0: s = 0
+    // s < 0: s = -1
+    normalizeScalar(s: number) {
+      if (s > 0) {
+        return 1;
+      } else if (s < 0) {
+        return -1;
+      } else {
+        return 0;
+      }
     },
 
     /**
