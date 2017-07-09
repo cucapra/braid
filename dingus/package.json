@@ -12,7 +12,7 @@
     "codemirror": "^5.27.4",
     "d3": "^3.5.16",
     "eye-vector": "^1.0.0",
-    "gl-mat4": "^1.0.0",
+    "gl-matrix": "^2.3.2",
     "seedrandom": "^2.4.3",
     "webgl-obj-loader": "^0.1.1"
   },
