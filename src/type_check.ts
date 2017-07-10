@@ -3,7 +3,7 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
   TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
-import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
+import { Gen, merge, hd, tl, cons, stack_lookup,
   stack_put, zip } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 import { error } from './error';

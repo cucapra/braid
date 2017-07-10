@@ -2,14 +2,14 @@ import * as ast from './ast';
 import { ASTVisit, ast_visit, compose_visit,
   ast_translate_rules } from './visit';
 import { pretty } from './pretty';
-import { overlay, merge } from './util';
+import { merge } from './util';
 
 // Dynamic syntax.
 
 type Value = number | string | boolean | Code | Fun | Extern;
 
 interface Env {
-  [key: string]: Value;
+  readonly [key: string]: Value;
 }
 
 type Pers = Value[];
@@ -102,8 +102,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
 
   visit_let(tree: ast.LetNode, state: State): [Value, State] {
     let [v, s] = interp(tree.expr, state);
-    let env = overlay(s.env);  // Update the value in an overlay.
-    env[tree.ident] = v;
+    let env = Object.assign({}, s.env, { [tree.ident]: v });
     return [v, merge(s, {env})];
   },
 
@@ -120,8 +119,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
       return [v, s];
     } else {
       // Ordinary variable assignment.
-      let env = overlay(s.env);
-      env[tree.ident] = v;
+      let env = Object.assign({}, s.env, { [tree.ident]: v });
       return [v, merge(s, {env})];
     }
   },
@@ -250,11 +248,12 @@ let Interp: ASTVisit<State, [Value, State]> = {
     if (target instanceof Fun) {
       // Bind the function parameters and overlay them on the function's
       // closed environment.
-      let call_env : Env = overlay(target.env);
+      let bindings: { [key: string]: Value } = {};
       for (let i = 0; i < args.length; ++i) {
         let param_name = target.params[i];
-        call_env[param_name] = args[i];
+        bindings[param_name] = args[i];
       }
+      let call_env = Object.assign({}, target.env, bindings);
 
       // Evaluate the function body. Throw away any updates it makes to its
       // environment.
@@ -283,8 +282,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
     // messy to mix together normal variables and externs, but the type system
     // keeps them straight so we don't have to.
     let extern = new Extern(tree.expansion || tree.name);
-    let env = overlay(state.env);
-    env[tree.name] = extern;
+    let env = Object.assign({}, state.env, { [tree.name]: extern });
 
     return [extern, merge(state, {env})];
   },
