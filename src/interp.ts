@@ -60,19 +60,19 @@ interface State {
   /**
    * Variable environment.
    */
-  env: Env;
+  readonly env: Env;
 
   /**
    * Persist-escape environment.
    */
-  pers: Pers;
+  readonly pers: Pers;
 
   /**
    * Bookkeeping for snippets: when we're inside a snippet escape, the number
    * of "levels" for that escape (so we can resume at the appropriate distance
    * when we hit a snippet quote).
    */
-  snipdist: number | null;
+  readonly snipdist: number | null;
 }
 
 // This first set of rules applies at the "top level", for ordinary execution.

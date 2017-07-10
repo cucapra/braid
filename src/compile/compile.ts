@@ -4,7 +4,7 @@ import * as ast from '../ast';
 import { CompilerIR, Variant } from './ir';
 import { TypeTable } from '../type_elaborate';
 import { TypeMap } from '../type';
-import { find_def_use, NameMap } from './defuse';
+import { find_def_use } from './defuse';
 import { find_scopes } from './scope';
 import { lift } from './lift';
 import { presplice } from './presplice';
@@ -43,7 +43,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   presplice_opt: boolean = true): CompilerIR
 {
   // Give IDs to the intrinsics and add them to the type table.
-  let intrinsics_map: NameMap = {};
+  let intrinsics_map: { [key: string]: number } = {};
   for (let name in intrinsics) {
     let id = type_table.length;
     type_table[id] = [intrinsics[name], null as any];  // TODO

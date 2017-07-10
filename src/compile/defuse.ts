@@ -3,7 +3,7 @@ import { DefUseTable } from './ir';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import * as ast from '../ast';
 
-export type NameMap = { [name: string]: number };
+export type NameMap = { readonly [name: string]: number };
 
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
@@ -16,6 +16,10 @@ type NameStack = NameMap[];
 function head_overlay <T extends Object> (a: T[]): T[] {
   let hm = Object.assign({}, hd(a));
   return cons(hm, tl(a));
+}
+
+function head_merge<T>(a: T[], hv: T): T[] {
+  return cons(merge(hd(a), hv), tl(a));
 }
 
 // The state structure for the DefUse analysis.
@@ -58,8 +62,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [State, DefUseTable]
     {
       let [s1, t1] = fself(tree.expr, [state, table]);
-      let ns = head_overlay(state.ns);
-      hd(ns)[tree.ident] = tree.id!;
+      let ns = head_merge(state.ns, { [tree.ident]: tree.id! });
       return [merge(s1, {ns}), t1];
     },
 
@@ -69,10 +72,11 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [State, DefUseTable]
     {
       // Update the top map with the function parameters.
-      let ns = head_overlay(state.ns);
+      let params: { [k: string]: number } = {};
       for (let param of tree.params) {
-        hd(ns)[param.name] = param.id!;
+        params[param.name] = param.id!;
       }
+      let ns = head_merge(state.ns, params);
 
       // Traverse the body with this new map.
       let [, t2] = fself(tree.body, [merge(state, {ns}), table]);
