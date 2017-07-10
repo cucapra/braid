@@ -10,22 +10,22 @@ export function merge<S, T>(obj: S, ...values: T[]): S {
 }
 
 // Lispy list manipulation.
-export function hd<T> (list: T[]): T {
+export function hd<T> (list: ReadonlyArray<T>): T {
   if (list.length === 0) {
     throw "error: head of empty list";
   }
   return list[0];
 }
 
-export function tl<T> (list: T[]): T[] {
+export function tl<T> (list: ReadonlyArray<T>): T[] {
   if (list.length === 0) {
     throw "error: tail of empty list";
   }
   return list.slice(1);
 }
 
-export function cons<T> (x: T, xs: T[]): T[] {
-  return [x].concat(xs);
+export function cons<T> (x: T, xs: ReadonlyArray<T>): T[] {
+  return [x].concat(xs as T[]);
 }
 
 export function zip<A, B> (a: A[], b: B[]): [A, B][] {
@@ -79,7 +79,7 @@ export function stack_put <T> (
   value: T):
   MapStack<T>
 {
-  let head = Object.assign({}, hd(mapstack), { [key]: value });
+  let head = merge(hd(mapstack), { [key]: value });
   return cons(head, tl(mapstack));
 }
 

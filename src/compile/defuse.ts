@@ -11,14 +11,9 @@ export type NameMap = { readonly [name: string]: number };
 type NameStack = NameMap[];
 
 /**
- * Create a new stack that shares the same tail but gets a new copy of the head.
+ * Merge some additional values onto the head element of a stack (immutably). 
  */
-function head_overlay <T extends Object> (a: T[]): T[] {
-  let hm = Object.assign({}, hd(a));
-  return cons(hm, tl(a));
-}
-
-function head_merge<T>(a: T[], hv: T): T[] {
+function head_merge<T>(a: ReadonlyArray<T>, hv: T): T[] {
   return cons(merge(hd(a), hv), tl(a));
 }
 
