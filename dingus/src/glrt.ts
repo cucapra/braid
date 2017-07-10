@@ -448,6 +448,10 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     // Matrix manipulation library.
     mat4,
+    mat3,
+    vec4,
+    vec3,
+    vec2,
 
     // Eye vector calculation.
     eye,
