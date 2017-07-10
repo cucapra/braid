@@ -249,7 +249,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let type = get_type(tree.type, env.named);
 
       // Add to TypeEnv
-      let new_named = Object.assign({}, env.named, { [tree.ident]: type });
+      let new_named = merge(env.named, { [tree.ident]: type });
 
       let e: TypeEnv = merge(env, {
         named: new_named,
@@ -370,7 +370,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       for (let param of tree.params) {
         let [ptype,] = check(param, env);
         param_types.push(ptype);
-        body_env_hd = Object.assign({}, body_env_hd, { [param.name]: ptype });
+        body_env_hd = merge(body_env_hd, { [param.name]: ptype });
       }
       let tvar = rectify_fun_params(param_types);
 
@@ -416,7 +416,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_extern(tree: ast.ExternNode, env: TypeEnv): [Type, TypeEnv] {
       // Add the type to the extern map.
       let type = get_type(tree.type, env.named);
-      let new_externs = Object.assign({}, env.externs, { [tree.name]: type });
+      let new_externs = merge(env.externs, { [tree.name]: type });
       let e: TypeEnv = merge(env, {
         externs: new_externs,
       });

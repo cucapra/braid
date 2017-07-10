@@ -147,7 +147,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
-      let externs = Object.assign({}, state.externs, { [tree.name]: tree.id! });
+      let externs = merge(state.externs, { [tree.name]: tree.id! });
       return [merge(state, {externs}), table];
     },
   });
