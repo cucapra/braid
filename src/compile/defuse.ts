@@ -1,4 +1,4 @@
-import { hd, tl, cons, stack_lookup, merge, fix } from '../util';
+import { hd, tl, cons, stack_lookup, merge, fix, head_merge } from '../util';
 import { DefUseTable } from './ir';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import * as ast from '../ast';
@@ -9,13 +9,6 @@ export type NameMap = { readonly [name: string]: number };
 // of maps*. The map assigns a defining node ID for names. We need a stack to
 // reflect function scopes, and a stack of *those* to reflect quotes.
 type NameStack = NameMap[];
-
-/**
- * Merge some additional values onto the head element of a stack (immutably). 
- */
-function head_merge<T>(a: ReadonlyArray<T>, hv: T): T[] {
-  return cons(merge(hd(a), hv), tl(a));
-}
 
 // The state structure for the DefUse analysis.
 interface State {

@@ -3,8 +3,8 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
   TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
-import { Gen, merge, hd, tl, cons, stack_lookup,
-  stack_put, zip } from './util';
+import { Gen, merge, hd, tl, cons, stack_lookup, zip,
+  head_merge } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 import { error } from './error';
 
@@ -160,7 +160,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // Insert the new type into the front of the map stack.
       let e2: TypeEnv = merge(e, {
-        stack: stack_put(e.stack, tree.ident, t)
+        stack: head_merge(e.stack, { [tree.ident]: t })
       });
 
       return [t, e2];

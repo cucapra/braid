@@ -72,15 +72,11 @@ export function stack_lookup <T> (
   return [undefined, undefined];
 }
 
-// Assign a value in the topmost map in a stack of maps.
-export function stack_put <T> (
-  mapstack: MapStack<T>,
-  key: string,
-  value: T):
-  MapStack<T>
-{
-  let head = merge(hd(mapstack), { [key]: value });
-  return cons(head, tl(mapstack));
+/**
+ * Merge some additional values onto the head element of a stack (immutably). 
+ */
+export function head_merge<T>(a: ReadonlyArray<T>, hv: T): T[] {
+  return cons(merge(hd(a), hv), tl(a));
 }
 
 // Treat an array as a set and insert into it. That is, do nothing if the
