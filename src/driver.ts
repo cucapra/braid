@@ -3,7 +3,7 @@ import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
 import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
 import { desugar_cross_stage, desugar_macros } from './sugar';
 import * as interp from './interp';
-import { compose, assign, Gen, scope_eval } from './util';
+import { compose, Gen, scope_eval } from './util';
 import { TypeTable, elaborate } from './type_elaborate';
 import * as webgl from './backends/webgl';
 import * as gl from './backends/gl';
@@ -66,7 +66,7 @@ function _runtime(config: Config): string {
 
 function _types(config: Config): TypeMap {
   if (config.webgl) {
-    return assign({}, BUILTIN_TYPES, gl.GL_TYPES);
+    return Object.assign({}, BUILTIN_TYPES, gl.GL_TYPES);
   } else {
     return BUILTIN_TYPES;
   }

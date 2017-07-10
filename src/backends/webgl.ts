@@ -7,7 +7,6 @@ import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
-import { assign } from '../util';
 import * as ast from '../ast';
 
 // Run-time functions invoked by generated code. These could eventually be
@@ -245,7 +244,7 @@ function emit_shader_binding_variant(emitter: Emitter,
   let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
-  let subemitter = assign({}, emitter);
+  let subemitter = Object.assign({}, emitter);
   if (!subemitter.variant) {
     subemitter.variant = variant;
   }

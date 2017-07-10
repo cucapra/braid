@@ -6,7 +6,6 @@
 
 import { SyntaxNode } from '../ast';
 import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
-import { assign } from '../util';
 
 /**
  * A structure specifying a code-generation backend and its state.
@@ -96,7 +95,7 @@ function emit_prog(emitter: Emitter, prog: Prog) {
   // Multiple variants. Compile each.
   let out = "";
   for (let variant of variants) {
-    let subemitter = assign({}, emitter);
+    let subemitter = Object.assign({}, emitter);
     subemitter.variant = variant;
     out += emitter.emit_prog_variant(
       subemitter, variant, specialized_prog(subemitter, variant.progid)

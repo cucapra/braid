@@ -1,30 +1,13 @@
-// Create a copy of an object `obj`, optionally with its fields updated
-// according to `values`.
-// TODO Opportunistically avoid copying identical expressions? This would work
-// best combined with full-on hash consing, which in turn would be painful
-// without using ES6 Map.
-export function merge<T extends Object>(obj: T, values: Object = {}): T {
-  let out = <T> {};
-  for (let key in obj) {
-    if (values.hasOwnProperty(key)) {
-      (<any> out)[key] = (<any> values)[key];
-    } else if (obj.hasOwnProperty(key)) {
-      (<any> out)[key] = (<any> obj)[key];
-    }
-  }
-  return out;
+/**
+ * Create a new JavaScript object that is a copy of `obj`. If `values`
+ * is provided, the new copy has its values merged in.
+ *
+ * This is just ES6's Object.assign with a fresh, empty object {} as its
+ * first parameter.
+ */
+export function merge<S, T>(obj: S, ...values: T[]): S {
+  return Object.assign({}, obj, ...values);
 }
-
-// An alternative that more closely matches ES6 Object.assign.
-export function assign <T, U> (target: T, ...sources: U[]): T & U {
-  var t: any = {};
-  for (var i = 0; i < arguments.length; ++i) {
-    for (var k in arguments[i]) {
-      t[k] = arguments[i][k];
-    }
-  }
-  return t;
-};
 
 // A bit of a hack that abuses prototypes to create overlay. Return a copy of
 // the argument where changing the new object won't affect the original.

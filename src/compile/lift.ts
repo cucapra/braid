@@ -1,5 +1,5 @@
 import * as ast from '../ast';
-import { assign, Gen, fix, set_add } from '../util';
+import { Gen, fix, set_add } from '../util';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import { TypeTable } from '../type_elaborate';
 import { Scope, Prog, Proc, Escape, DefUseTable } from './ir';
@@ -132,7 +132,7 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
 
         // Quote (Prog) specifics.
         if (_is_quote(node)) {
-          let prog: Prog = assign(scope, {
+          let prog: Prog = Object.assign(scope, {
             annotation: node.annotation,
             owned_persist: [],
             owned_splice: [],
@@ -150,7 +150,7 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
             param_ids.push(param.id!);
           }
 
-          let proc: Proc = assign(scope, {
+          let proc: Proc = Object.assign(scope, {
             params: param_ids,
           });
           procs[node.id!] = proc;
