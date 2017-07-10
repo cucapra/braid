@@ -14,11 +14,7 @@
 declare function require(name: string): any;
 
 const eye = require('eye-vector');
-const mat4 = require('gl-matrix').mat4;
-const mat3 = require('gl-matrix').mat3;
-const vec4 = require('gl-matrix').vec4;
-const vec3 = require('gl-matrix').vec3;
-const vec2 = require('gl-matrix').vec2;
+import {vec2, vec3, vec4, mat3, mat4} from 'gl-matrix';
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
@@ -574,13 +570,14 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     },
 
     mat4fromOneValue(x: number) {
-      let out = mat3.fromValues(x, x, x, x,
+      let out = mat4.fromValues(x, x, x, x,
+                                x, x, x, x,
                                 x, x, x, x,
                                 x, x, x, x);
       return out;
     },
 
-    mat3div(a: number[], b: number[]) {
+    mat3div(a: mat3, b: mat3) {
       let out = mat3.create();
       out[0] = a[0]/b[0];
       out[1] = a[1]/b[1];
@@ -594,7 +591,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return out;
     },
 
-    mat4div(a: number[], b: number[]) {
+    mat4div(a: mat4, b: mat4) {
       let out = mat4.create();
       out[0] = a[0]/b[0];
       out[1] = a[1]/b[1];
@@ -616,7 +613,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     },
 
     // Create vec3 using vec4
-    vec3fromvec4(v4: number[]) {
+    vec3fromvec4(v4: vec4) {
       let out = vec3.create();
       out[0] = v4[0] || 0.0;
       out[1] = v4[1] || 0.0;
@@ -625,7 +622,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     },
 
     // Create vec4 using vec3
-    vec4fromvec3(v3: number[], x: number) {
+    vec4fromvec3(v3: vec3, x: number) {
       let out = vec4.create();
       out[0] = v3[0] || 0.0;
       out[1] = v3[1] || 0.0;

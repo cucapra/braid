@@ -12,8 +12,8 @@
 declare function require(name: string): any;
 
 import * as glrt from './glrt';
+import {mat4} from 'gl-matrix';
 
-const mat4 = require('gl-matrix').mat4;
 const canvasOrbitCamera = require('canvas-orbit-camera');
 
 // A type alias for a GL data structure.
