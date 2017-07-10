@@ -115,7 +115,7 @@ export class TypeVariable {
 // Type maps are used all over the place: most urgently, as "frames" in the
 // type checker's environment.
 export interface TypeMap {
-  [name: string]: Type;
+  readonly [name: string]: Type;
 }
 
 // The built-in primitive types.

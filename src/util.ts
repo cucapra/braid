@@ -75,7 +75,7 @@ export function compose <A, B, C> (g : (_:B) => C, f : (_:A) => B): (_:A) => C {
   }
 }
 
-type MapStack <T> = { [key: string]: T }[];
+type MapStack <T> = { readonly [key: string]: T }[];
 
 // Look up a key in a stack of maps, from left to right. Return the value and
 // the position where it was found (or [undefined, undefined] if not found).
@@ -102,8 +102,7 @@ export function stack_put <T> (
   value: T):
   MapStack<T>
 {
-  let head = overlay(hd(mapstack));
-  head[key] = value;
+  let head = Object.assign({}, hd(mapstack), { [key]: value });
   return cons(head, tl(mapstack));
 }
 
