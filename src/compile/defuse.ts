@@ -1,4 +1,4 @@
-import { hd, tl, cons, overlay, stack_lookup, merge, fix } from '../util';
+import { hd, tl, cons, stack_lookup, merge, fix } from '../util';
 import { DefUseTable } from './ir';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import * as ast from '../ast';
@@ -10,9 +10,11 @@ export type NameMap = { [name: string]: number };
 // reflect function scopes, and a stack of *those* to reflect quotes.
 type NameStack = NameMap[];
 
-// Like overlay, but works on the top of a NameStack.
+/**
+ * Create a new stack that shares the same tail but gets a new copy of the head.
+ */
 function head_overlay <T extends Object> (a: T[]): T[] {
-  let hm = overlay(hd(a));
+  let hm = Object.assign({}, hd(a));
   return cons(hm, tl(a));
 }
 
@@ -145,8 +147,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
-      let externs = overlay(state.externs);
-      externs[tree.name] = tree.id!;
+      let externs = Object.assign({}, state.externs, { [tree.name]: tree.id! });
       return [merge(state, {externs}), table];
     },
   });

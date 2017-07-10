@@ -9,12 +9,6 @@ export function merge<S, T>(obj: S, ...values: T[]): S {
   return Object.assign({}, obj, ...values);
 }
 
-// A bit of a hack that abuses prototypes to create overlay. Return a copy of
-// the argument where changing the new object won't affect the original.
-export function overlay<T extends Object>(base: T): T {
-  return <T> Object.create(base);
-}
-
 // Lispy list manipulation.
 export function hd<T> (list: T[]): T {
   if (list.length === 0) {
