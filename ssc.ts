@@ -9,7 +9,7 @@ import * as driver from "./src/driver";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
-const HEADER_FILE = 'header.ss'
+const HEADER_FILE = 'header.ss';
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
@@ -27,7 +27,7 @@ function check_output(filename: string, source: string, result: string):
 {
   let name = path.basename(filename, EXTENSION);
 
-  let [,expected] = source.split('# -> ');
+  let [, expected] = source.split('# -> ');
   if (expected === undefined) {
     console.log(`${name} ✘: ${result} (no expected result found)`);
     return false;
@@ -189,7 +189,7 @@ function main() {
       // Work around a TypeScript limitation:
       // https://github.com/Microsoft/TypeScript/issues/4755
       console.log(out[0], ...out.slice(1));
-    }
+    };
   } else {
     log = (_ => void 0);
   }
@@ -209,7 +209,7 @@ function main() {
         process.stdin.on("data", function (chunk: string) {
           chunks.push(chunk);
         }).on("end", function () {
-          then(chunks.join(""))
+          then(chunks.join(""));
         }).setEncoding("utf8");
       } else {
         // Read from a file.

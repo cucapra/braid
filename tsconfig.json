@@ -6,7 +6,11 @@
         "allowJs": true,
         "outDir": "build",
 
-        "lib": ["dom", "es5", "es2015.promise", "es2015.core"]
+        "lib": ["dom", "es5", "es2015.promise", "es2015.core"],
+
+        "plugins": [
+            { "name": "tslint-language-service" }
+        ]
     },
     "files": [
         "ssc.ts",
