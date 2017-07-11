@@ -1,7 +1,12 @@
+/**
+ * Code generation for WebGL runtime support. This module contains the
+ * machinery to generate calls in the `glrt` runtime library from operators
+ * and intrinsic functions in host-side code.
+ */
 import { FLOAT4X4, FLOAT3X3, FLOAT4, FLOAT3, FLOAT2 } from './gl';
 import { Type, PrimitiveType, FLOAT, INT } from '../type';
 
-// The following two interfaces define the type of the function map below
+// The following two interfaces define the type of the function map below.
 interface ParamsRetType {
   params: Type[];
   ret: (args: string[]) => string;
@@ -12,18 +17,18 @@ interface FuncMap {
 }
 
 /**
- * This funcMapList contains rules that describe the corresponding js code of
- * each braid built-in webgl function. This map is structured in the following
- * way. 
+ * This funcMapList contains rules that describe the corresponding JS code of
+ * each braid built-in WebGL function. This map is structured like this:
+ *
  * {
  *  func1: [
  *    {
  *      params: [args1type, arg2type...],
  *      ret: (args) => `the compiled javascript code`,
- *    }, { 
+ *    }, {
  *      params: [...]
  *      ret: ...
- *    }, 
+ *    },
  *    ...
  *  ],
  *  func2: [...],
@@ -470,18 +475,20 @@ let funcMap: FuncMap = {
 }
 
 /**
- * This exported function could return the corresponeding javascript code
- * according to the given braid function name and types of arguments. It
- * searches the funcMap declared above to look for the rules.
- * If you would like to support more functions or edit the implementation
- * of existed funcitons, you can make changes on the funcMap above.
- * 
- * @param func the name of a function in braid
- * @param params types of arguments
- * @param args arguments as a string list
- * @return the compiled javascript function including arguments 
+ * Generate the JavaScript code for a special WebGL call given the Braid
+ * function (or operator) name and the types of its arguments.
+ *
+ * This searches the funcMap above to look for code-generation rules. To add
+ * support for more intrinsics and operators, add them there.
+ *
+ * @param func The name of a function in Braid.
+ * @param params Types of arguments.
+ * @param args JavaScript code for the arguments as a string list.
+ * @return The compiled JavaScript function including arguments.
  */
-export function getFunc(func: string, params: Type[], args: string[]): string | null {
+export function getFunc(func: string, params: Type[],
+                        args: string[]): string | null
+{
   if (funcMap[func]) {
     for (let paramsRet of funcMap[func]) {
       let isEqual: boolean = true;
@@ -500,4 +507,3 @@ export function getFunc(func: string, params: Type[], args: string[]): string | 
   }
   return null;
 }
-
