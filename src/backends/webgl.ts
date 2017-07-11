@@ -299,11 +299,11 @@ let compile_rules: ASTVisit<Emitter, string> =
           let [typ,] = emitter.ir.type_table[arg.id!];
           argsType.push(typ);
         }
+        // get the function name
         let func = (tree.fun as ast.LookupNode).ident;
-
+        // Look up the corresponding javascript code of this webgl braid fucntion
         let res = getFunc(func, argsType, args);
-        
-        if (res !== null) {
+        if (res) {
           return res;
         }
       }
@@ -315,9 +315,9 @@ let compile_rules: ASTVisit<Emitter, string> =
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
       let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
+      // Look up the corresponding javascript code of this webgl braid fucntion
       let res = getFunc(tree.op, [typExpr], [expr]);
-
-      if (res !== null) {
+      if (res) {
         return res;
       }
 
@@ -329,9 +329,9 @@ let compile_rules: ASTVisit<Emitter, string> =
       let [typR,] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
+      // Look up the corresponding javascript code of this webgl braid fucntion
       let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
-
-      if (res !== null) {
+      if (res) {
         return res;
       }
 
