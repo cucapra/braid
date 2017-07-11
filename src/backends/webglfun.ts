@@ -500,6 +500,7 @@ export function getFunc(func: string, params: Type[],
       }
 
       if (isEqual) {
+        // Call the code-generation lambda for this function.
         return paramsRet.ret(args);
       }
     }
