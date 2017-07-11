@@ -25,10 +25,13 @@
         "variable-name": [ true, "ban-keywords" ],
         "whitespace": [
             true,
+            "check-branch",
             "check-decl",
             "check-operator",
+            "check-module",
             "check-separator",
-            "check-type"
+            "check-type",
+            "check-preblock"
         ]
     }
 }

@@ -18,33 +18,33 @@ export interface TypeEnv {
    * are to the right. Normal accesses must refer to the top environment
    * frame; subsequent ones are "auto-persists".
    */
-  stack: TypeMap[],
+  stack: TypeMap[];
 
   /**
    * A stack of *quote annotations*, which allows type system extensions to be
    * sensitive to the quote context.
    */
-  anns: (string | null)[],
+  anns: (string | null)[];
 
   /**
    * A single frame for "extern" values, which are always available without
    * any persisting.
    */
-  externs: TypeMap,
+  externs: TypeMap;
 
   /**
    * A map for *named types*. Unlike the other maps, each entry here
    * represents a *type*, not a variable.
    */
-  named: TypeMap,
+  named: TypeMap;
 
   /**
    * The current *snippet escape* (or null if there is none). The tuple
    * consists of the ID of the escape and the environment at that point that
    * should be "resumed" on quote.
    */
-  snip: [number, TypeEnv] | null,
-};
+  snip: [number, TypeEnv] | null;
+}
 
 /**
  * Push a scope onto a `TypeEnv`.
@@ -121,13 +121,13 @@ export const BUILTIN_OPERATORS: TypeMap = {
 // below).
 
 export type TypeCheck = (tree: ast.SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
-export let gen_check : Gen<TypeCheck> = function(check) {
-  let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
+export let gen_check: Gen<TypeCheck> = function(check) {
+  let type_rules: ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     visit_root(tree: ast.RootNode, env: TypeEnv): [Type, TypeEnv] {
-      let t:Type | null = null;
-      let e:TypeEnv = env;
+      let t: Type | null = null;
+      let e: TypeEnv = env;
       for (let child of tree.children) {
-        [t,e] = check(child, e);
+        [t, e] = check(child, e);
       }
       if (t === null) {
         throw "Error: Empty Root node";
@@ -172,7 +172,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // Check that the new value is compatible with the variable's type.
       // Try a normal variable first.
-      let [var_t,] = stack_lookup(env.stack, tree.ident);
+      let [var_t] = stack_lookup(env.stack, tree.ident);
       if (var_t === undefined) {
         var_t = env.externs[tree.ident];
         if (var_t === undefined) {
@@ -191,7 +191,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_lookup(tree: ast.LookupNode, env: TypeEnv): [Type, TypeEnv] {
       // Try a normal variable first.
-      let [t,] = stack_lookup(env.stack, tree.ident);
+      let [t] = stack_lookup(env.stack, tree.ident);
       if (t !== undefined) {
         return [t, env];
       }
@@ -365,10 +365,10 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_fun(tree: ast.FunNode, env: TypeEnv): [Type, TypeEnv] {
       // Get the list of declared parameter types and accumulate them in an
       // environment based on the top of the environment stack.
-      let param_types : Type[] = [];
+      let param_types: Type[] = [];
       let body_env_hd = hd(env.stack);
       for (let param of tree.params) {
-        let [ptype,] = check(param, env);
+        let [ptype] = check(param, env);
         param_types.push(ptype);
         body_env_hd = merge(body_env_hd, { [param.name]: ptype });
       }
@@ -378,7 +378,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let body_env: TypeEnv = merge(env, {
         stack: cons(body_env_hd, tl(env.stack)),
       });
-      let [ret_type,] = check(tree.body, body_env);
+      let [ret_type] = check(tree.body, body_env);
 
       // Construct the function type.
       let fun_type: Type = new FunType(param_types, ret_type);
@@ -434,8 +434,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw error(tree.cond, "type", '`if` condition must be a Bool');
       }
 
-      let [true_type,] = check(tree.truex, e);
-      let [false_type,] = check(tree.falsex, e);
+      let [true_type] = check(tree.truex, e);
+      let [false_type] = check(tree.falsex, e);
       if (!(compatible(true_type, false_type) &&
             compatible(false_type, true_type))) {
         throw error(tree, "type", 'condition branches must have same type');
@@ -450,7 +450,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw error(tree.cond, "type", '`while` condition must be a Bool');
       }
 
-      let [body_type,] = check(tree.body, e);
+      let [body_type] = check(tree.body, e);
       return [VOID, e];
     },
 
@@ -483,12 +483,12 @@ export let gen_check : Gen<TypeCheck> = function(check) {
           let as_snippet = !!param.snippet_var;
 
           // Check the argument and record its code type.
-          let [t,] = check(arg, as_snippet ? env : arg_env);
+          let [t] = check(arg, as_snippet ? env : arg_env);
           let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
           arg_types.push(code_t);
         } else {
           // Non-code type. Check the argument in the macro's scope.
-          let [t,] = check(arg, env);
+          let [t] = check(arg, env);
           arg_types.push(t);
         }
       }
@@ -511,8 +511,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
   // The entry point for the recursion.
   return function (tree, env) {
     return ast_visit(type_rules, tree, env);
-  }
-}
+  };
+};
 
 /**
  * An error message for argument types.
@@ -530,7 +530,7 @@ function param_error(i: number, param: Type, arg: Type): string {
 function check_call(target: Type, args: Type[]): Type | string {
   // The target is a variadic function.
   if (target instanceof VariadicFunType) {
-    if (target.params.length != 1) {
+    if (target.params.length !== 1) {
       return "variadic function with multiple argument types";
     }
     let param = target.params[0];
@@ -546,7 +546,7 @@ function check_call(target: Type, args: Type[]): Type | string {
   // The target is an ordinary function.
   } else if (target instanceof FunType) {
     // Check that the arguments are the right type.
-    if (args.length != target.params.length) {
+    if (args.length !== target.params.length) {
       return "mismatched argument length";
     }
     for (let i = 0; i < args.length; ++i) {
@@ -611,7 +611,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
     return true;
 
   } else if (ltype instanceof FunType && rtype instanceof FunType) {
-    if (ltype.params.length != rtype.params.length) {
+    if (ltype.params.length !== rtype.params.length) {
       return false;
     }
     for (let i = 0; i < ltype.params.length; ++i) {
@@ -761,7 +761,7 @@ function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
 }
 
 // Fill in a parameterized type.
-let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
+const apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
   // Replace a type variable (used as a type) with the provided type.
   visit_variable(type: VariableType, [tvar, targ]: [TypeVariable, any]): Type {
     if (type.variable === tvar) {
@@ -832,7 +832,7 @@ let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
   {
     return type;
   },
-}
+};
 
 function apply_type(type: Type, tvar: TypeVariable, targ: any): Type {
   return type_visit(apply_type_rules, type, [tvar, targ]);

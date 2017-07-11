@@ -87,9 +87,9 @@ export function frontend(config: Config, sources: string[],
   let emptyExpressionNodeArray: ExpressionNode[] = [];
   let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
 
-  for (var i = 0; i < sources.length; i++) {
+  for (let i = 0; i < sources.length; i++) {
     let source: string = sources[i];
-    let filename: string | null = (filenames != null && i < sources.length) ? filenames[i] : null;
+    let filename: string | null = (filenames !== null && i < sources.length) ? filenames[i] : null;
 
     // Parse.
     let tree: SyntaxNode;
