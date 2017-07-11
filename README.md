@@ -32,11 +32,12 @@ to install an alias to the `ssc` command. Then, type:
 
 to see some options. In particular, run `ssc example.ss` to interpret programs; run `ssc -c example.ss` to compile programs to JavaScript; and run `ssc -cx example.ss` to compile programs and then execute the resulting JavaScript.
 
-## Details
+## Credits
 
-The license is [MIT][].
-This project uses the [Microsoft Open Source Code of Conduct][coc]; check out the [FAQ about the CoC][cocfaq].
+This is a project of [Capra][] at Cornell. The license is [MIT][].
+
+[Adrian Sampson](http://www.cs.cornell.edu/~asampson/) started this project while he was at Microsoft Research, where it was released as [open source][ssc]. It has since been improved by [Richie Henwood](https://github.com/rhenwood39), [Eric Lin](https://github.com/eric780), and [Yiteng Guo](https://github.com/guoyiteng).
 
 [MIT]: https://opensource.org/licenses/MIT
-[coc]: https://opensource.microsoft.com/codeofconduct/
-[cocfaq]: https://opensource.microsoft.com/codeofconduct/faq/
+[ssc]: https://github.com/microsoft/staticstaging
+[capra]: https://capra.cs.cornell.edu
