@@ -98,7 +98,7 @@ export function emit_fun(name: string | null, argnames: string[],
 // Wrap some code in an anonymous JavaScript function (and possibly invoke it)
 // to isolate its variables. The code should define a function called `main`,
 // which we will invoke.
-export function emit_main_wrapper(code: string, call=true): string {
+export function emit_main_wrapper(code: string, call = true): string {
   let inner_code = code + "\n" + "return main();";
   let wrapper = emit_fun(null, [], [], inner_code);
   if (call) {
@@ -130,7 +130,7 @@ export function emit_string(value: string) {
 
 // Emit a JavaScript variable declaration. If `verbose`, then there will be a
 // newline between the name and the beginning of the initialization value.
-export function emit_var(name: string, value: string, verbose=false): string {
+export function emit_var(name: string, value: string, verbose = false): string {
   let out = "var " + name + " =";
   if (verbose) {
     out += "\n";
@@ -224,7 +224,7 @@ export let compile_rules = {
     return paren(p1) + " " + tree.op + " " + paren(p2);
   },
 
-  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+  visit_typealias(tree: ast.TypeAliasNode, emitter: Emitter): string {
     return "void 0";
   },
 
@@ -457,7 +457,7 @@ export function emit_variant_selector(emitter: Emitter, prog: Prog,
     let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
     let condition = cond_parts.join(" && ");
     let progval = emit_variant(variant);
-    body += `if (${condition}) {\n`
+    body += `if (${condition}) {\n`;
     body += `  return ${progval};\n`;
     body += `}\n`;
   }

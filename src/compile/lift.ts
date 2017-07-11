@@ -249,7 +249,7 @@ function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
     // Walk the scopes upward from the use location. We are *free* in every
     // scope until our defining scope.
     let cur_scope = containers[use_id];
-    while (cur_scope != def_scope_id && cur_scope != null) {
+    while (cur_scope !== def_scope_id && cur_scope !== null) {
       // First, try traversing from snippet escapes to their owners. If the
       // variable was defined in a different quote that's part of the same
       // "snippet aggregate" as this one, it is *not* a free variable here.
@@ -346,7 +346,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
           }
 
           // Proceed to parent.
-          if (cur_scope == quote_id) {
+          if (cur_scope === quote_id) {
             break;
           }
           cur_scope = containers[cur_scope];

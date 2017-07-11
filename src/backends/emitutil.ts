@@ -241,7 +241,7 @@ function statement_pred(tree: ast.ExpressionNode): boolean {
  * returned instead.
  */
 export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
-    ret="return ", sep=";",
+    ret = "return ", sep = ";",
     pred: (_: ast.ExpressionNode) => boolean = useful_pred,
     stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {

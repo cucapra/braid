@@ -150,7 +150,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
   {
     return ast_visit(rules, tree, [state, table]);
   };
-};
+}
 
 // Build a def/use table for lookups that links them to their corresponding
 // "let" or "fun" AST nodes.

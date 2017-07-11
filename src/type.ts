@@ -219,14 +219,16 @@ let pretty_type_rules: TypeVisit<void, string> = {
     return type.variable.name;
   },
   visit_overloaded(type: OverloadedType, param: void): string {
-    let out:string = "";
-    for (var i = 0; i < type.types.length; i++) {
+    let out = "";
+    for (let i = 0; i < type.types.length; i++) {
       out += pretty_type(type.types[i]);
-      if (i !== type.types.length - 1) out += " | ";
+      if (i !== type.types.length - 1) {
+        out += " | ";
+      }
     }
     return out;
   },
-}
+};
 
 export function pretty_type(type: Type) {
   return type_visit(pretty_type_rules, type, null);

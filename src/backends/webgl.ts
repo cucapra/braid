@@ -303,7 +303,7 @@ let compile_rules: ASTVisit<Emitter, string> =
         let argsType: Type[] = [];
         for (let arg of tree.args) {
           args.push(paren(emit(emitter, arg)));
-          let [typ,] = emitter.ir.type_table[arg.id!];
+          let [typ] = emitter.ir.type_table[arg.id!];
           argsType.push(typ);
         }
 
@@ -322,7 +322,7 @@ let compile_rules: ASTVisit<Emitter, string> =
     // Check for unary operators on special WebGL types that get emitted as
     // calls to the glrt runtime.
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
-      let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
+      let [typExpr] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
       let res = getFunc(tree.op, [typExpr], [expr]);
       if (res) {
@@ -336,8 +336,8 @@ let compile_rules: ASTVisit<Emitter, string> =
 
     // And the same for binary operators on WebGL types.
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
-      let [typL,] = emitter.ir.type_table[tree.lhs.id!];
-      let [typR,] = emitter.ir.type_table[tree.rhs.id!];
+      let [typL] = emitter.ir.type_table[tree.lhs.id!];
+      let [typR] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
       let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
