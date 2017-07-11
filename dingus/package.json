@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/codemirror": "^0.0.41",
     "@types/d3": "^3.5.36",
+    "@types/gl-matrix": "^2.2.34",
     "browserify": "^14.4.0",
     "pegjs": "^0.10.0",
     "typescript": "^2.4.1",

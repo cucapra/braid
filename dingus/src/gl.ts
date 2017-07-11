@@ -16,16 +16,13 @@ import {mat4} from 'gl-matrix';
 
 const canvasOrbitCamera = require('canvas-orbit-camera');
 
-// A type alias for a GL data structure.
-type Mat4 = Float32Array;
-
 /**
  * Evaluate the compiled JavaScript code with `eval` in the context of the
  * runtime library, `glrt`. Also include a `dingus` object containing some
  * dingus-specific matrices.
  */
-function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
-                   view: Mat4, assets: glrt.Assets,
+function shfl_eval(code: string, gl: WebGLRenderingContext, projection: mat4,
+                   view: mat4, assets: glrt.Assets,
                    drawtime: (ms: number) => void)
 {
   // Get the runtime functions.
@@ -55,7 +52,7 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
  * Compute a projection matrix (placed in the `out` matrix allocation) given
  * the width and height of a viewport.
  */
-function projection_matrix(out: Mat4, width: number, height: number) {
+function projection_matrix(out: mat4, width: number, height: number) {
   let aspectRatio = width / height;
   let fieldOfView = Math.PI / 4;
   let near = 0.01;

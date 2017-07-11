@@ -442,7 +442,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       drawtime(end - start);
     },
 
-    // Matrix manipulation library.
+    // Expose the gl-matrix library's components.
     mat4,
     mat3,
     vec4,
@@ -561,7 +561,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return averages;
     },
 
-    // webgl helper function
+    // Helper functions used by the WebGL compiler backend.
     mat3fromOneValue(x: number) {
       let out = mat3.fromValues(x, x, x,
                                 x, x, x,
