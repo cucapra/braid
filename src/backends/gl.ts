@@ -87,7 +87,7 @@ export const SHADER_ANNOTATION = "glsl";
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
-  new FunType([FLOAT2], FLOAT2),  
+  new FunType([FLOAT2], FLOAT2),
   new FunType([FLOAT3], FLOAT3),
   new FunType([FLOAT4], FLOAT4),
 ]);
@@ -108,7 +108,7 @@ const _GL_BINARY_TYPE = new OverloadedType([
 const _GL_ARITH_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
-  new FunType([FLOAT2], FLOAT2),  
+  new FunType([FLOAT2], FLOAT2),
   new FunType([FLOAT3], FLOAT3),
   new FunType([FLOAT4], FLOAT4),
   new FunType([FLOAT3X3], FLOAT3X3),
@@ -123,7 +123,7 @@ const _GL_ARITH_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
 
-  // Vector/Matrix by scalar
+  // Vector- or matrix-by-scalar.
   new FunType([FLOAT2, FLOAT], FLOAT2),
   new FunType([FLOAT, FLOAT2], FLOAT2),
   new FunType([FLOAT3, FLOAT], FLOAT3),
@@ -155,12 +155,12 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT3], FLOAT3),
   new FunType([FLOAT, FLOAT4], FLOAT4),
 
-  // Matrix-by-scalar
+  // Matrix-by-scalar.
   new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
   new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
   new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
   new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
-  
+
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),

@@ -83,7 +83,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 
   // Get the fragment program.
   if (vertex_prog.quote_children.length > 1 ||
-    vertex_prog.quote_children.length < 1) {
+      vertex_prog.quote_children.length < 1) {
     throw "error: vertex quote must have exactly one fragment quote";
   }
   let fragment_prog = ir.progs[vertex_prog.quote_children[0]];
@@ -95,7 +95,8 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-  varid: number, variant: Variant | null): string {
+  varid: number, variant: Variant | null): string
+{
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid) + variant_suffix(variant);
   return js.emit_var(
@@ -140,7 +141,7 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   let glue = emit_glue(emitter, vertex_prog.id!);
   for (let g of glue) {
     out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
-      variant) + "\n";
+                        variant) + "\n";
   }
 
   return out;
@@ -151,7 +152,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
   value: string, attribute: boolean, texture_index: number | undefined,
-  variant: Variant | null): string {
+  variant: Variant | null): string
+{
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
@@ -186,8 +188,8 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       throw "error: uniforms must be primitive types";
     }
 
-    // Array types are bound as attributes.
   } else {
+    // Array types are bound as attributes.
     if (type instanceof PrimitiveType) {
       // The value is a WebGL buffer object.
       let buf_expr = paren(value);
@@ -206,7 +208,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       return [
         `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
         `gl.vertexAttribPointer(${loc_expr}, ${dims}, ${eltype}, `,
-        `false, 0, 0),\n`,
+          `false, 0, 0),\n`,
         `gl.enableVertexAttribArray(${loc_expr})`
       ].join('');
     } else {
@@ -285,12 +287,18 @@ let compile_rules: ASTVisit<Emitter, string> =
           throw "dynamic `vtx` calls unimplemented";
         }
 
-        // And our intrinsic for indicating the rendering stage.
+      // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Pass through the code argument.
         return emit(emitter, tree.args[0]);
+
+      // Check for a few special intrinsic functions that get emitted as
+      // calls to the glrt library.
       } else if (tree.fun.tag === "lookup") {
-        // Emit arguments
+        // Get the function name.
+        let func = (tree.fun as ast.LookupNode).ident;
+
+        // Emit arguments for the intrinsic.
         let args: string[] = [];
         let argsType: Type[] = [];
         for (let arg of tree.args) {
@@ -298,9 +306,9 @@ let compile_rules: ASTVisit<Emitter, string> =
           let [typ,] = emitter.ir.type_table[arg.id!];
           argsType.push(typ);
         }
-        // get the function name
-        let func = (tree.fun as ast.LookupNode).ident;
-        // Look up the corresponding javascript code of this webgl braid fucntion
+
+        // Get the JavaScript code for this intrinsic call, if it's an
+        // intrinsic. If it's not, this returns null.
         let res = getFunc(func, argsType, args);
         if (res) {
           return res;
@@ -311,24 +319,27 @@ let compile_rules: ASTVisit<Emitter, string> =
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
+    // Check for unary operators on special WebGL types that get emitted as
+    // calls to the glrt runtime.
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
       let [typExpr,] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
-      // Look up the corresponding javascript code of this webgl braid fucntion
       let res = getFunc(tree.op, [typExpr], [expr]);
       if (res) {
         return res;
       }
 
+      // If no library call was emitted by `getFunc`, fall back to using the
+      // ordinary JavaScript binary operator.
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
+    // And the same for binary operators on WebGL types.
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
       let [typL,] = emitter.ir.type_table[tree.lhs.id!];
       let [typR,] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
-      // Look up the corresponding javascript code of this webgl braid fucntion
       let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
       if (res) {
         return res;
