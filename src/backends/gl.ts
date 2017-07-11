@@ -41,6 +41,7 @@ export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
   "Float3": FLOAT3,
   "Float4": FLOAT4,
+  "Vec2": FLOAT2,
   "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
   "Vec4": FLOAT4,
   "Float3x3": FLOAT3X3,
@@ -86,6 +87,7 @@ export const SHADER_ANNOTATION = "glsl";
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),  
   new FunType([FLOAT3], FLOAT3),
   new FunType([FLOAT4], FLOAT4),
 ]);
@@ -103,12 +105,43 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT3, FLOAT], FLOAT3),
   new FunType([FLOAT4, FLOAT], FLOAT4),
 ]);
-const _GL_UNARY_BINARY_TYPE = new OverloadedType(
-  _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
+const _GL_ARITH_UNARY_TYPE = new OverloadedType([
+  new FunType([INT], INT),
+  new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),  
+  new FunType([FLOAT3], FLOAT3),
+  new FunType([FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4], FLOAT4X4),
+]);
+const _GL_ARITH_BINARY_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector/Matrix by scalar
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
+  new FunType([FLOAT, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
+  new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+]);
+const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
+  _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
   new FunType([FLOAT3, FLOAT3], FLOAT3),
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
@@ -122,6 +155,12 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT3], FLOAT3),
   new FunType([FLOAT, FLOAT4], FLOAT4),
 
+  // Matrix-by-scalar
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+  new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
+  new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
+  
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
@@ -144,12 +183,18 @@ export const INTRINSICS: TypeMap = {
   ]),
   vec2: new OverloadedType([
     new FunType([FLOAT, FLOAT], FLOAT2),
+    new FunType([FLOAT], FLOAT2),
   ]),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
-  reflect: _GL_BINARY_TYPE,
+  reflect: new OverloadedType([
+    new FunType([FLOAT2, FLOAT2], FLOAT),
+    new FunType([FLOAT3, FLOAT3], FLOAT),
+    new FunType([FLOAT4, FLOAT4], FLOAT),
+  ]),
   dot: new OverloadedType([
+    new FunType([FLOAT2, FLOAT2], FLOAT),
     new FunType([FLOAT3, FLOAT3], FLOAT),
     new FunType([FLOAT4, FLOAT4], FLOAT),
   ]),
@@ -159,6 +204,10 @@ export const INTRINSICS: TypeMap = {
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
     new FunType([FLOAT2, FLOAT, FLOAT], FLOAT2),
     new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
+    new FunType([FLOAT4, FLOAT, FLOAT], FLOAT4),
+    new FunType([FLOAT2, FLOAT2, FLOAT2], FLOAT2),
+    new FunType([FLOAT3, FLOAT3, FLOAT3], FLOAT3),
+    new FunType([FLOAT4, FLOAT4, FLOAT4], FLOAT4),
   ]),
   exp2: new FunType([FLOAT], FLOAT),
   cross: new FunType([FLOAT3, FLOAT3], FLOAT3),
@@ -171,10 +220,10 @@ export const INTRINSICS: TypeMap = {
   ]),
 
   // Binary operators.
-  '+': _GL_UNARY_BINARY_TYPE,
-  '-': _GL_UNARY_BINARY_TYPE,
+  '+': _GL_ARITH_UNARY_BINARY_TYPE,
+  '-': _GL_ARITH_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
-  '/': _GL_BINARY_TYPE,
+  '/': _GL_ARITH_BINARY_TYPE,
 
   // Boolean binary operators inherited from core.
   '~': new FunType([BOOLEAN], BOOLEAN),

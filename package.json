@@ -5,6 +5,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "@types/gl-matrix": "^2.2.34",
     "minimist": "^1.2.0"
   },
   "devDependencies": {
