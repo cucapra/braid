@@ -11,7 +11,7 @@ import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import { assign } from '../util';
 import * as ast from '../ast';
-import { getFunc } from './fun';
+import { getFunc } from './webglfun';
 
 // Run-time functions invoked by generated code. These could eventually be
 // moved to the `glrt` library.
