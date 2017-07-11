@@ -139,7 +139,7 @@ let Pretty: ASTVisit<void, string> = {
     }
     return s;
   },
-}
+};
 
 /**
  * Format an AST as a string.
@@ -196,7 +196,7 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
     return tree.types.map(pretty_type_paren).join(" | ");
   },
-}
+};
 
 /**
  * Pretty-print a type AST.

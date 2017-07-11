@@ -53,7 +53,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
         let ei = fold_rules.visit_quote(tree, escids);
         if (tree.snippet) {
           ei = ei.slice(0);
-          let [t,] = type_table[tree.id!];
+          let [t] = type_table[tree.id!];
           if (t instanceof CodeType) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
@@ -76,7 +76,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
 function assoc_snippets(tree: ast.SyntaxNode, type_table: TypeTable): number[] {
   let _assoc_snippets = fix(gen_assoc_snippets(type_table));
   return _assoc_snippets(tree, []);
-};
+}
 
 
 // A few AST type tests we'll need.

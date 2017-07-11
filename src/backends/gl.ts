@@ -381,42 +381,42 @@ export interface Glue {
   /**
    * Uniquely identify the original value.
    */
-  id: number,
+  id: number;
 
   /**
    * The GLSL variable name that stores the value as used in this stage.
    */
-  name: string,
+  name: string;
 
   /**
    * The type of the value as it appears in the GLSL program.
    */
-  type: Type,
+  type: Type;
 
   /**
    * The value is either an expression (for escapes) or just another variable
    * name to carry through (for free variables). Only one of these may be set.
    */
-  value_expr?: ast.ExpressionNode,
-  value_name?: string,
+  value_expr?: ast.ExpressionNode;
+  value_name?: string;
 
   /**
    * Whether this variable comes from the host directly (a WebGL binding) or
    * from a previous shader stage (a `varying` variable).
    */
-  from_host: boolean,
+  from_host: boolean;
 
   /**
    * Whether this is the point where the value decays from a `T Array` to a
    * plain old `T`. This occurs only at the first shader stage.
    */
-  attribute: boolean,
+  attribute: boolean;
 
   /**
    * If `type` is `TEXTURE`, the unique index of this texture. Textures are
    * assigned to texture units, which have unique indices.
    */
-  texture_index?: number,
+  texture_index?: number;
 }
 
 // Find all the incoming Glue values for a given shader program.
@@ -426,7 +426,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
   // Get glue for the persists.
   for (let esc of prog.persist) {
-    let [type,] = ir.type_table[esc.body.id!];
+    let [type] = ir.type_table[esc.body.id!];
     let g: Glue = {
       id: esc.id,
       name: shadervarsym(prog.id!, esc.id),
@@ -474,7 +474,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
   // Get glue for the free variables.
   for (let fv of prog.free) {
-    let [type,] = ir.type_table[fv];
+    let [type] = ir.type_table[fv];
     let g: Glue = {
       id: fv,
       name: shadervarsym(prog.id!, fv),

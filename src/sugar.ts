@@ -56,8 +56,8 @@ function gen_desugar_cross_stage(type_table: TypeTable,
       } else {
         return fsuper(tree);
       }
-    }
-  }
+    };
+  };
 }
 
 // Get a copy of the *elaborated* AST with cross-stage references (a.k.a.

@@ -12,9 +12,9 @@ type NameStack = NameMap[];
 
 // The state structure for the DefUse analysis.
 interface State {
-  ns: NameStack,  // Variable mapping.
-  externs: NameMap,  // Extern mapping.
-  snip: NameStack | null,  // Snippet environment.
+  ns: NameStack;  // Variable mapping.
+  externs: NameMap;  // Extern mapping.
+  snip: NameStack | null;  // Snippet environment.
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
