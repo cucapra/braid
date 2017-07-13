@@ -5,11 +5,9 @@
 all: teapot.obj head.obj lambertian.jpg bump-lowRes.png default.png bunny.obj
 
 # Teapot.
-teapot.obj: teapot.zip
-	unzip $^ $@
+teapot.obj:
+	curl -LO "http://graphics.cs.utah.edu/courses/cs6620/fall2013/prj05/$@"
 	touch $@
-teapot.zip:
-	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
 
 # Head.
 head.OBJ: head.zip
