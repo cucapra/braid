@@ -298,7 +298,7 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
 
 // Basic AST visitor rules implementing a "fold," analogous to a list fold.
 // This threads a single function through the whole tree, bottom-up.
-export type ASTFold <T> = (tree:ast.SyntaxNode, p: T) => T;
+export type ASTFold <T> = (tree: ast.SyntaxNode, p: T) => T;
 export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
   return {
     visit_root(tree: ast.RootNode, p: T): T {

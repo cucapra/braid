@@ -12,9 +12,9 @@ type NameStack = NameMap[];
 
 // The state structure for the DefUse analysis.
 interface State {
-  ns: NameStack,  // Variable mapping.
-  externs: NameMap,  // Extern mapping.
-  snip: NameStack | null,  // Snippet environment.
+  ns: NameStack;  // Variable mapping.
+  externs: NameMap;  // Extern mapping.
+  snip: NameStack | null;  // Snippet environment.
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
@@ -150,7 +150,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
   {
     return ast_visit(rules, tree, [state, table]);
   };
-};
+}
 
 // Build a def/use table for lookups that links them to their corresponding
 // "let" or "fun" AST nodes.

@@ -6,9 +6,9 @@ import { hd, tl, cons, fix } from '../util';
 // Either "coordinate" may be null if the tree is outside of a function (in
 // its current quote) or is top-level, outside of any quote.
 interface ScopeFrame {
-  func: number | null,
-  quote: number | null,
-};
+  func: number | null;
+  quote: number | null;
+}
 
 type FindScopesFun = ASTFold<[ScopeFrame[], number[]]>;
 function gen_find_scopes(fself: FindScopesFun): FindScopesFun {

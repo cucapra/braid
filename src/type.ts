@@ -9,19 +9,19 @@ export abstract class Type {
  * Primitive types. Each primitive type is a (shared) instance of this class.
  */
 export class PrimitiveType extends Type {
-  constructor(public name: string) { super() };
+  constructor(public name: string) { super(); }
 
   // A workaround to compensate for TypeScript's structural subtyping:
   // https://github.com/Microsoft/TypeScript/issues/202
   _brand_PrimitiveType: void;
-};
+}
 
 /**
  * A "top" type: a supertype of everything.
  */
 export class AnyType extends Type {
   _brand_AnyType: void;
-};
+}
 export const ANY = new AnyType();
 
 /**
@@ -29,7 +29,7 @@ export const ANY = new AnyType();
  */
 export class VoidType extends Type {
   _brand_AnyType: void;
-};
+}
 export const VOID = new VoidType();
 
 /**
@@ -46,9 +46,9 @@ export class FunType extends Type {
      * The return type.
      */
     public ret: Type
-  ) { super() };
+  ) { super(); }
   _brand_FunType: void;
-};
+}
 
 /**
  * Variadic function types. These functions can take any number of arguments
@@ -67,36 +67,36 @@ export class CodeType extends Type {
     public annotation: string,
     public snippet: number | null = null,  // Corresponding escape ID.
     public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
-  ) { super() };
+  ) { super(); }
   _brand_CodeType: void;
-};
+}
 
 // Type constructors: the basic element of parametricity.
 export class ConstructorType extends Type {
-  constructor(public name: string) { super() };
+  constructor(public name: string) { super(); }
   instance(arg: Type) {
     return new InstanceType(this, arg);
-  };
+  }
   _brand_ConstructorType: void;
 }
 export class InstanceType extends Type {
-  constructor(public cons: ConstructorType, public arg: Type) { super() };
+  constructor(public cons: ConstructorType, public arg: Type) { super(); }
   _brand_InstanceType: void;
 }
 
 // Slightly more general parametricity with a universal quantifier.
 export class QuantifiedType extends Type {
-  constructor(public variable: TypeVariable, public inner: Type) { super() };
+  constructor(public variable: TypeVariable, public inner: Type) { super(); }
   _brand_QuantifiedType: void;
 }
 export class VariableType extends Type {
-  constructor(public variable: TypeVariable) { super() };
+  constructor(public variable: TypeVariable) { super(); }
   _brand_VariableType: void;
 }
 
 // Simple overloading.
 export class OverloadedType extends Type {
-  constructor(public types: Type[]) { super() };
+  constructor(public types: Type[]) { super(); }
   _brand_OverloadedType: void;
 }
 
@@ -219,14 +219,16 @@ let pretty_type_rules: TypeVisit<void, string> = {
     return type.variable.name;
   },
   visit_overloaded(type: OverloadedType, param: void): string {
-    let out:string = "";
-    for (var i = 0; i < type.types.length; i++) {
+    let out = "";
+    for (let i = 0; i < type.types.length; i++) {
       out += pretty_type(type.types[i]);
-      if (i !== type.types.length - 1) out += " | ";
+      if (i !== type.types.length - 1) {
+        out += " | ";
+      }
     }
     return out;
   },
-}
+};
 
 export function pretty_type(type: Type) {
   return type_visit(pretty_type_rules, type, null);

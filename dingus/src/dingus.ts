@@ -26,8 +26,8 @@ const RUN_DELAY_MS = 200;
  * - the complete WebGL code (if in WebGL mode)
  * The mode can be "interp", "compile", or "webgl".
  */
-function ssc_run(code: string, mode: string)
-  : [string | error.Error, ast.SyntaxNode, string, string, string, string]
+function ssc_run(code: string, mode: string):
+  [string | error.Error, ast.SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
   let error: string | error.Error | null = null;
@@ -151,7 +151,7 @@ interface Config {
    * possible instead of respecting the host browser's render loop.
    */
   perfMode?: boolean;
-};
+}
 
 let DEFAULT: Config = {
   history: true,
@@ -211,7 +211,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       clearTimeout(tid);
     }
     tid = setTimeout(run_code, RUN_DELAY_MS);
-  };
+  }
 
   if (codemirror) {
     codemirror.on('change', function (cm, change) {
@@ -308,7 +308,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
             },
           );
         }
-      } 
+      }
 
       // Show the output, either as text or in the WebGL viewer.
       if (mode === "webgl" && glcode) {
@@ -482,7 +482,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   // Handle the "clear" button.
   if (clearbtn) {
     clearbtn.addEventListener('click', function () {
-      if (get_code() != '') {
+      if (get_code() !== '') {
         link_to_code('');
       }
     });
@@ -520,4 +520,4 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       }
     }
   };
-}
+};

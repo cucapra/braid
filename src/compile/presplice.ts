@@ -203,7 +203,7 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] | nul
           trickle_free(parent.id, parent_newly_free);
         }
       }
-    }
+    };
     for (let id in variant.progs) {
       let old_prog = progs[id];
       let new_prog = variant.progs[id];

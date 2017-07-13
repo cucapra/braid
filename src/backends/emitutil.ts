@@ -72,7 +72,7 @@ function repeat(s: string, n: number): string {
 }
 
 // Indent a string by a given number of spaces.
-export function indent(s: string, first=false, spaces=2): string {
+export function indent(s: string, first = false, spaces = 2): string {
   let space = repeat(" ", spaces);
   let out = s.replace(/\n/g, "\n" + space);
   if (first) {
@@ -138,7 +138,7 @@ export function check_header(emitter: Emitter, expr: ast.ExpressionNode, sep: st
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
 export function emit_assign(emitter: Emitter,
-    tree: ast.AssignNode, get_varsym=varsym): string {
+    tree: ast.AssignNode, get_varsym = varsym): string {
   let defid = emitter.ir.defuse[tree.id!];
   let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
@@ -156,7 +156,7 @@ export function emit_assign(emitter: Emitter,
 export function emit_lookup(emitter: Emitter,
     emit_extern: (name: string, type: Type) => string,
     tree: ast.LookupNode,
-    get_varsym=varsym): string {
+    get_varsym = varsym): string {
   let defid = emitter.ir.defuse[tree.id!];
   let name = emitter.ir.externs[defid];
   if (name !== undefined) {
@@ -241,7 +241,7 @@ function statement_pred(tree: ast.ExpressionNode): boolean {
  * returned instead.
  */
 export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
-    ret="return ", sep=";",
+    ret = "return ", sep = ";",
     pred: (_: ast.ExpressionNode) => boolean = useful_pred,
     stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {

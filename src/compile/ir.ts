@@ -12,24 +12,24 @@ export type DefUseTable = number[];
  * A lexical program scope. This is shared among quotes and function bodies.
  */
 export interface Scope {
-  id: number | null,  // null for the top-level scope
-  body: ExpressionNode,
-  free: number[],  // variables referenced here, defined elsewhere
-  bound: number[],  // variables defined here
+  id: number | null;  // null for the top-level scope
+  body: ExpressionNode;
+  free: number[];  // variables referenced here, defined elsewhere
+  bound: number[];  // variables defined here
 
   // Explicit escapes. These are lists of escapes that appear anywhere
   // inside the scope, regardless of the escape's level.
-  persist: Escape[],
-  splice: Escape[],
-  snippet: Escape[],
+  persist: Escape[];
+  splice: Escape[];
+  snippet: Escape[];
 
   // Containing and contained scopes.
-  parent: number | null,
-  children: number[],
+  parent: number | null;
+  children: number[];
 
   // Similarly, for jumping directly through functions to quotes.
-  quote_parent: number | null,
-  quote_children: number[],
+  quote_parent: number | null;
+  quote_children: number[];
 }
 
 /**
@@ -38,8 +38,8 @@ export interface Scope {
  * variables used in the function.
  */
 export interface Proc extends Scope {
-  params: number[],
-};
+  params: number[];
+}
 
 /**
  * Information about any kind of escape appearing within a quote.
@@ -140,14 +140,14 @@ export interface CompilerIR {
   /**
    * A mapping from every AST node ID to the containing scope ID.
    */
-  containers: number[],
+  containers: number[];
 
   /**
    * For pre-splicing, a set of variants for each `Prog` that has snippet
    * escapes. Programs with no snippet escapes have a `null` value in this
    * map.
    */
-  presplice_variants: (Variant[] | null)[],
+  presplice_variants: (Variant[] | null)[];
 }
 
 /**

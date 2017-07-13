@@ -53,7 +53,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
         let ei = fold_rules.visit_quote(tree, escids);
         if (tree.snippet) {
           ei = ei.slice(0);
-          let [t,] = type_table[tree.id!];
+          let [t] = type_table[tree.id!];
           if (t instanceof CodeType) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
@@ -76,7 +76,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
 function assoc_snippets(tree: ast.SyntaxNode, type_table: TypeTable): number[] {
   let _assoc_snippets = fix(gen_assoc_snippets(type_table));
   return _assoc_snippets(tree, []);
-};
+}
 
 
 // A few AST type tests we'll need.
@@ -249,7 +249,7 @@ function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
     // Walk the scopes upward from the use location. We are *free* in every
     // scope until our defining scope.
     let cur_scope = containers[use_id];
-    while (cur_scope != def_scope_id && cur_scope != null) {
+    while (cur_scope !== def_scope_id && cur_scope !== null) {
       // First, try traversing from snippet escapes to their owners. If the
       // variable was defined in a different quote that's part of the same
       // "snippet aggregate" as this one, it is *not* a free variable here.
@@ -346,7 +346,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
           }
 
           // Proceed to parent.
-          if (cur_scope == quote_id) {
+          if (cur_scope === quote_id) {
             break;
           }
           cur_scope = containers[cur_scope];

@@ -49,7 +49,7 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
   return function (tree: ast.SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
     return ast_visit(type_rules, tree, env);
   };
-};
+}
 
 
 // The core compiler rules for emitting GLSL code.
@@ -94,7 +94,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
-    let [t,] = emitter.ir.type_table[tree.id!];
+    let [t] = emitter.ir.type_table[tree.id!];
     if (t === INT) {
       return tree.value.toString();
     } else if (t === FLOAT) {
@@ -122,13 +122,13 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
   visit_assign(tree: ast.AssignNode, emitter: Emitter): string {
     // TODO Prevent assignment to nonlocal variables.
-    let vs = (id:number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
+    let vs = (id: number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
     return emit_assign(emitter, tree, vs);
   },
 
   visit_lookup(tree: ast.LookupNode, emitter: Emitter): string {
-    return emit_lookup(emitter, emit_extern, tree, function (id:number) {
-      let [type,] = emitter.ir.type_table[id];
+    return emit_lookup(emitter, emit_extern, tree, function (id: number) {
+      let [type] = emitter.ir.type_table[id];
       if (_is_cpu_scope(emitter.ir, nearest_prespliced_quote(emitter.ir, id)) && !_attribute_type(type)) {
         // References to variables defined on the CPU ("uniforms") get a
         // special naming convention so they can be shared between multiple
@@ -152,7 +152,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
            paren(emit(emitter, tree.rhs));
   },
 
-  visit_typealias(tree: ast.TypeAliasNode, emitter:Emitter): string {
+  visit_typealias(tree: ast.TypeAliasNode, emitter: Emitter): string {
     return "0";
   },
 
@@ -253,10 +253,10 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
     ir: ir,
     emit_expr: (tree: ast.SyntaxNode, emitter: Emitter) =>
       ast_visit(compile_rules, tree, emitter),
-    emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
-    emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
+    emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL"; },
+    emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL"; },
     emit_prog_variant:
-      (e: any, p: any) => { throw "progs unimplemented in GLSL" },
+      (e: any, p: any) => { throw "progs unimplemented in GLSL"; },
     variant: parent_emitter.variant,
   };
 
@@ -315,7 +315,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   // Emit the bound variable declarations.
   let local_decls: string[] = [];
   for (let id of prog.bound) {
-    let [t,] = ir.type_table[id];
+    let [t] = ir.type_table[id];
     local_decls.push(`${emit_type(t)} ${shadervarsym(progid, id)};\n`);
   }
   let local_decls_s = local_decls.join("");

@@ -472,7 +472,7 @@ let funcMap: FuncMap = {
       ret: (args) => `vec3.lerp(vec3.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     },
   ]
-}
+};
 
 /**
  * Generate the JavaScript code for a special WebGL call given the Braid

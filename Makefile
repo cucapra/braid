@@ -117,5 +117,5 @@ deploy: web
 .PHONY: lint
 lint:
 	find src -name '*.ts' | xargs tslint
-	find dingus -name '*.ts' | xargs tslint
+	find dingus/src -name '*.ts' | xargs tslint
 	tslint $(CLI_TS)

@@ -14,7 +14,7 @@
 declare function require(name: string): any;
 
 const eye = require('eye-vector');
-import {vec2, vec3, vec4, mat3, mat4} from 'gl-matrix';
+import { vec2, vec3, vec4, mat3, mat4 } from 'gl-matrix';
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
@@ -31,7 +31,7 @@ interface Mesh {
   texcoords?: Vec2Array;
   normals?: Vec3Array;
   tangents?: Vec3Array;
-};
+}
 
 /**
  * Given a flat array, return an array with the elements grouped into
@@ -149,9 +149,9 @@ function ajax_get_binary(url: string): Promise<ArrayBuffer> {
 function image_get(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     let img = new Image();
-    img.onload = function() {
+    img.onload = () => {
       resolve(img);
-    }
+    };
     img.src = url;
   });
 }
@@ -182,7 +182,7 @@ function has_extension(path: string, extensions: string[]): boolean {
 /**
  * Load an asset from the server.
  */
-export function load_asset(path: string, baseurl="assets/"):
+export function load_asset(path: string, baseurl = "assets/"):
   Promise<Asset>
 {
   // Fetch the URL either as an image, binary, or string file.
@@ -198,19 +198,19 @@ export function load_asset(path: string, baseurl="assets/"):
 
 /**
  * An exception indicating that an asset is not ready yet.
- * 
+ *
  * The exception wraps a promise that resolves when the asset is finished
  * loading.
  */
 class Loading {
   constructor(
     public promise: Promise<void>
-  ) {};
+  ) {}
 }
 
 /**
  * Run a function repeatedly to load all the assets it needs.
- * 
+ *
  * This works by catching the `Loading` exception when it's raised, waiting
  * for the load to complete, and then re-executing the function. The next
  * time around, the asset *should* be loaded and the exception shouldn't
@@ -579,36 +579,36 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     mat3div(a: mat3, b: mat3) {
       let out = mat3.create();
-      out[0] = a[0]/b[0];
-      out[1] = a[1]/b[1];
-      out[2] = a[2]/b[2];
-      out[3] = a[3]/b[3];
-      out[4] = a[4]/b[4];
-      out[5] = a[5]/b[5];
-      out[6] = a[6]/b[6];
-      out[7] = a[7]/b[7];
-      out[8] = a[8]/b[8];
+      out[0] = a[0] / b[0];
+      out[1] = a[1] / b[1];
+      out[2] = a[2] / b[2];
+      out[3] = a[3] / b[3];
+      out[4] = a[4] / b[4];
+      out[5] = a[5] / b[5];
+      out[6] = a[6] / b[6];
+      out[7] = a[7] / b[7];
+      out[8] = a[8] / b[8];
       return out;
     },
 
     mat4div(a: mat4, b: mat4) {
       let out = mat4.create();
-      out[0] = a[0]/b[0];
-      out[1] = a[1]/b[1];
-      out[2] = a[2]/b[2];
-      out[3] = a[3]/b[3];
-      out[4] = a[4]/b[4];
-      out[5] = a[5]/b[5];
-      out[6] = a[6]/b[6];
-      out[7] = a[7]/b[7];
-      out[8] = a[8]/b[8];
-      out[9] = a[9]/b[9];
-      out[10] = a[10]/b[10];
-      out[11] = a[11]/b[11];
-      out[12] = a[12]/b[12];
-      out[13] = a[13]/b[13];
-      out[14] = a[14]/b[14];
-      out[15] = a[15]/b[15];
+      out[0] = a[0] / b[0];
+      out[1] = a[1] / b[1];
+      out[2] = a[2] / b[2];
+      out[3] = a[3] / b[3];
+      out[4] = a[4] / b[4];
+      out[5] = a[5] / b[5];
+      out[6] = a[6] / b[6];
+      out[7] = a[7] / b[7];
+      out[8] = a[8] / b[8];
+      out[9] = a[9] / b[9];
+      out[10] = a[10] / b[10];
+      out[11] = a[11] / b[11];
+      out[12] = a[12] / b[12];
+      out[13] = a[13] / b[13];
+      out[14] = a[14] / b[14];
+      out[15] = a[15] / b[15];
       return out;
     },
 
@@ -627,7 +627,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       out[0] = v3[0] || 0.0;
       out[1] = v3[1] || 0.0;
       out[2] = v3[2] || 0.0;
-      out[3] = x || 0.0; 
+      out[3] = x || 0.0;
       return out;
     },
 

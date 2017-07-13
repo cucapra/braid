@@ -36,20 +36,20 @@ export function zip<A, B> (a: A[], b: B[]): [A, B][] {
   return out;
 }
 
-export type Gen <T> = (_:T) => T;
+export type Gen <T> = (_: T) => T;
 
 // A fixed-point combinator.
-export function fix <T extends Function> (f : Gen<T>) : T {
+export function fix <T extends Function> (f: Gen<T>): T {
   return <any> function (...args: any[]) {
     return (f(fix(f)))(...args);
   };
 }
 
 // Function composition.
-export function compose <A, B, C> (g : (_:B) => C, f : (_:A) => B): (_:A) => C {
-  return function (x : A): C {
+export function compose <A, B, C> (g: (_: B) => C, f: (_: A) => B): (_: A) => C {
+  return function (x: A): C {
     return g(f(x));
-  }
+  };
 }
 
 type MapStack <T> = { readonly [key: string]: T }[];
@@ -73,7 +73,7 @@ export function stack_lookup <T> (
 }
 
 /**
- * Merge some additional values onto the head element of a stack (immutably). 
+ * Merge some additional values onto the head element of a stack (immutably).
  */
 export function head_merge<T>(a: ReadonlyArray<T>, hv: T): T[] {
   return cons(merge(hd(a), hv), tl(a));

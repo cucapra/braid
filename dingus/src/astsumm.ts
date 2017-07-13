@@ -61,14 +61,14 @@ let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_macrocall(tree: ast.MacroCallNode, _: void): ast.SyntaxNode[] {
     return tree.args;
   },
-  visit_typealias(tree: ast.TypeAliasNode, _:void): ast.SyntaxNode[] {
+  visit_typealias(tree: ast.TypeAliasNode, _: void): ast.SyntaxNode[] {
     return [];
   },
 };
 
 export function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
   return ast_visit(GetChildren, tree, null);
-};
+}
 
 let GetName: ASTVisit<void, string> = {
   visit_root(tree: ast.RootNode, _: void): string {
@@ -133,11 +133,11 @@ let GetName: ASTVisit<void, string> = {
   visit_macrocall(tree: ast.MacroCallNode, _: void): string {
     return "@" + tree.macro;
   },
-  visit_typealias(tree: ast.TypeAliasNode, _:void): string {
+  visit_typealias(tree: ast.TypeAliasNode, _: void): string {
     return "typealias";
   },
-}
+};
 
 export function get_name(tree: ast.SyntaxNode): string {
   return ast_visit(GetName, tree, null);
-};
+}

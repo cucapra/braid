@@ -203,7 +203,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
         case "/":
           v = v1 / v2; break;
         case "==":
-          v = v1 == v2; break;
+          v = v1 === v2; break;
         case "!=":
           v = v1 !== v2; break;
         default:
@@ -221,7 +221,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
 
   visit_fun(tree: ast.FunNode, state: State): [Value, State] {
     // Extract the parameter names.
-    let param_names : string[] = [];
+    let param_names: string[] = [];
     for (let param of tree.params) {
       param_names.push(param.name);
     }
@@ -317,7 +317,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
     throw "error: macro invocations are sugar";
   },
-}
+};
 
 function interp(tree: ast.SyntaxNode, state: State): [Value, State] {
   return ast_visit(Interp, tree, state);
@@ -351,8 +351,8 @@ function increment_persists(amount: number) {
 // We also accumulate a *new* Pers, just called `pers`, which is a list of
 // values produced by each *persistent* escape. The Persist nodes in the code
 // contain indices into this array.
-let QuoteInterp : ASTVisit<[number, State, Pers],
-                           [ast.SyntaxNode, State, Pers]> = {
+let QuoteInterp: ASTVisit<[number, State, Pers],
+                          [ast.SyntaxNode, State, Pers]> = {
   // The `quote` and `escape` cases are the only interesting ones. We
   // increment/decrement the stage number and (when the stage gets back down
   // to zero) swap back to normal interpretation.
@@ -379,7 +379,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       state = merge(state, { snipdist: tree.count });
     }
 
-    if (inner_stage == 0) {
+    if (inner_stage === 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
       let [v, s] = interp(tree.expr, state);
@@ -401,7 +401,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
 
       } else if (tree.kind === "persist") {
         let p = pers.concat([v]);
-        let expr : ast.PersistNode = {tag: "persist", index: p.length - 1};
+        let expr: ast.PersistNode = {tag: "persist", index: p.length - 1};
         return [expr, s, p];
 
       } else {
@@ -427,15 +427,15 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   visit_root(tree: ast.RootNode,
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers] {
-    let t:ast.SyntaxNode = tree;
-    let s:State = state;
-    let p:Pers = pers;
-    let trees:ast.SyntaxNode[] = [];
+    let t: ast.SyntaxNode = tree;
+    let s: State = state;
+    let p: Pers = pers;
+    let trees: ast.SyntaxNode[] = [];
     for (let child of tree.children) {
       [t, s, p] = quote_interp(child, stage, s, p);
       trees.push(t);
     }
-    return [merge(tree, {children:trees}), s, p];
+    return [merge(tree, {children: trees}), s, p];
   },
 
   visit_literal(tree: ast.LiteralNode,
@@ -511,9 +511,9 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers] {
     let [fun_tree, s, p] = quote_interp(tree.fun, stage, state, pers);
-    let arg_trees : ast.SyntaxNode[] = [];
+    let arg_trees: ast.SyntaxNode[] = [];
     for (let arg of tree.args) {
-      let arg_tree : ast.SyntaxNode;
+      let arg_tree: ast.SyntaxNode;
       [arg_tree, s, p] = quote_interp(arg, stage, state, p);
       arg_trees.push(arg_tree);
     }
@@ -555,7 +555,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     let [b, s2, p2] = quote_interp(tree.body, stage, s1, p1);
     return [merge(tree, { cond: c, body: b }), s2, p2];
   },
-}
+};
 
 function quote_interp(tree: ast.SyntaxNode, stage: number, state: State,
     pers: Pers): [ast.SyntaxNode, State, Pers]
@@ -573,7 +573,7 @@ export function interpret(program: ast.SyntaxNode, e: Env = {}, p: Pers = []):
 
 // Format a resulting value as a string.
 export function pretty_value(v: Value): string {
-  if (typeof v == 'number') {
+  if (typeof v === 'number') {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);

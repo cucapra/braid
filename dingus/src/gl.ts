@@ -12,7 +12,7 @@
 declare function require(name: string): any;
 
 import * as glrt from './glrt';
-import {mat4} from 'gl-matrix';
+import { mat4 } from 'gl-matrix';
 
 const canvasOrbitCamera = require('canvas-orbit-camera');
 
@@ -58,7 +58,7 @@ function projection_matrix(out: mat4, width: number, height: number) {
   let near = 0.01;
   let far  = 100;
 
-  mat4.perspective(out, fieldOfView, aspectRatio, near, far)
+  mat4.perspective(out, fieldOfView, aspectRatio, near, far);
 }
 
 /**
@@ -189,7 +189,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
     // Ask to be run again.
     nextFrame();
-  };
+  }
 
   // Start the first frame.
   nextFrame();

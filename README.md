@@ -1,7 +1,7 @@
 Braid: a Static Staging Compiler
 ================================
 
-[![build status](https://circleci.com/gh/sampsyo/braid.svg?style=shield)](https://circleci.com/gh/sampsyo/braid)
+[![build status](https://circleci.com/gh/cucapra/braid.svg?style=shield)](https://circleci.com/gh/cucapra/braid)
 
 Braid is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
 
