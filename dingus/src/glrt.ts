@@ -335,7 +335,7 @@ function texture(gl: WebGLRenderingContext, img: HTMLImageElement) {
   // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
   // but it appears to have been invented to convert between the DOM
   // coordinate convention for images and WebGL's convention.
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
                 gl.UNSIGNED_BYTE, img);
