@@ -21,8 +21,8 @@ The rest of this guide will assume you're using the recommended option 2. If you
 
 For the virtual machine image, the user is called `oopsla` and the password is the same. There's a directory called `braid` in the home directory.
 
-[readme]: https://github.com/sampsyo/braid/blob/master/docs/README.md
-[repo]: https://github.com/sampsyo/braid
+[readme]: https://github.com/cucapra/braid/blob/master/docs/README.md
+[repo]: https://github.com/cucapra/braid
 [Node]: https://nodejs.org/
 [npm]: https://www.npmjs.com/
 
@@ -138,7 +138,7 @@ The dingus shows the final result in the right-hand pane. You're currently in *i
 
 You can also skip ahead to the `externs` example, which shows you how to use values from the JavaScript standard library.
 
-[basics]: https://github.com/sampsyo/braid/blob/master/docs/basics.md
+[basics]: https://github.com/cucapra/braid/blob/master/docs/basics.md
 
 ### Simple Multi-Stage Programming
 
@@ -271,7 +271,7 @@ If you're interested in browsing TypeScript source code, I recommend using [Visu
 [vscode]: https://code.visualstudio.com
 [PEG.js]: https://github.com/pegjs/pegjs
 [Gitbook]: https://www.gitbook.com
-[hacking]: https://github.com/sampsyo/braid/blob/master/docs/hacking.md
+[hacking]: https://github.com/cucapra/braid/blob/master/docs/hacking.md
 
 
 Reproducing the Results
