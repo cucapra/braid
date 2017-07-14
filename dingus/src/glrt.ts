@@ -362,9 +362,6 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
   // "Wrap around" the texture on overrun.
   gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
   gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.REPEAT);
-  // gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  // gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  // gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
   gl.bindTexture(glTextureType, null);  // Unbind.
 
