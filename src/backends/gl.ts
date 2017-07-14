@@ -192,9 +192,9 @@ export const INTRINSICS: TypeMap = {
   normalize: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
   reflect: new OverloadedType([
-    new FunType([FLOAT2, FLOAT2], FLOAT),
-    new FunType([FLOAT3, FLOAT3], FLOAT),
-    new FunType([FLOAT4, FLOAT4], FLOAT),
+    new FunType([FLOAT2, FLOAT2], FLOAT2),
+    new FunType([FLOAT3, FLOAT3], FLOAT3),
+    new FunType([FLOAT4, FLOAT4], FLOAT4),
   ]),
   dot: new OverloadedType([
     new FunType([FLOAT2, FLOAT2], FLOAT),
