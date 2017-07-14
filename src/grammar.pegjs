@@ -45,7 +45,7 @@ TermExpr
 
 // Expressions that can be operands to binary/unary operators.
 Operand
-  = If / Call / MacroCall / TermExpr
+  = If / Call / MacroCall / Unary / TermExpr
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
