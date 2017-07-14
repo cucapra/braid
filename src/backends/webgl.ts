@@ -156,15 +156,19 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 {
   if (!attribute) {
     if (type === TEXTURE || type === CUBE_TEXTURE) {
-      // Bind a texture sampler.
+      // Bind a texture sampler. We get the ID for the sampler by adding the
+      // offset (an integer) to `gl.TEXTURE0`, as suggested in the OpenGL docs
+      // for `glActiveTexture`. This will fail if the index is greater than
+      // GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS.
       if (texture_index === undefined) {
         throw "missing texture index";
       }
-      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`; // TODO: bugs when index is larger than 9
+      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
+
       if (type === TEXTURE) {
-        out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;  
+        out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
       } else { // cube texture
-        out += `gl.bindTexture(gl.TEXTURE_CUBE_MAP, ${value}),\n`;  
+        out += `gl.bindTexture(gl.TEXTURE_CUBE_MAP, ${value}),\n`;
       }
       let locname = locsym(scopeid, varid) + variant_suffix(variant);
       out += `gl.uniform1i(${locname}, ${texture_index})`;
