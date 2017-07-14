@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "bundle": "webpack --output-library sscDingus build/dingus/src/dingus.js ssc.bundle.js",
-    "build": "tsc && npm run bundle"
+    "compile": "tsc",
+    "bundle": "webpack",
+    "build": "tsc && webpack"
   },
   "dependencies": {
     "angle-normals": "^1.0.0",
