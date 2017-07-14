@@ -42,14 +42,17 @@ extern mat4.invert: Mat4 Mat4 -> Void;
 # Get the camera position (in world space) from a view matrix.
 extern eye: Mat4 -> Vec3;
 
-# Textures.
+# Assets: loading images and such.
 extern load_obj: String -> Mesh;
 extern load_texture: String -> Texture;
 extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
-# For cubetexture, arguments are [posx, negx, posy, negy, posz, negz]
-extern texture: Image -> Texture | Image Image Image Image Image Image -> CubeTexture; 
 extern average: Image -> Float4;
+
+# Create a texture from an image. The first form is for standard 2D
+# textures; the second form takes [posx, negx, posy, negy, posz, negz]
+# to create a cube-map texture.
+extern texture: Image -> Texture | Image Image Image Image Image Image -> CubeTexture;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;
