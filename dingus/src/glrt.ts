@@ -65,8 +65,7 @@ function flat_array<T>(a: T[][]) {
  * `mode` should be either `ELEMENT_ARRAY_BUFFER` or `ARRAY_BUFFER`.
  */
 function gl_buffer(gl: WebGLRenderingContext, mode: number,
-                   data: Float32Array | Uint16Array)
-{
+  data: Float32Array | Uint16Array) {
   let buf = gl.createBuffer();
   gl.bindBuffer(mode, buf);
   gl.bufferData(mode, data, gl.STATIC_DRAW);
@@ -103,8 +102,7 @@ function get_asset(assets: Assets, path: string) {
  * Simple AJAX wrapper for GET requests.
  */
 function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
-              "document" | "json"): Promise<XMLHttpRequest>
-{
+  "document" | "json"): Promise<XMLHttpRequest> {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.responseType = responseType;
@@ -183,8 +181,7 @@ function has_extension(path: string, extensions: string[]): boolean {
  * Load an asset from the server.
  */
 export function load_asset(path: string, baseurl = "assets/"):
-  Promise<Asset>
-{
+  Promise<Asset> {
   // Fetch the URL either as an image, binary, or string file.
   let url = baseurl + path;
   if (has_extension(path, IMAGE_EXTENSIONS)) {
@@ -205,7 +202,7 @@ export function load_asset(path: string, baseurl = "assets/"):
 class Loading {
   constructor(
     public promise: Promise<void>
-  ) {}
+  ) { }
 }
 
 /**
@@ -328,28 +325,48 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
 /**
  * Convert an image into a WebGL texture.
  */
-function texture(gl: WebGLRenderingContext, img: HTMLImageElement) {
+function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureType: number) {
   let tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.bindTexture(glTextureType, tex);
 
   // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
   // but it appears to have been invented to convert between the DOM
   // coordinate convention for images and WebGL's convention.
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-                gl.UNSIGNED_BYTE, img);
+  if (glTextureType === gl.TEXTURE_2D) {
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[0]);
+  } else { // cube map
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[0]);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[1]);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[2]);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[3]);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[4]);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA, 
+      gl.UNSIGNED_BYTE, imgs[5]);
+  }
 
   // Interpolation.
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+  gl.generateMipmap(glTextureType);
+  gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
 
   // "Wrap around" the texture on overrun.
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  // gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  // gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
+  gl.bindTexture(glTextureType, null);  // Unbind.
 
   return tex;
 }
@@ -362,7 +379,7 @@ function texture(gl: WebGLRenderingContext, img: HTMLImageElement) {
  * whenever an object is drawn.
  */
 export function runtime(gl: WebGLRenderingContext, assets: Assets,
-                        drawtime: (ms: number) => void) {
+  drawtime: (ms: number) => void) {
   return {
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
@@ -486,8 +503,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     /**
      * Convert an image to a texture.
      */
-    texture(img: HTMLImageElement) {
-      return texture(gl, img);
+    texture(...imgs: HTMLImageElement[]) {
+      let glTextureType: number = (imgs.length === 1 ? gl.TEXTURE_2D : gl.TEXTURE_CUBE_MAP);
+      return texture(gl, imgs, glTextureType);
     },
 
     /**
@@ -495,7 +513,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      */
     load_texture(name: string) {
       let img = load_image(assets, name);
-      return texture(gl, img);
+      return texture(gl, [img], gl.TEXTURE_2D);
     },
 
     /**
@@ -564,16 +582,16 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     // Helper functions used by the WebGL compiler backend.
     mat3fromOneValue(x: number) {
       let out = mat3.fromValues(x, x, x,
-                                x, x, x,
-                                x, x, x);
+        x, x, x,
+        x, x, x);
       return out;
     },
 
     mat4fromOneValue(x: number) {
       let out = mat4.fromValues(x, x, x, x,
-                                x, x, x, x,
-                                x, x, x, x,
-                                x, x, x, x);
+        x, x, x, x,
+        x, x, x, x,
+        x, x, x, x);
       return out;
     },
 

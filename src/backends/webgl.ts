@@ -3,7 +3,7 @@ import * as js from './js';
 import * as glsl from './glsl';
 import {
   Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2
+  FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2, CUBE_TEXTURE
 } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType, FLOAT, INT } from '../type';
@@ -155,13 +155,17 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   variant: Variant | null): string
 {
   if (!attribute) {
-    if (type === TEXTURE) {
+    if (type === TEXTURE || type === CUBE_TEXTURE) {
       // Bind a texture sampler.
       if (texture_index === undefined) {
         throw "missing texture index";
       }
-      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
-      out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
+      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`; // TODO: bugs when index is larger than 9
+      if (type === TEXTURE) {
+        out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;  
+      } else { // cube texture
+        out += `gl.bindTexture(gl.TEXTURE_CUBE_MAP, ${value}),\n`;  
+      }
       let locname = locsym(scopeid, varid) + variant_suffix(variant);
       out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;

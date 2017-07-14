@@ -56,7 +56,7 @@ function projection_matrix(out: mat4, width: number, height: number) {
   let aspectRatio = width / height;
   let fieldOfView = Math.PI / 4;
   let near = 0.01;
-  let far  = 100;
+  let far  = 1000;
 
   mat4.perspective(out, fieldOfView, aspectRatio, near, far);
 }
@@ -142,6 +142,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
     // Handle user input and update the resulting camera view matrix.
     camera.view(view);
+    console.log(view);
     camera.tick();
 
     // Update the projection matrix for translating to 2D screen space.
@@ -151,6 +152,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     gl.viewport(0, 0, width, height);
 
     // Rendering flags.
+    gl.depthFunc(gl.LESS);
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
 
     // Invoke the compiled SHFL code.

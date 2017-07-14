@@ -36,6 +36,7 @@ export const INT4 = new PrimitiveType("Int4");
 
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
+export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
 
 export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
@@ -58,6 +59,7 @@ export const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 
   "Texture": TEXTURE,
+  "CubeTexture": CUBE_TEXTURE,
   "Image": new PrimitiveType("Image"),
 };
 
@@ -78,6 +80,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Float3x3": "mat3",
   "Float4x4": "mat4",
   "Texture": "sampler2D",
+  "CubeTexture": "samplerCube",
 };
 
 export const FRAG_INTRINSIC = "fragment";
@@ -238,6 +241,7 @@ export const INTRINSICS: TypeMap = {
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
+  textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
@@ -455,7 +459,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       g.value_expr = esc.body;
 
       // If this is a texture, assign its index.
-      if (g.type === TEXTURE) {
+      if (g.type === TEXTURE || g.type === CUBE_TEXTURE) {
         g.texture_index = texture_index;
         ++texture_index;
       }
@@ -506,7 +510,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
         g.value_name = varsym(fv);
 
         // If this is a texture, assign its index.
-        if (g.type === TEXTURE) {
+        if (g.type === TEXTURE || g.type === CUBE_TEXTURE) {
           g.texture_index = texture_index;
           ++texture_index;
         }
