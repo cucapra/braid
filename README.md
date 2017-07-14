@@ -36,7 +36,7 @@ to see some options. In particular, run `ssc example.ss` to interpret programs; 
 
 This is a project of [Capra][] at Cornell. The license is [MIT][].
 
-[Adrian Sampson](http://www.cs.cornell.edu/~asampson/) started this project while he was at Microsoft Research, where it was released as [open source][ssc]. It has since been improved by [Richie Henwood](https://github.com/rhenwood39), [Eric Lin](https://github.com/eric780), and [Yiteng Guo](https://github.com/guoyiteng).
+[Adrian Sampson](http://www.cs.cornell.edu/~asampson/) started this project in collaboration with [Kathryn S McKinley](http://www.cs.utexas.edu/users/mckinley/) and [Todd Mytkowicz](https://www.microsoft.com/en-us/research/people/toddm/) at Microsoft Research, where it was released as [open source][ssc]. It has since been improved by [Richie Henwood](https://github.com/rhenwood39), [Eric Lin](https://github.com/eric780), and [Yiteng Guo](https://github.com/guoyiteng).
 
 [MIT]: https://opensource.org/licenses/MIT
 [ssc]: https://github.com/microsoft/staticstaging
