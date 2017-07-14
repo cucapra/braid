@@ -142,7 +142,6 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
     // Handle user input and update the resulting camera view matrix.
     camera.view(view);
-    console.log(view);
     camera.tick();
 
     // Update the projection matrix for translating to 2D screen space.

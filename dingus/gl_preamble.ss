@@ -47,6 +47,7 @@ extern load_obj: String -> Mesh;
 extern load_texture: String -> Texture;
 extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
+# For cubetexture, arguments are [posx, negx, posy, negy, posz, negz]
 extern texture: Image -> Texture | Image Image Image Image Image Image -> CubeTexture; 
 extern average: Image -> Float4;
 

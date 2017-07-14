@@ -64,8 +64,8 @@ function flat_array<T>(a: T[][]) {
  *
  * `mode` should be either `ELEMENT_ARRAY_BUFFER` or `ARRAY_BUFFER`.
  */
-function gl_buffer(gl: WebGLRenderingContext, mode: number,
-  data: Float32Array | Uint16Array) {
+function gl_buffer(gl: WebGLRenderingContext, mode: number, 
+                   data: Float32Array | Uint16Array) {
   let buf = gl.createBuffer();
   gl.bindBuffer(mode, buf);
   gl.bufferData(mode, data, gl.STATIC_DRAW);
@@ -102,7 +102,7 @@ function get_asset(assets: Assets, path: string) {
  * Simple AJAX wrapper for GET requests.
  */
 function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
-  "document" | "json"): Promise<XMLHttpRequest> {
+              "document" | "json"): Promise<XMLHttpRequest> {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.responseType = responseType;
@@ -329,15 +329,16 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
   let tex = gl.createTexture();
   gl.bindTexture(glTextureType, tex);
 
-  // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
-  // but it appears to have been invented to convert between the DOM
-  // coordinate convention for images and WebGL's convention.
-
   if (glTextureType === gl.TEXTURE_2D) {
+    // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
+    // but it appears to have been invented to convert between the DOM
+    // coordinate convention for images and WebGL's convention.
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, 
       gl.UNSIGNED_BYTE, imgs[0]);
-  } else { // cube map
+  } else {
+    // Cube mapping
+    // Do not invert Y-coordinate for cube mapping
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA, 
       gl.UNSIGNED_BYTE, imgs[0]);
@@ -376,7 +377,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
  * whenever an object is drawn.
  */
 export function runtime(gl: WebGLRenderingContext, assets: Assets,
-  drawtime: (ms: number) => void) {
+                        drawtime: (ms: number) => void) {
   return {
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
@@ -579,16 +580,16 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     // Helper functions used by the WebGL compiler backend.
     mat3fromOneValue(x: number) {
       let out = mat3.fromValues(x, x, x,
-        x, x, x,
-        x, x, x);
+                                x, x, x,
+                                x, x, x);
       return out;
     },
 
     mat4fromOneValue(x: number) {
       let out = mat4.fromValues(x, x, x, x,
-        x, x, x, x,
-        x, x, x, x,
-        x, x, x, x);
+                                x, x, x, x,
+                                x, x, x, x,
+                                x, x, x, x);
       return out;
     },
 
