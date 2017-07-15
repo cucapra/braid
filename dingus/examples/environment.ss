@@ -37,7 +37,7 @@ render js<
     var pos = skyBoxPosition;
     fragment glsl<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
-      gl_FragColor = textureCube(tex, pos - eye);
+      gl_FragColor = textureCube(tex, (pos - eye) * vec3(-1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
@@ -58,7 +58,7 @@ render js<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
       var rayIn = normalize(frag_pos - eye);
       var rayOut = normalize(reflect(rayIn, normal));
-      gl_FragColor = textureCube(tex, rayOut);
+      gl_FragColor = textureCube(tex, rayOut * vec3(-1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(teapotIndices, teapotSize);
