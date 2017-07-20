@@ -332,44 +332,67 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
   let tex = gl.createTexture();
   gl.bindTexture(glTextureType, tex);
 
-  if (glTextureType === gl.TEXTURE_2D) {
-    // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
-    // but it appears to have been invented to convert between the DOM
-    // coordinate convention for images and WebGL's convention.
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[0]);
+  // If imgs is null, it means that we need to create an empty texture
+  if (imgs.length === 0) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   } else {
-    // Cube mapping
-    // Do not invert Y-coordinate for cube mapping
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[0]);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[1]);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[2]);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[3]);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[4]);
-    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA,
-      gl.UNSIGNED_BYTE, imgs[5]);
+    // Create a normal 2D texture
+    if (glTextureType === gl.TEXTURE_2D) {
+      // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
+      // but it appears to have been invented to convert between the DOM
+      // coordinate convention for images and WebGL's convention.
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[0]);
+    } else {
+      // Cube mapping
+      // Do not invert Y-coordinate for cube mapping
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[0]);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[1]);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[2]);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[3]);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[4]);
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[5]);
+    }
+
+    // Interpolation.
+    gl.generateMipmap(glTextureType);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+    // "Wrap around" the texture on overrun.
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.REPEAT);
   }
 
-  // Interpolation.
-  gl.generateMipmap(glTextureType);
-  gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-
-
-  // "Wrap around" the texture on overrun.
-  gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
-  gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-  gl.bindTexture(glTextureType, null);  // Unbind.
-
+  gl.bindTexture(glTextureType, null);  // Unbind.  
   return tex;
+}
+
+/**
+ * Create a framebuffer object
+ * @param gl the webgl context
+ * @param tex an empty texture that this framebuffer will write into
+ */
+function createFramebuffer(gl: WebGLRenderingContext, tex: WebGLTexture) {
+  var framebuffer = gl.createFramebuffer();
+  
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  return framebuffer;
 }
 
 /**
@@ -507,7 +530,8 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      * to create a cube-map texture.
      */
     texture(...imgs: HTMLImageElement[]) {
-      let glTextureType: number = (imgs.length === 1 ? gl.TEXTURE_2D : gl.TEXTURE_CUBE_MAP);
+      // Create a cube mapping texture only if the number of input images are 6
+      let glTextureType: number = (imgs.length === 6 ? gl.TEXTURE_CUBE_MAP: gl.TEXTURE_2D);
       return texture(gl, imgs, glTextureType);
     },
 
@@ -517,6 +541,11 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     load_texture(name: string) {
       let img = load_image(assets, name);
       return texture(gl, [img], gl.TEXTURE_2D);
+    },
+
+    framebuffer(tex: WebGLTexture) {
+      let fbo = createFramebuffer(gl, tex);
+      return fbo;
     },
 
     /**

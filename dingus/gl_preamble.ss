@@ -52,7 +52,7 @@ extern average: Image -> Float4;
 # Create a texture from an image. The first form is for standard 2D
 # textures; the second form takes [posx, negx, posy, negy, posz, negz]
 # to create a cube-map texture.
-extern texture: Image -> Texture | Image Image Image Image Image Image -> CubeTexture;
+extern texture: Image -> Texture | -> Texture | Image Image Image Image Image Image -> CubeTexture;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;
