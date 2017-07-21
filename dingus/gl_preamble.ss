@@ -38,6 +38,8 @@ extern mat4.fromTranslation: Mat4 Vec3 -> Void;
 extern mat4.transpose: Mat4 Mat4 -> Void;
 extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
 extern mat4.invert: Mat4 Mat4 -> Void;
+extern mat4.perspective: Mat4 FLOAT FLOAT FLOAT FLOAT -> Void;
+extern mat4.lookAt: Mat4 Vec3 Vec3 Vec3 -> Void;
 
 # Get the camera position (in world space) from a view matrix.
 extern eye: Mat4 -> Vec3;
@@ -53,6 +55,8 @@ extern average: Image -> Float4;
 # textures; the second form takes [posx, negx, posy, negy, posz, negz]
 # to create a cube-map texture.
 extern texture: Image -> Texture | -> Texture | Image Image Image Image Image Image -> CubeTexture;
+extern framebuffer: Texture -> Framebuffer;
+extern bindFramebuffer: Framebuffer -> Void | -> Void;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;

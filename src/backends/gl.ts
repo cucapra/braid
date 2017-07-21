@@ -37,6 +37,7 @@ export const INT4 = new PrimitiveType("Int4");
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
 export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
+export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
@@ -60,6 +61,7 @@ export const GL_TYPES: TypeMap = {
 
   "Texture": TEXTURE,
   "CubeTexture": CUBE_TEXTURE,
+  "Framebuffer": FRAMEBUFFER,
   "Image": new PrimitiveType("Image"),
 };
 
@@ -190,6 +192,7 @@ export const INTRINSICS: TypeMap = {
   ]),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
+  fract: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
   reflect: new OverloadedType([
     new FunType([FLOAT2, FLOAT2], FLOAT2),

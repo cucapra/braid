@@ -543,9 +543,25 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return texture(gl, [img], gl.TEXTURE_2D);
     },
 
+    /**
+     * create a framebuffer object
+     * @param tex an empty webgl texture that this framebuffer will write into
+     */
     framebuffer(tex: WebGLTexture) {
       let fbo = createFramebuffer(gl, tex);
       return fbo;
+    },
+
+    bindFrameBuffer(fbo: WebGLFramebuffer) {
+      if (fbo === null) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      } else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.viewport(0, 0, 1024, 1024);
+        gl.clearColor(0, 0, 0, 1);            
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      }
     },
 
     /**
