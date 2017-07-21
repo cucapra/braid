@@ -10,16 +10,6 @@ import * as driver from "./src/driver";
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
 
-function read_string(filename: string, f: (s: string) => void) {
-  fs.readFile(filename, function (err: any, data: any) {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    f(data.toString());
-  });
-}
-
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
     generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
@@ -100,6 +90,53 @@ function run(filename: string, source: string, webgl: boolean,
   return success;
 }
 
+/**
+ * Dump a lot of debugging information using Node's `util.inspect`.
+ */
+function verbose_log(...msg: any[]) {
+  let out: string[] = [];
+  for (let m of msg) {
+    if (typeof(m) === "string") {
+      out.push(m);
+    } else if (m instanceof Array) {
+      for (let i = 0; i < m.length; ++i) {
+        out.push("\n" + i + ": " +
+            util.inspect(m[i], { depth: undefined, colors: true }));
+      }
+    } else {
+      out.push(util.inspect(m, { depth: undefined, colors: true }));
+    }
+  }
+  // Work around a TypeScript limitation:
+  // https://github.com/Microsoft/TypeScript/issues/4755
+  console.log(out[0], ...out.slice(1));
+}
+
+/**
+ * Read from a file or, if the filename is "-", from stdin.
+ */
+function read_file_or_stdin(fn: string): Promise<string> {
+  return new Promise(function (resolve, reject) {
+    if (fn === STDIN_FILENAME) {
+      // Read from stdin.
+      let chunks: string[] = [];
+      process.stdin.on("data", (chunk: string) => {
+        chunks.push(chunk);
+      }).on("end", () => {
+        resolve(chunks.join(""));
+      }).setEncoding("utf8");
+    } else {
+      // Read from a file.
+      fs.readFile(fn, (err, data) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(data.toString());
+      });
+    }
+  });
+}
+
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
@@ -135,53 +172,16 @@ function main() {
   }
 
   // Log stuff, if in verbose mode.
-  let log: (...msg: any[]) => void;
-  if (verbose) {
-    log = function (...msg: any[]) {
-      let out: string[] = [];
-      for (let m of msg) {
-        if (typeof(m) === "string") {
-          out.push(m);
-        } else if (m instanceof Array) {
-          for (let i = 0; i < m.length; ++i) {
-            out.push("\n" + i + ": " +
-                util.inspect(m[i], { depth: undefined, colors: true }));
-          }
-        } else {
-          out.push(util.inspect(m, { depth: undefined, colors: true }));
-        }
-      }
-      // Work around a TypeScript limitation:
-      // https://github.com/Microsoft/TypeScript/issues/4755
-      console.log(out[0], ...out.slice(1));
-    };
-  } else {
-    log = (_ => void 0);
-  }
+  let log = verbose ? verbose_log : (() => void 0);
 
   // Read each source file and run the driver.
   let success = true;
-  let promises = filenames.map(function (fn) {
-    return new Promise(function (resolve, reject) {
-      let then = function (source: string) {
+  let promises = filenames.map(fn =>
+    read_file_or_stdin(fn).then(source => {
         success = run(fn, source, webgl, compile, execute, test,
             generate, log, !no_presplice) && success;
-        resolve();
-      };
-      if (fn === STDIN_FILENAME) {
-        // Read from stdin.
-        let chunks: string[] = [];
-        process.stdin.on("data", function (chunk: string) {
-          chunks.push(chunk);
-        }).on("end", function () {
-          then(chunks.join(""));
-        }).setEncoding("utf8");
-      } else {
-        // Read from a file.
-        read_string(fn, then);
-      }
-    });
-  });
+    })
+  );
   Promise.all(promises).then(function() {
     if (!success) {
       process.exit(1);
