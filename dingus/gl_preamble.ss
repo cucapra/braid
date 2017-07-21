@@ -38,7 +38,7 @@ extern mat4.fromTranslation: Mat4 Vec3 -> Void;
 extern mat4.transpose: Mat4 Mat4 -> Void;
 extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
 extern mat4.invert: Mat4 Mat4 -> Void;
-extern mat4.perspective: Mat4 FLOAT FLOAT FLOAT FLOAT -> Void;
+extern mat4.perspective: Mat4 Float Float Float Float -> Void;
 extern mat4.lookAt: Mat4 Vec3 Vec3 Vec3 -> Void;
 
 # Get the camera position (in world space) from a view matrix.
