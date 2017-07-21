@@ -44,12 +44,12 @@ function run(filename: string, source: string, webgl: boolean,
     let sources: string[] = [source];
     let filenames: string[] = [filename];
 
-    driver.frontend(config, sources, filenames, function (tree, types) {
+    driver.frontend(config, sources, filenames, (tree, types) => {
       if (compile) {
         // Compiler.
-        driver.compile(config, tree, types, function (code) {
+        driver.compile(config, tree, types, (code) => {
           if (execute) {
-            driver.execute(config, code, function (res) {
+            driver.execute(config, code, (res) => {
               if (test) {
                 success = driver.check_output(name, source, res);
               } else {
@@ -63,7 +63,7 @@ function run(filename: string, source: string, webgl: boolean,
 
       } else {
         // Interpreter.
-        driver.interpret(config, tree, types, function (res) {
+        driver.interpret(config, tree, types, (res) => {
           if (test) {
             success = driver.check_output(name, source, res);
           } else {
