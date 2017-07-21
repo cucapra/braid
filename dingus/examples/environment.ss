@@ -16,10 +16,15 @@ var teapotNormal = mesh_normals(teapotMesh);
 var teapotIndices = mesh_indices(teapotMesh);
 var teapotSize = mesh_size(teapotMesh);
 
+# create a transformation matrix for teapot
+var trans = mat4.create();
+mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
+var normalTrans = mat4.create();
+mat4.transpose(normalTrans, trans);
+mat4.invert(normalTrans, normalTrans);
+
 # Load a cube texture six images.
 var tex = texture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
-
-var initTime = Date.now();
 
 render js<
   var modelView = mat4.create();
@@ -42,13 +47,6 @@ render js<
     >
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
-
-  # create a transformation matrix for teapot
-  var trans = mat4.create();
-  mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
-  var normalTrans = mat4.create();
-  mat4.transpose(normalTrans, trans);
-  mat4.invert(normalTrans, normalTrans);
 
   vertex glsl<
     gl_Position = projection * modelView * trans * vec4(teapotPosition, 1.0);
