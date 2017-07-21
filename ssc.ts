@@ -176,12 +176,11 @@ function main() {
 
   // Read each source file and run the driver.
   let success = true;
-  let promises = filenames.map(fn =>
-    read_file_or_stdin(fn).then(source => {
-        success = run(fn, source, webgl, compile, execute, test,
-            generate, log, !no_presplice) && success;
-    })
-  );
+  let promises = filenames.map(async fn => {
+    let source = await read_file_or_stdin(fn);
+    success = run(fn, source, webgl, compile, execute, test,
+        generate, log, !no_presplice) && success;
+  });
   Promise.all(promises).then(function() {
     if (!success) {
       process.exit(1);
