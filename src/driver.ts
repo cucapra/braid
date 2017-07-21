@@ -80,9 +80,13 @@ function _check(config: Config): Gen<TypeCheck> {
   return check;
 }
 
+/**
+ * Parse, type-check, and desugar source files. Return a parsed AST and
+ * type information or an Error if parsing or typing fails.
+ */
 export function frontend(config: Config, sources: string[],
-    filenames: string[] | null,
-    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
+    filenames: string[] | null):
+    [SyntaxNode, TypeTable] | error.Error
 {
   let emptyExpressionNodeArray: ExpressionNode[] = [];
   let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
@@ -105,9 +109,7 @@ export function frontend(config: Config, sources: string[],
           start: e.location.start,
           end: e.location.end,
         };
-        let err = new error.Error(loc, "parse", e.message);
-        config.error(err);
-        return;
+        return new error.Error(loc, "parse", e.message);
       } else {
         throw e;
       }
@@ -128,15 +130,14 @@ export function frontend(config: Config, sources: string[],
     config.typed(pretty_type(type));
   } catch (e) {
     if (e instanceof error.Error) {
-      config.error(e);
-      return;
+      return e;
     } else {
       throw e;
     }
   }
   config.log('type table', type_table);
 
-  checked(elaborated, type_table);
+  return [elaborated, type_table];
 }
 
 export function compile(config: Config, tree: SyntaxNode,

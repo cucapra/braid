@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
+import { Error } from "./src/error";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
@@ -44,34 +45,43 @@ function run(filename: string, source: string, webgl: boolean,
     let sources: string[] = [source];
     let filenames: string[] = [filename];
 
-    driver.frontend(config, sources, filenames, (tree, types) => {
-      if (compile) {
-        // Compiler.
-        driver.compile(config, tree, types, (code) => {
-          if (execute) {
-            driver.execute(config, code, (res) => {
-              if (test) {
-                success = driver.check_output(name, source, res);
-              } else {
-                console.log(res);
-              }
-            });
-          } else {
-            console.log(code);
-          }
-        });
-
+    let res = driver.frontend(config, sources, filenames);
+    if (res instanceof Error) {
+      if (test) {
+        return driver.check_output(name, source, res.toString());
       } else {
-        // Interpreter.
-        driver.interpret(config, tree, types, (res) => {
-          if (test) {
-            success = driver.check_output(name, source, res);
-          } else {
-            console.log(res);
-          }
-        });
+        console.error(res.toString());
+        return false;
       }
-    });
+    }
+
+    let [tree, types] = res;
+    if (compile) {
+      // Compiler.
+      driver.compile(config, tree, types, (code) => {
+        if (execute) {
+          driver.execute(config, code, (res) => {
+            if (test) {
+              success = driver.check_output(name, source, res);
+            } else {
+              console.log(res);
+            }
+          });
+        } else {
+          console.log(code);
+        }
+      });
+
+    } else {
+      // Interpreter.
+      driver.interpret(config, tree, types, (res) => {
+        if (test) {
+          success = driver.check_output(name, source, res);
+        } else {
+          console.log(res);
+        }
+      });
+    }
 
   } catch (e) {
 

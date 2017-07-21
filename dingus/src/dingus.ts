@@ -1,6 +1,7 @@
 import * as driver from '../../src/driver';
 import * as ast from '../../src/ast';
 import * as error from '../../src/error';
+import { Error } from '../../src/error';
 
 import { tree_canvas } from './tree';
 import { get_children, get_name } from './astsumm';
@@ -27,10 +28,11 @@ const RUN_DELAY_MS = 200;
  * The mode can be "interp", "compile", or "webgl".
  */
 function ssc_run(code: string, mode: string):
-  [string | error.Error, ast.SyntaxNode, string, string, string, string]
+  [string | Error, ast.SyntaxNode | null, string | null, string | null,
+    string | null, string | null]
 {
   // Configure the driver to store a bunch of results.
-  let error: string | error.Error | null = null;
+  let error: string | Error | null = null;
   let type: string | null = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
@@ -65,29 +67,33 @@ function ssc_run(code: string, mode: string):
   let jscode: string | null = null;
   let ast: ast.SyntaxNode | null = null;
   let glcode: string | null = null;
-  driver.frontend(config, code_pieces, null, function (tree, types) {
-    ast = tree;
 
-    if (mode === "interp") {
-      // Interpreter.
-      driver.interpret(config, tree, types, function (r) {
-        res = r;
-      });
+  let feres = driver.frontend(config, code_pieces, null);
+  if (feres instanceof Error) {
+    return [feres, null, null, null, null, null];
+  }
+  let [tree, types] = feres;
+  ast = tree;
 
-    } else {
-      // Compiler.
-      driver.compile(config, tree, types, function (code) {
-        jscode = code;
-        if (mode === "webgl") {
-          glcode = driver.full_code(config, jscode);
-        } else {
-          driver.execute(config, code, function (r) {
-            res = r;
-          });
-        }
-      });
-    }
-  });
+  if (mode === "interp") {
+    // Interpreter.
+    driver.interpret(config, tree, types, function (r) {
+      res = r;
+    });
+
+  } else {
+    // Compiler.
+    driver.compile(config, tree, types, function (code) {
+      jscode = code;
+      if (mode === "webgl") {
+        glcode = driver.full_code(config, jscode);
+      } else {
+        driver.execute(config, code, function (r) {
+          res = r;
+        });
+      }
+    });
+  }
 
   return [error!, ast!, type!, jscode!, res!, glcode!];
 }
