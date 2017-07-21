@@ -137,7 +137,7 @@ function read_file_or_stdin(fn: string): Promise<string> {
   });
 }
 
-function main() {
+async function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
     boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P'],
@@ -181,11 +181,10 @@ function main() {
     success = run(fn, source, webgl, compile, execute, test,
         generate, log, !no_presplice) && success;
   });
-  Promise.all(promises).then(function() {
-    if (!success) {
-      process.exit(1);
-    }
-  });
+  await Promise.all(promises);
+  if (!success) {
+    process.exit(1);
+  }
 }
 
 main();
