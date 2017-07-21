@@ -20,41 +20,12 @@ function read_string(filename: string, f: (s: string) => void) {
   });
 }
 
-// Check the output of a test. Return a success flag.
-function check_output(filename: string, source: string, result: string):
-  boolean
-{
-  let name = path.basename(filename, EXTENSION);
-
-  let [, expected] = source.split('# -> ');
-  if (expected === undefined) {
-    console.log(`${name} ✘: ${result} (no expected result found)`);
-    return false;
-  }
-  expected = expected.trim();
-  result = result.trim();
-
-  let match: boolean;
-  if (expected === "type error") {
-    match = result.indexOf(expected) !== -1;
-  } else {
-    match = expected === result;
-  }
-
-  if (match) {
-    console.log(`${name} ✓`);
-    return true;
-  } else {
-    console.log(`${name} ✘: ${result} (${expected})`);
-    return false;
-  }
-}
-
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
     generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
 {
   let success = true;
+  let name = path.basename(filename, EXTENSION);
 
   try {
 
@@ -66,7 +37,7 @@ function run(filename: string, source: string, webgl: boolean,
       log: log,
       error: e => {
         if (test) {
-          success = check_output(filename, source, e.toString());
+          success = driver.check_output(name, source, e.toString());
         } else {
           console.error(e.toString());
           success = false;
@@ -90,7 +61,7 @@ function run(filename: string, source: string, webgl: boolean,
           if (execute) {
             driver.execute(config, code, function (res) {
               if (test) {
-                success = check_output(filename, source, res);
+                success = driver.check_output(name, source, res);
               } else {
                 console.log(res);
               }
@@ -104,7 +75,7 @@ function run(filename: string, source: string, webgl: boolean,
         // Interpreter.
         driver.interpret(config, tree, types, function (res) {
           if (test) {
-            success = check_output(filename, source, res);
+            success = driver.check_output(name, source, res);
           } else {
             console.log(res);
           }

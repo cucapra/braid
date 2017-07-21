@@ -194,12 +194,17 @@ export function interpret(config: Config, tree: SyntaxNode,
   }
 }
 
-// Get the complete, `eval`-able JavaScript program, including the runtime
-// code.
+/**
+ * Get the complete, `eval`-able JavaScript program, including the runtime
+ * code.
+ */
 export function full_code(config: Config, jscode: string): string {
   return _runtime(config) + jscode;
 }
 
+/**
+ * Run compiled JavaScript code.
+ */
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
@@ -224,3 +229,35 @@ export function execute(config: Config, jscode: string,
     executed(js.pretty_value(res));
   }
 }
+
+/**
+ * Check the output of a test. Log a message and return a success flag.
+ */
+export function check_output(name: string, source: string,
+                             result: string): boolean
+{
+  // Look for the special expected output marker.
+  let [, expected] = source.split('# -> ');
+  if (expected === undefined) {
+    console.log(`${name} ✘: ${result} (no expected result found)`);
+    return false;
+  }
+  expected = expected.trim();
+  result = result.trim();
+
+  let match: boolean;
+  if (expected === "type error") {
+    match = result.indexOf(expected) !== -1;
+  } else {
+    match = expected === result;
+  }
+
+  if (match) {
+    console.log(`${name} ✓`);
+    return true;
+  } else {
+    console.log(`${name} ✘: ${result} (${expected})`);
+    return false;
+  }
+}
+
