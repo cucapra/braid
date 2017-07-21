@@ -9,7 +9,6 @@ import * as driver from "./src/driver";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
-const HEADER_FILE = 'header.ss';
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
@@ -83,11 +82,6 @@ function run(filename: string, source: string, webgl: boolean,
     // Run the driver.
     let sources: string[] = [source];
     let filenames: string[] = [filename];
-    if (config.webgl) {
-      // Add GL "header" files to sources and filenames
-      filenames.unshift(HEADER_FILE);
-      sources.unshift(fs.readFileSync(HEADER_FILE, 'utf8'));
-    }
 
     driver.frontend(config, sources, filenames, function (tree, types) {
       if (compile) {
