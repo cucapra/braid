@@ -23,21 +23,22 @@ var initTime = Date.now();
 
 render js<
   var modelView = mat4.create();
+  # Apply a translation matrix in y-axis in order to put the teapot at the center
   var T = mat4.create();
-  mat4.fromTranslation(T, vec3(0.0, 1.5, 7.0));
-  var R = mat4.create();
-  # Create a modelview matrix such that the camera will rotate around the teapot and always towards it
-  mat4.rotateY(R, R, (Date.now() - initTime) / 100.0 / 180.0 * 3.14);
-  modelView = R * T;
+  mat4.fromTranslation(T, vec3(0.0, 8.0, 0.0));
+  mat4.invert(modelView, view);
+  modelView = T * modelView;
   mat4.invert(modelView, modelView);
   var mvInv = mat4.create();
+
   mat4.invert(mvInv, modelView);
   vertex glsl<
     gl_Position = projection * modelView * vec4(skyBoxPosition, 1.0);
     var pos = skyBoxPosition;
     fragment glsl<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
-      gl_FragColor = textureCube(tex, pos - eye);
+      # Change vector from right-hand coordinate system to left-hand coordinate system, which is a webgl convention
+      gl_FragColor = textureCube(tex, (pos - eye) * vec3(-1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
@@ -48,8 +49,9 @@ render js<
   var normalTrans = mat4.create();
   mat4.transpose(normalTrans, trans);
   mat4.invert(normalTrans, normalTrans);
+
   vertex glsl<
-    gl_Position = projection * modelView * trans * vec4(teapotPosition / 5.0, 1.0);
+    gl_Position = projection * modelView * trans * vec4(teapotPosition, 1.0);
     var frag_normal = vec3(normalTrans * vec4(teapotNormal, 0.0));
     var frag_pos = vec3(trans * vec4(teapotPosition / 5.0, 1.0));
     fragment glsl<
@@ -58,7 +60,7 @@ render js<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
       var rayIn = normalize(frag_pos - eye);
       var rayOut = normalize(reflect(rayIn, normal));
-      gl_FragColor = textureCube(tex, rayOut);
+      gl_FragColor = textureCube(tex, rayOut * vec3(-1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(teapotIndices, teapotSize);
