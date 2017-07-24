@@ -93,7 +93,7 @@ export interface UnaryNode extends ExpressionNode {
 
 export interface BinaryNode extends ExpressionNode {
   tag: "binary";
-  op: "+" | "-" | "*" | "/" | "==" | "!=";
+  op: "+" | "-" | "*" | "/" | "==" | "!=" | ">=" | "<=";
   lhs: ExpressionNode;
   rhs: ExpressionNode;
 }
