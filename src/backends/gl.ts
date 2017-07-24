@@ -179,6 +179,7 @@ export const INTRINSICS: TypeMap = {
   vertex: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   fragment: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   gl_Position: FLOAT4,
+  gl_FragCoord: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([
     new FunType([FLOAT3, FLOAT], FLOAT4),
