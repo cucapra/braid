@@ -1,11 +1,10 @@
 {
   "name": "braid",
   "version": "1.0.0",
-  "author": "Adrian Sampson <asampson@cornell.edu>",
+  "author": "Adrian Sampson <asampson@cs.cornell.edu>",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@types/gl-matrix": "^2.2.34",
     "minimist": "^1.2.0"
   },
   "devDependencies": {

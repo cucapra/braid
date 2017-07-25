@@ -80,9 +80,13 @@ function _check(config: Config): Gen<TypeCheck> {
   return check;
 }
 
+/**
+ * Parse, type-check, and desugar source files. Return a parsed AST and
+ * type information or an Error if parsing or typing fails.
+ */
 export function frontend(config: Config, sources: string[],
-    filenames: string[] | null,
-    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
+    filenames: string[] | null):
+    [SyntaxNode, TypeTable] | error.Error
 {
   let emptyExpressionNodeArray: ExpressionNode[] = [];
   let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
@@ -105,9 +109,7 @@ export function frontend(config: Config, sources: string[],
           start: e.location.start,
           end: e.location.end,
         };
-        let err = new error.Error(loc, "parse", e.message);
-        config.error(err);
-        return;
+        return new error.Error(loc, "parse", e.message);
       } else {
         throw e;
       }
@@ -128,15 +130,14 @@ export function frontend(config: Config, sources: string[],
     config.typed(pretty_type(type));
   } catch (e) {
     if (e instanceof error.Error) {
-      config.error(e);
-      return;
+      return e;
     } else {
       throw e;
     }
   }
   config.log('type table', type_table);
 
-  checked(elaborated, type_table);
+  return [elaborated, type_table];
 }
 
 export function compile(config: Config, tree: SyntaxNode,
@@ -194,12 +195,17 @@ export function interpret(config: Config, tree: SyntaxNode,
   }
 }
 
-// Get the complete, `eval`-able JavaScript program, including the runtime
-// code.
+/**
+ * Get the complete, `eval`-able JavaScript program, including the runtime
+ * code.
+ */
 export function full_code(config: Config, jscode: string): string {
   return _runtime(config) + jscode;
 }
 
+/**
+ * Run compiled JavaScript code.
+ */
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
@@ -224,3 +230,35 @@ export function execute(config: Config, jscode: string,
     executed(js.pretty_value(res));
   }
 }
+
+/**
+ * Check the output of a test. Log a message and return a success flag.
+ */
+export function check_output(name: string, source: string,
+                             result: string): boolean
+{
+  // Look for the special expected output marker.
+  let [, expected] = source.split('# -> ');
+  if (expected === undefined) {
+    console.log(`${name} ✘: ${result} (no expected result found)`);
+    return false;
+  }
+  expected = expected.trim();
+  result = result.trim();
+
+  let match: boolean;
+  if (expected === "type error") {
+    match = result.indexOf(expected) !== -1;
+  } else {
+    match = expected === result;
+  }
+
+  if (match) {
+    console.log(`${name} ✓`);
+    return true;
+  } else {
+    console.log(`${name} ✘: ${result} (${expected})`);
+    return false;
+  }
+}
+
