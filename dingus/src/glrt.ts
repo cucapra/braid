@@ -348,7 +348,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
         gl.UNSIGNED_BYTE, imgs[0]);
-    } else {
+    } else { 
       // Cube mapping
       // Do not invert Y-coordinate for cube mapping
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -387,9 +387,17 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
  */
 function createFramebuffer(gl: WebGLRenderingContext, tex: WebGLTexture) {
   var framebuffer = gl.createFramebuffer();
-  
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+
+  // Bind a depth render buffer to this frame buffer in order to enable the depth test
+  var depthBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024, 1024);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, 
+    gl.RENDERBUFFER, depthBuffer);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   return framebuffer;
@@ -552,8 +560,8 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return fbo;
     },
 
-    bindFrameBuffer(fbo: WebGLFramebuffer) {
-      if (fbo === null) {
+    bindFramebuffer(fbo: WebGLFramebuffer) {
+      if (fbo === undefined) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
