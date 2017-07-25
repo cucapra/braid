@@ -78,7 +78,7 @@ render js<
   shadow(floorPosition, MVPLight);
   draw_mesh(floorIndices, floorSize);
 
-  bindFramebuffer();
+  bindFramebuffer(screenbuffer);
 
   var normalMatrix = mat4.create();
   mat4.transpose(normalMatrix, modelView);

@@ -56,7 +56,10 @@ extern average: Image -> Float4;
 # to create a cube-map texture.
 extern texture: Image -> Texture | -> Texture | Image Image Image Image Image Image -> CubeTexture;
 extern framebuffer: Texture -> Framebuffer;
-extern bindFramebuffer: Framebuffer -> Void | -> Void;
+extern bindFramebuffer: Framebuffer -> Void;
+
+# A framebuffer representing the content to be shown in the canvas
+extern screenbuffer: Framebuffer;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;
