@@ -35,8 +35,8 @@ render js<
   modelView = T * modelView;
   mat4.invert(modelView, modelView);
   var mvInv = mat4.create();
-
   mat4.invert(mvInv, modelView);
+  
   vertex glsl<
     gl_Position = projection * modelView * vec4(skyBoxPosition, 1.0);
     var pos = skyBoxPosition;

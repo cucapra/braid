@@ -25,7 +25,7 @@ extern mesh_texcoords: Mesh -> (Float2 Array);
 extern mesh_tangents: Mesh -> (Float3 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
 extern draw_arrays: Int -> Void;
-
+  
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
 extern mat4.rotate: Mat4 Mat4 Float Vec3 -> Void;

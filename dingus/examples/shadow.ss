@@ -10,29 +10,30 @@ var floorIndices = mesh_indices(floorMesh);
 var floorSize = mesh_size(floorMesh);
 
 # Load Box
-var boxMesh = load_obj("box.obj");
-var boxPosition = mesh_positions(boxMesh);
-var boxNormal = mesh_normals(boxMesh);
-var boxIndices = mesh_indices(boxMesh);
-var boxSize = mesh_size(boxMesh);
+# var boxMesh = load_obj("box.obj");
+# var boxPosition = mesh_positions(boxMesh);
+# var boxNormal = mesh_normals(boxMesh);
+# var boxIndices = mesh_indices(boxMesh);
+# var boxSize = mesh_size(boxMesh);
 
-# # Load teapot
-# var teapotMesh = load_obj("teapot.obj");
-# var teapotPosition = mesh_positions(teapotMesh);
-# var teapotNormal = mesh_normals(teapotMesh);
-# var teapotIndices = mesh_indices(teapotMesh);
-# var teapotSize = mesh_size(teapotMesh);
+# Load teapot
+var teapotMesh = load_obj("teapot.obj");
+var teapotPosition = mesh_positions(teapotMesh);
+var teapotNormal = mesh_normals(teapotMesh);
+var teapotIndices = mesh_indices(teapotMesh);
+var teapotSize = mesh_size(teapotMesh);
 
-# # create a transformation matrix for teapot
-# var trans = mat4.create();
-# mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
-# var normalTrans = mat4.create();
-# mat4.transpose(normalTrans, trans);
-# mat4.ainvert(normalTrans, normalTrans);
+# create a transformation matrix for teapot
+var trans = mat4.create();
+mat4.scale(trans, trans, vec3(0.4, 0.4, 0.4));
+mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
+var normalTrans = mat4.create();
+mat4.transpose(normalTrans, trans);
+mat4.invert(normalTrans, normalTrans);
 
 var projLight = mat4.create();
 var modelViewLight = mat4.create();
-var lightPos = vec3(8, 8, 8);
+var lightPos = vec3(8, 15, 8);
 var center = vec3(0, 0, 0);
 var up = vec3(-1, 2, -1);
 mat4.perspective(projLight, 90.0, 1024/1024, 0.1, 2000.0);
@@ -43,9 +44,9 @@ var shadowMap = texture();
 var fbo = framebuffer(shadowMap);
 var initTime = Date.now();
 
-def shadow(vert_position: Float3 Array, mvp: Mat4) (
+def shadow(vert_position: Float3 Array, mvp: Mat4, trans: Mat4) (
   vertex glsl<
-    gl_Position = mvp * vec4(vert_position, 1.0);
+    gl_Position = mvp * trans * vec4(vert_position, 1.0);
     fragment glsl<
       var bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
       var bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
@@ -59,23 +60,19 @@ def shadow(vert_position: Float3 Array, mvp: Mat4) (
 
 render js<
   
-  
   var modelView = mat4.create();
   var T = mat4.create();
-  mat4.fromTranslation(T, vec3(0.0, 5.0, 20.0));
-  var R = mat4.create();
-  mat4.rotateY(R, R, (Date.now() - initTime) / 100.0 / 180.0 * 3.14);
-  var rotationX = -10.0/180*3.14;
-  mat4.rotateX(R, R, rotationX);
-  modelView = R * T;
+  mat4.fromTranslation(T, vec3(0.0, 5.0, 0.0));
+  mat4.invert(modelView, view);
+  modelView = T * modelView;
   mat4.invert(modelView, modelView);
 
-
   bindFramebuffer(fbo);
+
   # shadow shader
-  shadow(boxPosition, MVPLight);
-  draw_mesh(boxIndices, boxSize);
-  shadow(floorPosition, MVPLight);
+  shadow(teapotPosition, MVPLight, trans);
+  draw_mesh(teapotIndices, teapotSize);
+  shadow(floorPosition, MVPLight, mat4.create());
   draw_mesh(floorIndices, floorSize);
 
   bindFramebuffer(screenbuffer);
@@ -84,11 +81,11 @@ render js<
   mat4.transpose(normalMatrix, modelView);
   mat4.invert(normalMatrix, normalMatrix);
 
-  # Box shader
+  # teapot shader
   vertex glsl<
-    gl_Position = projection * modelView * vec4(boxPosition, 1.0);
-    var vPosition = modelView * vec4(boxPosition, 1.0);
-    var vNormal = normalize(vec3(normalMatrix * vec4(boxNormal, 0.0)));
+    gl_Position = projection * modelView * trans * vec4(teapotPosition, 1.0);
+    var vPosition = modelView * trans * vec4(teapotPosition, 1.0);
+    var vNormal = normalize(vec3(normalMatrix * normalTrans * vec4(teapotNormal, 0.0)));
 
     fragment glsl<
       var color = vec3(0.5, 0.0, 0.0);
@@ -112,7 +109,7 @@ render js<
                       0.3 * specular * vec3(1.0, 1.0, 1.0)) * 2.0, 1.0);
     >
   >;
-  draw_mesh(boxIndices, boxSize);
+  draw_mesh(teapotIndices, teapotSize);
 
   # Floor shader
   vertex glsl<
@@ -130,7 +127,7 @@ render js<
       if (swizzle(shadowCoord, "z") >= (depth + 0.00015)) (
         visibility = 0.6;
       ) (visibility = 1.0;);
-      var color = vec3(0.7, 0.7, 0.7);
+      var color = vec3(0.5, 0.5, 0.5);
       var N = normalize(vNormal);
       var V = normalize(vec3(-vPosition));
 
