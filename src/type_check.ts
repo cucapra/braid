@@ -112,6 +112,8 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '~': new FunType([BOOLEAN], BOOLEAN),
   '==': _COMPARE_TYPE,
   '!=': _COMPARE_TYPE,
+  '>=': _COMPARE_TYPE,
+  '<=': _COMPARE_TYPE,
 };
 
 

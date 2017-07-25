@@ -138,6 +138,10 @@ const _GL_ARITH_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
   new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
 ]);
+const _GL_COMPARE_TYPE = new OverloadedType([
+  new FunType([INT, INT], BOOLEAN),
+  new FunType([FLOAT, FLOAT], BOOLEAN),
+]);
 const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
   _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
@@ -230,14 +234,10 @@ export const INTRINSICS: TypeMap = {
 
   // Boolean binary operators inherited from core.
   '~': new FunType([BOOLEAN], BOOLEAN),
-  '==': new OverloadedType([
-    new FunType([INT, INT], BOOLEAN),
-    new FunType([FLOAT, FLOAT], BOOLEAN),
-  ]),
-  '!=': new OverloadedType([
-    new FunType([INT, INT], BOOLEAN),
-    new FunType([FLOAT, FLOAT], BOOLEAN),
-  ]),
+  '==': _GL_COMPARE_TYPE,
+  '!=': _GL_COMPARE_TYPE,
+  '>=': _GL_COMPARE_TYPE,
+  '<=': _GL_COMPARE_TYPE,
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
