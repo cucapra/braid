@@ -36,70 +36,77 @@ var lightPos = vec3(8, 8, 8);
 var center = vec3(0, 0, 0);
 var up = vec3(-1, 2, -1);
 mat4.perspective(projLight, 90.0, 1024/1024, 0.1, 2000.0);
-mat4.lookAt(modelViewLight, eye, center, up);
+mat4.lookAt(modelViewLight, lightPos, center, up);
 var MVPLight = projLight * modelViewLight;
 
 var shadowMap = texture();
 var fbo = framebuffer(shadowMap);
+var initTime = Date.now();
 
-def shadow(vert_position: Float3 Array) (
+def shadow(vert_position: Float3 Array, mvp: Mat4) (
   vertex glsl<
-    gl_Position = MVPLight * vec4(vert_position, 1.0);
+    gl_Position = mvp * vec4(vert_position, 1.0);
     fragment glsl<
       var bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
       var bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
-      var rgbaDepth = fract(gl_FragCoord.z * bitShift);
-      rgbaDepth = rgbaDepth - rgbaDepth.gbaa * bitMask;
+      var rgbaDepth = fract(swizzle(gl_FragCoord, "z") * bitShift);
+      var gbaa = vec4(swizzle(rgbaDepth, "g"), swizzle(rgbaDepth, "b"), swizzle(rgbaDepth, "a"), swizzle(rgbaDepth, "a"));
+      rgbaDepth = rgbaDepth - gbaa * bitMask;
       gl_FragColor = rgbaDepth;
     >
   >
 );
 
-def unpackDepth(rgbaDepth: Float4) (
-  var bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0 * 256.0), 1.0/(256.0*256.0*256.0));
-  var depth = dot(rgbaDepth, bitShift);
-  return depth;
-);
-
-
 render js<
+  
+  
+  var modelView = mat4.create();
+  var T = mat4.create();
+  mat4.fromTranslation(T, vec3(0.0, 5.0, 20.0));
+  var R = mat4.create();
+  mat4.rotateY(R, R, (Date.now() - initTime) / 100.0 / 180.0 * 3.14);
+  var rotationX = -10.0/180*3.14;
+  mat4.rotateX(R, R, rotationX);
+  modelView = R * T;
+  mat4.invert(modelView, modelView);
+
 
   bindFramebuffer(fbo);
   # shadow shader
-  shadow(boxPosition);
+  shadow(boxPosition, MVPLight);
   draw_mesh(boxIndices, boxSize);
-  shadow(floorPosition);
+  shadow(floorPosition, MVPLight);
   draw_mesh(floorIndices, floorSize);
 
   bindFramebuffer();
 
   var normalMatrix = mat4.create();
-  mat4.transpose(normalMatrix, view);
+  mat4.transpose(normalMatrix, modelView);
   mat4.invert(normalMatrix, normalMatrix);
 
   # Box shader
   vertex glsl<
-    gl_Position = projection * view * vec4(boxPosition, 1.0);
-    var vPosition = view * vec4(boxPosition, 1.0);
+    gl_Position = projection * modelView * vec4(boxPosition, 1.0);
+    var vPosition = modelView * vec4(boxPosition, 1.0);
     var vNormal = normalize(vec3(normalMatrix * vec4(boxNormal, 0.0)));
 
     fragment glsl<
       var color = vec3(0.5, 0.0, 0.0);
       var N = normalize(vNormal);
-      var V = normalize(-vPosition.xyz);
+      var V = normalize(vec3(-vPosition));
 
       var light_dir = modelView * vec4(lightPos, 0.0);
-      var L = normalize(lightPos.xyz - vec3(0, 0, 0));
+      var L = normalize(vec3(light_dir) - vec3(0, 0, 0));
       var H = normalize(L + V);
       var lambertian = max(0.0, dot(N, L));
       var specular = 0.0;
 
-      if(lambertian > 0.0) {
+      if(lambertian >= 0.00001) (
         var R = reflect(-L, N);
 
         var specAngle = max(dot(R, V), 0.0);
         specular = pow(specAngle, 0.8);
-      }
+      ) (var a = 0.0;);
       gl_FragColor = vec4((1.0 * vec3(0.2, 0.0, 0.0) +
                       1.0 * lambertian * color +
                       0.3 * specular * vec3(1.0, 1.0, 1.0)) * 2.0, 1.0);
@@ -109,38 +116,42 @@ render js<
 
   # Floor shader
   vertex glsl<
-    gl_Position = projection * view * vec4(floorPosition, 1.0);
-    var vPosition = view * vec4(floorPosition, 1.0);
-    var vNormal = normalize((normalMatrix * vec4(floorNormal, 0.0)).xyz);
+    gl_Position = projection * modelView * vec4(floorPosition, 1.0);
+    var vPosition = modelView * vec4(floorPosition, 1.0);
+    var vNormal = normalize(vec3(normalMatrix * vec4(floorNormal, 0.0)));
     var vPositionFromLight = MVPLight * vec4(floorPosition, 1.0);
 
     fragment glsl<
-      var shadowCoord = (vPositionFromLight.xyz/vPositionFromLight.w)/2.0 + 0.5;
-      var rgbaDepth = texture2D(shadowMap, shadowCoord.xy);
-      var depth = unpackDepth(rgbaDepth);
-      var visibility = (shadowCoord.z > depth + 0.00015) ? 0.6 : 1.0;
-
-      vec3 color = vec3(0.5, 0.5, 0.5);
+      var shadowCoord = (vec3(vPositionFromLight)/swizzle(vPositionFromLight, "w"))/2.0 + 0.5;
+      var rgbaDepth = texture2D(shadowMap, vec2(swizzle(shadowCoord, "x"), swizzle(shadowCoord, "y")));
+      var bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0 * 256.0), 1.0/(256.0*256.0*256.0));
+      var depth = dot(rgbaDepth, bitShift);
+      var visibility = 0.0;
+      if (swizzle(shadowCoord, "z") >= (depth + 0.00015)) (
+        visibility = 0.6;
+      ) (visibility = 1.0;);
+      var color = vec3(0.7, 0.7, 0.7);
       var N = normalize(vNormal);
-      var V = normalize(-vPosition.xyz);
+      var V = normalize(vec3(-vPosition));
 
       var light_dir = modelView * vec4(lightPos, 0.0);
-      var L = normalize(lightPos.xyz - vec3(0, 0, 0));
+      var L = normalize(vec3(light_dir) - vec3(0, 0, 0));
       var H = normalize(L + V);
       var lambertian = max(0.0, dot(N, L));
       var specular = 0.0;
 
-      if(lambertian > 0.0) {
+      if(lambertian >= 0.00001) (
         var R = reflect(-L, N);
 
         var specAngle = max(dot(R, V), 0.0);
         specular = pow(specAngle, 0.8);
-      }
+      ) (var a = 0.0;);
       gl_FragColor = vec4((1.0 * vec3(0.0, 0.0, 0.0) +
-                      1.0 * lambertian * color * visibility +
-                      0.2 * specular * vec3(1.0, 1.0, 1.0) * visibility)
-                      * 2.0, 1.0);
+                     1.0 * lambertian * color * visibility +
+                     0.2 * specular * vec3(1.0, 1.0, 1.0) * visibility)
+                     * 2.0, 1.0);
     >
   >;
+  draw_mesh(floorIndices, floorSize);
 
 >
