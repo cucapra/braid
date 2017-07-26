@@ -545,7 +545,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      */
     texture(...imgs: HTMLImageElement[]) {
       // Create a cube mapping texture only if the number of input images are 6
-      let glTextureType: number = (imgs.length === 6 ? gl.TEXTURE_CUBE_MAP: gl.TEXTURE_2D);
+      let glTextureType = (imgs.length === 6 ? gl.TEXTURE_CUBE_MAP: gl.TEXTURE_2D);
       return texture(gl, imgs, glTextureType);
     },
 
