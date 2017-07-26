@@ -17,9 +17,9 @@ var teapotIndices = mesh_indices(teapotMesh);
 var teapotSize = mesh_size(teapotMesh);
 
 # create a transformation matrix for teapot
-var trans = mat4.create();
+var trans = mat4();
 mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
-var normalTrans = mat4.create();
+var normalTrans = mat4();
 mat4.transpose(normalTrans, trans);
 mat4.invert(normalTrans, normalTrans);
 
@@ -27,14 +27,14 @@ mat4.invert(normalTrans, normalTrans);
 var tex = texture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
 
 render js<
-  var modelView = mat4.create();
+  var modelView = mat4();
   # Apply a translation matrix in y-axis in order to put the teapot at the center
-  var T = mat4.create();
+  var T = mat4();
   mat4.fromTranslation(T, vec3(0.0, 8.0, 0.0));
   mat4.invert(modelView, view);
   modelView = T * modelView;
   mat4.invert(modelView, modelView);
-  var mvInv = mat4.create();
+  var mvInv = mat4();
   mat4.invert(mvInv, modelView);
   
   vertex glsl<

@@ -17,17 +17,17 @@ var teapotIndices = mesh_indices(teapotMesh);
 var teapotSize = mesh_size(teapotMesh);
 
 # create a transformation matrix for teapot
-var trans = mat4.create();
+var trans = mat4();
 mat4.scale(trans, trans, vec3(0.4, 0.4, 0.4));
 mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
-var normalTrans = mat4.create();
+var normalTrans = mat4();
 mat4.transpose(normalTrans, trans);
 mat4.invert(normalTrans, normalTrans);
 
 # Create a view matrix and a projection matrix
 # from the perspective of light
-var projLight = mat4.create();
-var modelViewLight = mat4.create();
+var projLight = mat4();
+var modelViewLight = mat4();
 var lightPos = vec3(8, 15, 8);
 var center = vec3(0, 0, 0);
 var up = vec3(-1, 2, -1);
@@ -58,14 +58,14 @@ def shadow(vert_position: Float3 Array, mvp: Mat4, trans: Mat4) (
 
 render js<
   # change camera's matrix
-  var modelView = mat4.create();
-  var T = mat4.create();
+  var modelView = mat4();
+  var T = mat4();
   mat4.fromTranslation(T, vec3(0.0, 5.0, 0.0));
   mat4.invert(modelView, view);
   modelView = T * modelView;
   mat4.invert(modelView, modelView);
   # create camera's normal transformation matrix
-  var normalMatrix = mat4.create();
+  var normalMatrix = mat4();
   mat4.transpose(normalMatrix, modelView);
   mat4.invert(normalMatrix, normalMatrix);
 
@@ -74,7 +74,7 @@ render js<
   # Use the shadow shader
   shadow(teapotPosition, MVPLight, trans);
   draw_mesh(teapotIndices, teapotSize);
-  shadow(floorPosition, MVPLight, mat4.create());
+  shadow(floorPosition, MVPLight, mat4());
   draw_mesh(floorIndices, floorSize);
 
   # Bind to the screenbuffer to render the image
