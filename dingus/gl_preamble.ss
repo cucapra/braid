@@ -56,7 +56,8 @@ extern average: Image -> Float4;
 # to create a cube-map texture.
 extern texture: Image -> Texture | -> Texture;
 extern cubeTexture: Image Image Image Image Image Image -> CubeTexture | -> CubeTexture;
-extern framebuffer: Texture -> Framebuffer;
+extern createFramebuffer: -> Framebuffer;
+extern framebufferTexture: Framebuffer Texture -> Void | Framebuffer CubeTexture Int -> Void;
 extern bindFramebuffer: Framebuffer -> Void;
 
 # A framebuffer representing the content to be shown in the canvas

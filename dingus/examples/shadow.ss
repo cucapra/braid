@@ -39,7 +39,8 @@ var MVPLight = projLight * modelViewLight;
 var shadowMap = texture();
 
 # Create an framebuffer using the empty texture
-var fbo = framebuffer(shadowMap);
+var fbo = createFramebuffer();
+framebufferTexture(fbo, shadowMap);
 
 # shadow shader
 def shadow(vert_position: Float3 Array, mvp: Mat4, trans: Mat4) (

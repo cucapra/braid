@@ -389,14 +389,12 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
 }
 
 /**
- * Create a framebuffer object
+ * Create a framebuffer object and bind a depth render buffer to it
  * @param gl the webgl context
- * @param tex an empty texture that this framebuffer will write into
  */
-function createFramebuffer(gl: WebGLRenderingContext, tex: WebGLTexture) {
+function createFramebuffer(gl: WebGLRenderingContext) {
   let framebuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
 
   // Bind a depth render buffer to this frame buffer in order to enable the depth test
   let depthBuffer = gl.createRenderbuffer();
@@ -405,10 +403,22 @@ function createFramebuffer(gl: WebGLRenderingContext, tex: WebGLTexture) {
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, 
     gl.RENDERBUFFER, depthBuffer);
   gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
+  
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   return framebuffer;
+}
+
+function framebufferTexture(gl: WebGLRenderingContext,
+  fbo: WebGLFramebuffer, tex: WebGLTexture, target: number) {
+  let cubemapTargets = [
+    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+  let glTextureType = target === -1 ? gl.TEXTURE_2D : cubemapTargets[target];
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, glTextureType, tex, 0);
 }
 
 /**
@@ -571,11 +581,22 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     /**
      * create a framebuffer object
-     * @param tex an empty webgl texture that this framebuffer will write into
      */
-    framebuffer(tex: WebGLTexture) {
-      let fbo = createFramebuffer(gl, tex);
+    createFramebuffer() {
+      let fbo = createFramebuffer(gl);
       return fbo;
+    },
+
+    framebufferTexture(fbo: WebGLFramebuffer, tex: WebGLTexture,
+      target: number) {
+      // texture2D if length === 2
+      if (arguments.length === 2) {
+        // target = -1 stands for texture2D
+        framebufferTexture(gl, fbo, tex, -1);
+      } else {
+        // bind cubeTexture to the framebuffer
+        framebufferTexture(gl, fbo, tex, target);
+      }
     },
 
     bindFramebuffer(fbo: WebGLFramebuffer) {
