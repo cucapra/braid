@@ -24,7 +24,7 @@ mat4.transpose(normalTrans, trans);
 mat4.invert(normalTrans, normalTrans);
 
 # Load a cube texture six images.
-var tex = texture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
+var tex = cubeTexture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
 
 render js<
   var modelView = mat4();

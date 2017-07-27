@@ -331,16 +331,29 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
  * Convert an image into a WebGL texture.
  */
 function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureType: number) {
+
+  let cubemapTargets = [
+    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+
   let tex = gl.createTexture();
   gl.bindTexture(glTextureType, tex);
 
   // If imgs is null, it means that we need to create an empty texture
   if (imgs.length === 0) {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (glTextureType === gl.TEXTURE_2D) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null);
+    } else {
+      cubemapTargets.forEach((target, idx) => (
+        gl.texImage2D(target, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null)
+      ));
+    }
+    gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   } else {
     // Create a normal 2D texture
     if (glTextureType === gl.TEXTURE_2D) {
@@ -354,18 +367,11 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
       // Cube mapping
       // Do not invert Y-coordinate for cube mapping
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[0]);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[1]);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[2]);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[3]);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[4]);
-      gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA,
-        gl.UNSIGNED_BYTE, imgs[5]);
+
+      cubemapTargets.forEach((target, idx) => (
+        gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, 
+          gl.UNSIGNED_BYTE, imgs[idx])
+      ));
     }
 
     // Interpolation.
@@ -388,12 +394,12 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
  * @param tex an empty texture that this framebuffer will write into
  */
 function createFramebuffer(gl: WebGLRenderingContext, tex: WebGLTexture) {
-  var framebuffer = gl.createFramebuffer();
+  let framebuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
 
   // Bind a depth render buffer to this frame buffer in order to enable the depth test
-  var depthBuffer = gl.createRenderbuffer();
+  let depthBuffer = gl.createRenderbuffer();
   gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
   gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024, 1024);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, 
@@ -543,10 +549,16 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      * either with one image to create a standard 2D texture or six images
      * to create a cube-map texture.
      */
-    texture(...imgs: HTMLImageElement[]) {
-      // Create a cube mapping texture only if the number of input images are 6
-      let glTextureType = (imgs.length === 6 ? gl.TEXTURE_CUBE_MAP: gl.TEXTURE_2D);
-      return texture(gl, imgs, glTextureType);
+    texture(img: HTMLImageElement) {
+      if (arguments.length === 0) {
+        return texture(gl, [], gl.TEXTURE_2D)
+      } else {
+        return texture(gl, [img], gl.TEXTURE_2D);
+      }
+    },
+
+    cubeTexture(...imgs: HTMLImageElement[]) {
+      return texture(gl, imgs, gl.TEXTURE_CUBE_MAP)
     },
 
     /**
