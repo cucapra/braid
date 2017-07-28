@@ -51,7 +51,7 @@ render js<
   vertex glsl<
     gl_Position = projection * modelView * trans * vec4(teapotPosition, 1.0);
     var frag_normal = vec3(normalTrans * vec4(teapotNormal, 0.0));
-    var frag_pos = vec3(trans * vec4(teapotPosition / 5.0, 1.0));
+    var frag_pos = vec3(trans * vec4(teapotPosition, 1.0));
     fragment glsl<
       # render the mirror effect
       var normal = normalize(frag_normal);

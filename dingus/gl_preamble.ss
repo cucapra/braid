@@ -51,10 +51,8 @@ extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
 extern average: Image -> Float4;
 
-# Create a texture from an image. The first form is for standard 2D
-# textures; the second form takes [posx, negx, posy, negy, posz, negz]
-# to create a cube-map texture.
 extern texture: Image -> Texture | -> Texture;
+# The order of arguments of cubeTexture is [posx, negx, posy, negy, posz, negz]
 extern cubeTexture: Image Image Image Image Image Image -> CubeTexture | -> CubeTexture;
 extern createFramebuffer: -> Framebuffer;
 extern framebufferTexture: Framebuffer Texture -> Void | Framebuffer CubeTexture Int -> Void;

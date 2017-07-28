@@ -344,10 +344,10 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
   // If imgs is null, it means that we need to create an empty texture
   if (imgs.length === 0) {
     if (glTextureType === gl.TEXTURE_2D) {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2048, 2048, 0, gl.RGBA, gl.FLOAT, null);
     } else {
       cubemapTargets.forEach((target, idx) => (
-        gl.texImage2D(target, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.FLOAT, null)
+        gl.texImage2D(target, 0, gl.RGBA, 2048, 2048, 0, gl.RGBA, gl.FLOAT, null)
       ));
     }
     gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -399,7 +399,7 @@ function createFramebuffer(gl: WebGLRenderingContext) {
   // Bind a depth render buffer to this frame buffer in order to enable the depth test
   let depthBuffer = gl.createRenderbuffer();
   gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024, 1024);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 2048, 2048);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, 
     gl.RENDERBUFFER, depthBuffer);
   gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -605,7 +605,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-        gl.viewport(0, 0, 1024, 1024);
+        gl.viewport(0, 0, 2048, 2048);
         gl.clearColor(0, 0, 0, 1);            
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       }
