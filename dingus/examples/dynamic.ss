@@ -40,7 +40,7 @@ var fbo = createFramebuffer();
 var tex = cubeTexture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
 var environment = cubeTexture();
 var envProjection = mat4();
-mat4.perspective(envProjection, 90.0, 1024/1024, 0.1, 2000.0);
+mat4.perspective(envProjection, 90 / 180 * 3.14, 1024/1024, 0.1, 2000.0);
 
 # var boxCode = glsl<vec4(1.0, 0.0, 0.0, 1.0)>; # Red color for box
 # var envCode = glsl<textureCube(tex, frag_pos * vec3(-1.0, 1.0, 1.0))>; # cube map
@@ -62,8 +62,8 @@ def dynamicEnv(vert_position: Float3 Array, envLookAt: Mat4, trans: Mat4) (
     gl_Position = envMVP * trans * vec4(vert_position, 1.0);
     var frag_pos = vec3(trans * vec4(vert_position, 1.0));
     fragment glsl<
-      # gl_FragColor = textureCube(tex, frag_pos * vec3(-1.0, 1.0, 1.0));
-      gl_FragColor = vec4(normalize(frag_pos), 1.0);
+      gl_FragColor = textureCube(tex, frag_pos * vec3(-1.0 ,1.0, 1.0));
+      #gl_FragColor = vec4(swizzle(normalize(frag_pos), "z"), 0.0, 0.0, 1.0);
     >
   >
 );
@@ -80,7 +80,7 @@ def dynamicBox(vert_position: Float3 Array, envLookAt: Mat4, trans: Mat4) (
 
 def drawEnv(fbo: Framebuffer, environment: CubeTexture, target: Int, envLookDir: Float3, envLookUp: Float3, trans: Mat4) (
   framebufferTexture(fbo, environment, target);
-  var envLookAt = mat4.create();
+  var envLookAt = mat4();
   var envOrigin = vec3(0, 0, 0);
   mat4.lookAt(envLookAt, envOrigin, envLookDir, envLookUp);
   dynamicEnv(skyBoxPosition, envLookAt, mat4());
@@ -104,12 +104,12 @@ render js<
 
   bindFramebuffer(fbo);
 
-  drawEnv(fbo, environment, 0, vec3(1, 0, 0), vec3(0, 1, 0), boxTrans);
-  drawEnv(fbo, environment, 1, vec3(-1, 0, 0), vec3(0, 1, 0), boxTrans);
+  drawEnv(fbo, environment, 0, vec3(1, 0, 0), vec3(0, -1, 0), boxTrans);
+  drawEnv(fbo, environment, 1, vec3(-1, 0, 0), vec3(0, -1, 0), boxTrans);
   drawEnv(fbo, environment, 2, vec3(0, 1, 0), vec3(0, 0, 1), boxTrans);
   drawEnv(fbo, environment, 3, vec3(0, -1, 0), vec3(0, 0, -1), boxTrans);
-  drawEnv(fbo, environment, 4, vec3(0, 0, 1), vec3(0, 1, 0), boxTrans);
-  drawEnv(fbo, environment, 5, vec3(0, 0, -1), vec3(0, 1, 0), boxTrans);
+  drawEnv(fbo, environment, 4, vec3(0, 0, 1), vec3(0, -1, 0), boxTrans);
+  drawEnv(fbo, environment, 5, vec3(0, 0, -1), vec3(0, -1, 0), boxTrans);
   
   bindFramebuffer(screenbuffer);
 
@@ -120,7 +120,7 @@ render js<
     fragment glsl<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
       # Change vector from right-hand coordinate system to left-hand coordinate system, which is a webgl convention
-      gl_FragColor = textureCube(environment, (pos - eye) * vec3(-1.0, 1.0, 1.0));
+      gl_FragColor = textureCube(tex, (pos - eye) * vec3(-1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
@@ -145,7 +145,7 @@ render js<
       var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
       var rayIn = normalize(frag_pos - eye);
       var rayOut = normalize(reflect(rayIn, normal));
-      gl_FragColor = textureCube(environment, rayOut * vec3(-1.0, 1.0, 1.0));
+      gl_FragColor = textureCube(environment, rayOut * vec3(1.0, 1.0, 1.0));
     >
   >;
   draw_mesh(teapotIndices, teapotSize);

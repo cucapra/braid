@@ -417,8 +417,9 @@ function framebufferTexture(gl: WebGLRenderingContext,
     gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
   ];
   let glTextureType = target === -1 ? gl.TEXTURE_2D : cubemapTargets[target];
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, glTextureType, tex, 0);
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
 /**

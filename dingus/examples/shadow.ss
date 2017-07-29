@@ -31,7 +31,7 @@ var modelViewLight = mat4();
 var lightPos = vec3(8, 15, 8);
 var center = vec3(0, 0, 0);
 var up = vec3(-1, 2, -1);
-mat4.perspective(projLight, 90.0, 1024/1024, 0.1, 2000.0);
+mat4.perspective(projLight, 120 / 180 * 3.14, 1024/1024, 0.1, 2000.0);
 mat4.lookAt(modelViewLight, lightPos, center, up);
 var MVPLight = projLight * modelViewLight;
 
@@ -40,7 +40,7 @@ var shadowMap = texture();
 
 # Create an framebuffer using the empty texture
 var fbo = createFramebuffer();
-framebufferTexture(fbo, shadowMap);
+
 
 # shadow shader
 def shadow(vert_position: Float3 Array, mvp: Mat4, trans: Mat4) (
@@ -72,6 +72,7 @@ render js<
 
   # bind to the framebuffer to render the depth texture
   bindFramebuffer(fbo);
+  framebufferTexture(fbo, shadowMap);
   # Use the shadow shader
   shadow(teapotPosition, MVPLight, trans);
   draw_mesh(teapotIndices, teapotSize);
