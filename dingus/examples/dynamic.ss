@@ -67,8 +67,11 @@ def dynamicEnv(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, t
   >;
 );
 
-def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, normalMatrix: Mat4, trans: Mat4, boxNormalTrans: Mat4) (
-  var mvp = projection * modelView;
+def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, normalMatrix: Mat4, trans: Mat4, color: Float3) (
+  var boxNormalTrans = mat4();
+  mat4.transpose(boxNormalTrans, trans);
+  mat4.invert(boxNormalTrans, boxNormalTrans);
+  
   vertex glsl<
     gl_Position = projection * modelView * trans * vec4(vert_position, 1.0);
     # Compute varying position and normal in camera space
@@ -76,7 +79,7 @@ def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, n
     var vNormal = normalize(vec3(normalMatrix * boxNormalTrans * vec4(boxNormal, 0.0)));
     fragment glsl<
       # the default color of teapot
-      var color = vec3(0.5, 0.0, 0.0);
+      # var color = vec3(0.5, 0.0, 0.0);
 
       # diffuse shader
       var N = normalize(vNormal);
@@ -93,26 +96,18 @@ def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, n
         var specAngle = max(dot(R, V), 0.0);
         specular = pow(specAngle, 0.8);
       ) (
-
         specular = 0.0;
       );
 
       # ambient shading + diffuse shading + phong shading
-      gl_FragColor = vec4((1.0 * vec3(0.2, 0.0, 0.0) +
+      gl_FragColor = vec4((0.3 * color +
                       1.0 * lambertian * color +
                       0.3 * specular * vec3(1.0, 1.0, 1.0)) * 2.0, 1.0);
     >
   >;
-
-  # vertex glsl<
-  #   gl_Position = mvp * trans * vec4(vert_position, 1.0);
-  #   fragment glsl<
-  #     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-  #   >
-  # >
 );
 
-def drawEnv(fbo: Framebuffer, environment: CubeTexture, target: Int, envLookDir: Float3, envLookUp: Float3, trans: Mat4, boxNormalTrans: Mat4) (
+def drawEnvFace(fbo: Framebuffer, environment: CubeTexture, target: Int, envLookDir: Float3, envLookUp: Float3, trans1: Mat4, trans2: Mat4, trans3: Mat4) (
   framebufferTexture(fbo, environment, target);
   var envLookAt = mat4();
   var envOrigin = vec3(0, 0, 0);
@@ -123,8 +118,31 @@ def drawEnv(fbo: Framebuffer, environment: CubeTexture, target: Int, envLookDir:
   var envNormalMatrix = mat4();
   mat4.transpose(envNormalMatrix, envLookAt);
   mat4.invert(envNormalMatrix, envNormalMatrix);
-  dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans, boxNormalTrans);
+
+  dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans1, vec3(0.5, 0.0, 0.0));
   draw_mesh(boxIndices, boxSize);
+  dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans2, vec3(0.0, 0.5, 0.0));
+  draw_mesh(boxIndices, boxSize);
+  dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans3, vec3(0.0, 0.0, 0.5));
+  draw_mesh(boxIndices, boxSize);
+);
+
+def drawEnv(fbo: Framebuffer, environment: CubeTexture, trans1: Mat4, trans2: Mat4, trans3: Mat4) (
+  drawEnvFace(fbo, environment, 0, vec3(1, 0, 0), vec3(0, -1, 0), trans1, trans2, trans3);
+  drawEnvFace(fbo, environment, 1, vec3(-1, 0, 0), vec3(0, -1, 0), trans1, trans2, trans3);
+  drawEnvFace(fbo, environment, 2, vec3(0, 1, 0), vec3(0, 0, 1), trans1, trans2, trans3);
+  drawEnvFace(fbo, environment, 3, vec3(0, -1, 0), vec3(0, 0, -1), trans1, trans2, trans3);
+  drawEnvFace(fbo, environment, 4, vec3(0, 0, 1), vec3(0, -1, 0), trans1, trans2, trans3);
+  drawEnvFace(fbo, environment, 5, vec3(0, 0, -1), vec3(0, -1, 0), trans1, trans2, trans3);
+);
+
+def createBoxTrans(rX: Float, rY: Float, rZ: Float, pos: Float3) (
+  var boxTrans = mat4();
+  mat4.rotateY(boxTrans, boxTrans, (Date.now() - initTime) / rX / 180.0 * 3.14);
+  mat4.rotateX(boxTrans, boxTrans, (Date.now() - initTime) / rY / 180.0 * 3.14);
+  mat4.rotateZ(boxTrans, boxTrans, (Date.now() - initTime) / rZ / 180.0 * 3.14);
+  mat4.translate(boxTrans, boxTrans, pos);
+  boxTrans;
 );
 
 
@@ -144,25 +162,30 @@ render js<
   mat4.invert(normalMatrix, normalMatrix);
 
   # create a transformation matrix for box
-  var boxTrans = mat4();
-  mat4.rotateY(boxTrans, boxTrans, (Date.now() - initTime) / 20.0 / 180.0 * 3.14);
-  mat4.rotateX(boxTrans, boxTrans, (Date.now() - initTime) / 40.0 / 180.0 * 3.14);
-  mat4.rotateZ(boxTrans, boxTrans, (Date.now() - initTime) / 30.0 / 180.0 * 3.14);
-  mat4.translate(boxTrans, boxTrans, vec3(25.0, 5.0, 25.0));
-  var boxNormalTrans = mat4();
-  mat4.transpose(boxNormalTrans, boxTrans);
-  mat4.invert(boxNormalTrans, boxNormalTrans);
+  # var boxTrans = mat4();
+  # mat4.rotateY(boxTrans, boxTrans, (Date.now() - initTime) / 20.0 / 180.0 * 3.14);
+  # mat4.rotateX(boxTrans, boxTrans, (Date.now() - initTime) / 40.0 / 180.0 * 3.14);
+  # mat4.rotateZ(boxTrans, boxTrans, (Date.now() - initTime) / 30.0 / 180.0 * 3.14);
+  # mat4.translate(boxTrans, boxTrans, vec3(25.0, 5.0, 25.0));
+  var boxTrans1 = createBoxTrans(40.0, 20.0, 30.0, vec3(25.0, 5.0, 25.0));
+  var boxTrans2 = createBoxTrans(20.0, 50.0, 40.0, vec3(0.0, 5.0, 30.0));
+  var boxTrans3 = createBoxTrans(35.0, 25.0, 50.0, vec3(40.0, 5.0, 10.0));
+
 
   bindFramebuffer(fbo);
 
-  drawEnv(fbo, environment, 0, vec3(1, 0, 0), vec3(0, -1, 0), boxTrans, boxNormalTrans);
-  drawEnv(fbo, environment, 1, vec3(-1, 0, 0), vec3(0, -1, 0), boxTrans, boxNormalTrans);
-  drawEnv(fbo, environment, 2, vec3(0, 1, 0), vec3(0, 0, 1), boxTrans, boxNormalTrans);
-  drawEnv(fbo, environment, 3, vec3(0, -1, 0), vec3(0, 0, -1), boxTrans, boxNormalTrans);
-  drawEnv(fbo, environment, 4, vec3(0, 0, 1), vec3(0, -1, 0), boxTrans, boxNormalTrans);
-  drawEnv(fbo, environment, 5, vec3(0, 0, -1), vec3(0, -1, 0), boxTrans, boxNormalTrans);
+  drawEnv(fbo, environment, boxTrans1, boxTrans2, boxTrans3);
+  
   
   bindFramebuffer(screenbuffer);
+
+  # box shader
+  dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans1, vec3(0.5, 0.0, 0.0));
+  draw_mesh(boxIndices, boxSize);  
+  dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans2, vec3(0.0, 0.5, 0.0));
+  draw_mesh(boxIndices, boxSize);  
+  dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans3, vec3(0.0, 0.0, 0.5));  
+  draw_mesh(boxIndices, boxSize);
 
   # skyBox shader
   vertex glsl<
@@ -175,10 +198,6 @@ render js<
     >
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
-
-  # box shader
-  dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans, boxNormalTrans);
-  draw_mesh(boxIndices, boxSize);
 
   # mirror teapot shader
   vertex glsl<
