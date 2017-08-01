@@ -7,8 +7,24 @@ $shevy: (
 @include body;
 @include content;
 
+$dark-color: #152023;
+$highlight-color: #EAC162;
+$gray1-color: #565356;
+$gray2-color: #A9AAAF;
+$light-color: #F0E9E8;
+
 body {
     font-family: sans-serif;
+    background: $dark-color;
+    color: $light-color;
+}
+
+a {
+    color: $highlight-color;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
 }
 
 header, main {
@@ -28,10 +44,11 @@ header {
     nav {
         margin: 0;
         a {
-            text-decoration: none;
             font-weight: bold;
-            color: inherit;
             margin-right: 1rem;
+        }
+        a:hover {
+            text-decoration: none;
         }
     }
 }
