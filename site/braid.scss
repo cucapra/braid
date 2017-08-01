@@ -1,0 +1,17 @@
+// Shevy is a typography library.
+@import 'node_modules/shevy/core/shevy';
+$shevy: (
+  base-font-size: 16px,
+);
+@include headings;
+@include body;
+@include content;
+
+body {
+    font-family: sans-serif;
+}
+
+header, main {
+    max-width: 35rem;
+    margin: 1rem auto;
+}

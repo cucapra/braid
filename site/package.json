@@ -1,0 +1,9 @@
+{
+  "name": "braid-site",
+  "private": true,
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "shevy": "^2.1.0"
+  }
+}
