@@ -332,6 +332,7 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
  */
 function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureType: number) {
 
+  // A list stores 6 faces of cube map
   let cubemapTargets = [
     gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 
     gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 
@@ -343,9 +344,12 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[], glTextureT
 
   // If imgs is null, it means that we need to create an empty texture
   if (imgs.length === 0) {
+    // The size of the empty texture is 1024
+    // Larger than 1024 might lead to low fps
     if (glTextureType === gl.TEXTURE_2D) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     } else {
+      // Create an empty cube texture
       cubemapTargets.forEach((target, idx) => (
         gl.texImage2D(target, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
       ));
@@ -399,6 +403,7 @@ function createFramebuffer(gl: WebGLRenderingContext) {
   // Bind a depth render buffer to this frame buffer in order to enable the depth test
   let depthBuffer = gl.createRenderbuffer();
   gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+  // The depth buffer's size should be the same as the texture's (1024x1024)
   gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024, 1024);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, 
     gl.RENDERBUFFER, depthBuffer);
@@ -409,6 +414,15 @@ function createFramebuffer(gl: WebGLRenderingContext) {
   return framebuffer;
 }
 
+/**
+ * Bind an empty texture to the framebuffer. If the texture is a cube texture,
+ * target is the index of cubemap target list ([posx, negx, posy, negy, 
+ * posz, negz]). If the texture is a 2D texture, the target is -1.
+ * @param gl a webgl rendering context
+ * @param fbo the framebuffer object that the texture is bound to
+ * @param tex a 2D texture or cube texture
+ * @param target -1 if 2D texture; index if cube texture
+ */
 function framebufferTexture(gl: WebGLRenderingContext,
   fbo: WebGLFramebuffer, tex: WebGLTexture, target: number) {
   let cubemapTargets = [
@@ -588,6 +602,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return fbo;
     },
 
+    /**
+     * bind a texture to a framebuffer object
+     */
     framebufferTexture(fbo: WebGLFramebuffer, tex: WebGLTexture,
       target: number) {
       // texture2D if length === 2
@@ -600,12 +617,16 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       }
     },
 
+    /**
+     * Set the pipeline destination to a framebuffer or the screenbuffer
+     */
     bindFramebuffer(fbo: WebGLFramebuffer) {
       if (fbo === null) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        // The size of viewport should be consistent with the size of framebuffer
         gl.viewport(0, 0, 1024, 1024);
       }
     },

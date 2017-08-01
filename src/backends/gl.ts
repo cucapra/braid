@@ -37,6 +37,7 @@ export const INT4 = new PrimitiveType("Int4");
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
 export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
+// A type for the framebuffer in webgl
 export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
