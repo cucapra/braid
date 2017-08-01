@@ -7,6 +7,9 @@ $shevy: (
 @include body;
 @include content;
 
+// GitHub banner.
+@import 'node_modules/github-fork-ribbon-css/gh-fork-ribbon.css';
+
 $dark-color: #152023;
 $highlight-color: #EAC162;
 $gray1-color: #565356;

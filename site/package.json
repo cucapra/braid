@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "dependencies": {
+    "github-fork-ribbon-css": "^0.2.1",
     "shevy": "^2.1.0"
   }
 }
