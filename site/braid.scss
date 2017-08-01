@@ -19,8 +19,20 @@ header {
     max-width: 45rem;
     display: flex;
     align-items: center;
-    h1 {
+    div {
         margin-left: 2rem;
+    }
+    h1 {
+        margin: 0.5rem 0;
+    }
+    nav {
+        margin: 0;
+        a {
+            text-decoration: none;
+            font-weight: bold;
+            color: inherit;
+            margin-right: 1rem;
+        }
     }
 }
 
