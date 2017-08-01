@@ -98,10 +98,6 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   let gl = (canvas.getContext("webgl") ||
     canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
 
-  // Add gl extensions to support shadow mapping
-  gl.getExtension("OES_texture_float");
-  gl.getExtension("OES_texture_float_linear");
-
   // Create the transform matrices. Alternatively, these can be created using
   // `new Float32Array(16)`.
   let projection = mat4.create();
