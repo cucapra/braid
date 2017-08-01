@@ -103,7 +103,7 @@ web: dingus docs
 	cp dingus/*.css $(DEPLOY_DIR)/dingus
 	cp dingus/*.html $(DEPLOY_DIR)/dingus
 	cp dingus/ssc.bundle.js $(DEPLOY_DIR)/dingus
-	cp site/index.html site/braid.css _web
+	cp site/index.html site/braid.css site/braid.svg _web
 
 RSYNCARGS := --compress --recursive --checksum --itemize-changes \
 	--delete -e ssh --perms --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r

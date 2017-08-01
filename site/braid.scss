@@ -12,6 +12,18 @@ body {
 }
 
 header, main {
-    max-width: 35rem;
     margin: 1rem auto;
+}
+
+header {
+    max-width: 45rem;
+    display: flex;
+    align-items: center;
+    h1 {
+        margin-left: 2rem;
+    }
+}
+
+main {
+    max-width: 35rem;
 }
