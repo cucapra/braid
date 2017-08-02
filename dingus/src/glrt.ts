@@ -19,8 +19,6 @@ const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
 
-const screenbuffer = null;
-
 type Vec3Array = [number, number, number][];
 type Vec2Array = [number, number][];
 
@@ -533,10 +531,12 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
 
     // Eye vector calculation.
     eye,
-    // A framebuffer representing the content to be shown in the canvas
-    // The value of screenbuffer is null since gl.bindFramebuffer(null)
-    // could unbind from a framebuffer and output the result to the canvas
-    screenbuffer,
+
+    // A frame buffer value representing the content to be shown on screen,
+    // in the canvas. The value is null so that, when we call
+    // gl.bindFrameBuffer(null), we unbind from any other frame buffer and
+    // draw to the canvas.
+    screenbuffer: null,
 
     // Load a mesh from an OBJ file.
     load_obj(name: string) {
