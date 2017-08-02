@@ -204,6 +204,10 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
     return tree.types.map(pretty_type_paren).join(" | ");
   },
+
+  visit_tuple(tree: ast.TupleTypeNode, param: void): string {
+    return tree.components.map(pretty_type_paren).join(" * ");
+  },
 };
 
 /**

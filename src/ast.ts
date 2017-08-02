@@ -210,6 +210,11 @@ export interface CodeTypeNode extends TypeNode {
   snippet: boolean;
 }
 
+export interface TupleTypeNode extends TypeNode {
+  tag: "type_tuple";
+  components: TypeNode[];
+}
+
 /**
  * An interpreter-specific expression kind that represents a persisted value
  * in deferred code.

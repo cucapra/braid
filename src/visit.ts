@@ -273,6 +273,7 @@ export interface TypeASTVisit<P, R> {
   visit_code(tree: ast.CodeTypeNode, param: P): R;
   visit_instance(tree: ast.InstanceTypeNode, param: P): R;
   visit_overloaded(tree: ast.OverloadedTypeNode, param: P): R;
+  visit_tuple(tree: ast.TupleTypeNode, param: P): R;
 }
 
 // Tag-based dispatch to the type visitor visit functions.
@@ -289,6 +290,8 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
       return visitor.visit_instance(<ast.InstanceTypeNode> tree, param);
     case "type_overloaded":
       return visitor.visit_overloaded(<ast.OverloadedTypeNode> tree, param);
+    case "type_tuple":
+      return visitor.visit_tuple(<ast.TupleTypeNode> tree, param);
 
     default:
       throw "error: unknown type syntax node " + tree.tag;

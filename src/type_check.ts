@@ -669,6 +669,19 @@ function compatible(ltype: Type, rtype: Type): boolean {
       ltype.snippet === rtype.snippet &&
       ltype.snippet_var === rtype.snippet_var;
 
+  } else if (ltype instanceof TupleType && rtype instanceof TupleType) {
+    if (ltype.components.length !== rtype.components.length) {
+      return false;
+    }
+    for (let i = 0; i < ltype.components.length; ++i) {
+      let lcomp = ltype.components[i];
+      let rcomp = rtype.components[i];
+      if (!compatible(lcomp, rcomp)) {
+        return false;
+      }
+    }
+    return true;
+
   } else if (ltype instanceof OverloadedType) {
     for (let t of ltype.types) {
       if (compatible(t, rtype)) {
@@ -786,6 +799,11 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
       ts.push(get_type(t, types));
     }
     return new OverloadedType(ts);
+  },
+
+  visit_tuple(tree: ast.TupleTypeNode, types: TypeMap) {
+    let comp_types = tree.components.map(t => get_type(t, types));
+    return new TupleType(comp_types);
   },
 };
 

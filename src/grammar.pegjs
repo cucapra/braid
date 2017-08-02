@@ -221,6 +221,10 @@ While
   = while _ c:TermExpr _ b:TermExpr
   { return loc({tag: "while", cond: c, body: b}); }
 
+TypeAlias
+  = type _ i:ident _ eq _ t:Type
+  { return loc({tag: "type_alias", ident:i, type:t}); }
+
 // Tuples are just pairs for now.
 Tuple
   = e1:TermExpr _ comma _ e2:TermExpr
@@ -234,10 +238,10 @@ TupleIndex
 // Type syntax.
 
 Type
-  = OverloadedType / FunType / InstanceType / TermType
+  = OverloadedType / FunType / InstanceType / TupleType / TermType
 
 NonOverloadedType
-  = FunType / InstanceType / TermType
+  = FunType / InstanceType / TupleType / TermType
 
 TermType
   = CodeType / PrimitiveType / ParenType
@@ -275,9 +279,10 @@ OverloadedTypeElement
   = _ pipe_operator _ t:NonOverloadedType
   { return t; }
 
-TypeAlias
-  = type _ i:ident _ eq _ t:Type
-  { return loc({tag: "type_alias", ident:i, type:t}); }
+// As above, only 2-ary tuples.
+TupleType
+  = t1:TermType _ star _ t2:TermType
+  { return loc({tag: "type_tuple", components: [t1, t2]}); }
 
 
 // Tokens.
@@ -393,6 +398,9 @@ strquote
 
 dot
   = '.'
+
+star
+  = '*'
 
 
 // Empty space.

@@ -50,7 +50,7 @@ You can also create type aliases. The syntax is `type NewType = OldType`. Here's
 There are also tuples (product types), which use Rust-like constructor and destructor syntax:
     
     let t = 42, "the answer";
-    t.0
+    (t).0
 
 ## Interoperation via `extern` {#extern}
 
