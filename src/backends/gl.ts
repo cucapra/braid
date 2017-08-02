@@ -37,6 +37,8 @@ export const INT4 = new PrimitiveType("Int4");
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
 export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
+// A type for the framebuffer in webgl
+export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
@@ -60,6 +62,7 @@ export const GL_TYPES: TypeMap = {
 
   "Texture": TEXTURE,
   "CubeTexture": CUBE_TEXTURE,
+  "Framebuffer": FRAMEBUFFER,
   "Image": new PrimitiveType("Image"),
 };
 
@@ -177,23 +180,30 @@ export const INTRINSICS: TypeMap = {
   vertex: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   fragment: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   gl_Position: FLOAT4,
+  gl_FragCoord: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([
+    new FunType([], FLOAT4),
     new FunType([FLOAT3, FLOAT], FLOAT4),
     new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
     new FunType([FLOAT], FLOAT4),
   ]),
   vec3: new OverloadedType([
+    new FunType([], FLOAT3),
     new FunType([FLOAT4], FLOAT3),
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
     new FunType([FLOAT], FLOAT3),
   ]),
   vec2: new OverloadedType([
+    new FunType([], FLOAT2),
     new FunType([FLOAT, FLOAT], FLOAT2),
     new FunType([FLOAT], FLOAT2),
   ]),
+  mat3: new FunType([], FLOAT3X3),
+  mat4: new FunType([], FLOAT4X4),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
+  fract: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
   reflect: new OverloadedType([
     new FunType([FLOAT2, FLOAT2], FLOAT2),

@@ -16,22 +16,27 @@ var teapotNormal = mesh_normals(teapotMesh);
 var teapotIndices = mesh_indices(teapotMesh);
 var teapotSize = mesh_size(teapotMesh);
 
-# Load a cube texture six images.
-var tex = texture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
+# create a transformation matrix for teapot
+var trans = mat4();
+mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
+var normalTrans = mat4();
+mat4.transpose(normalTrans, trans);
+mat4.invert(normalTrans, normalTrans);
 
-var initTime = Date.now();
+# Load a cube texture six images.
+var tex = cubeTexture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
 
 render js<
-  var modelView = mat4.create();
+  var modelView = mat4();
   # Apply a translation matrix in y-axis in order to put the teapot at the center
-  var T = mat4.create();
+  var T = mat4();
   mat4.fromTranslation(T, vec3(0.0, 8.0, 0.0));
   mat4.invert(modelView, view);
   modelView = T * modelView;
   mat4.invert(modelView, modelView);
-  var mvInv = mat4.create();
-
+  var mvInv = mat4();
   mat4.invert(mvInv, modelView);
+  
   vertex glsl<
     gl_Position = projection * modelView * vec4(skyBoxPosition, 1.0);
     var pos = skyBoxPosition;
@@ -43,17 +48,10 @@ render js<
   >;
   draw_mesh(skyBoxIndices, skyBoxSize);
 
-  # create a transformation matrix for teapot
-  var trans = mat4.create();
-  mat4.rotateX(trans, trans, (-90.0) /180.0*3.14);
-  var normalTrans = mat4.create();
-  mat4.transpose(normalTrans, trans);
-  mat4.invert(normalTrans, normalTrans);
-
   vertex glsl<
     gl_Position = projection * modelView * trans * vec4(teapotPosition, 1.0);
     var frag_normal = vec3(normalTrans * vec4(teapotNormal, 0.0));
-    var frag_pos = vec3(trans * vec4(teapotPosition / 5.0, 1.0));
+    var frag_pos = vec3(trans * vec4(teapotPosition, 1.0));
     fragment glsl<
       # render the mirror effect
       var normal = normalize(frag_normal);

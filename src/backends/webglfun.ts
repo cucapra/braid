@@ -262,6 +262,10 @@ let funcMap: FuncMap = {
     },
   ], "vec4": [
     {
+      params: [],
+      ret: (args) => `vec4.create()`,
+    }, 
+    {
       params: [FLOAT3, FLOAT],
       ret: (args) => `vec4fromvec3(${args[0]}, ${args[1]})`,
     }, {
@@ -272,6 +276,10 @@ let funcMap: FuncMap = {
       ret: (args) => `vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]})`,
     },
   ], "vec3": [
+    {
+      params: [],
+      ret: (args) => `vec3.create()`,
+    },
     {
       params: [FLOAT4],
       ret: (args) => `vec3fromvec4(${args[0]})`,
@@ -284,11 +292,25 @@ let funcMap: FuncMap = {
     }
   ], "vec2": [
     {
+      params: [],
+      ret: (args) => `vec2.create()`,
+    },
+    {
       params: [FLOAT, FLOAT],
       ret: (args) => `vec2.fromValues(${args[0]}, ${args[1]})`,
     }, {
       params: [FLOAT],
       ret: (args) => `vec2.fromValues(${args[0]}, ${args[0]})`,
+    },
+  ], "mat3": [
+    {
+      params: [],
+      ret: (args) => `mat3.create()`,
+    },
+  ], "mat4": [
+    {
+      params: [],
+      ret: (args) => `mat4.create()`,
     },
   ], "abs": [
     {
@@ -499,7 +521,7 @@ export function getFunc(func: string, params: Type[],
         }
       }
 
-      if (isEqual) {
+      if (isEqual && params.length === paramsRet.params.length) {
         // Call the code-generation lambda for this function.
         return paramsRet.ret(args);
       }
