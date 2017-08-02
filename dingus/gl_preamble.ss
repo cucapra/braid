@@ -25,7 +25,7 @@ extern mesh_texcoords: Mesh -> (Float2 Array);
 extern mesh_tangents: Mesh -> (Float3 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
 extern draw_arrays: Int -> Void;
-  
+
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
 extern mat4.rotate: Mat4 Mat4 Float Vec3 -> Void;
@@ -51,9 +51,13 @@ extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
 extern average: Image -> Float4;
 
+# Create a standard 2D texture from an image or a blank texture "from scratch."
 extern texture: Image -> Texture | -> Texture;
-# The order of arguments of cubeTexture is [posx, negx, posy, negy, posz, negz]
+# Create a cube-map texture. The arguments are:
+# [posx, negx, posy, negy, posz, negz]
 extern cubeTexture: Image Image Image Image Image Image -> CubeTexture | -> CubeTexture;
+
+# Manage frame buffer objects.
 extern createFramebuffer: -> Framebuffer;
 extern framebufferTexture: Framebuffer Texture -> Void | Framebuffer CubeTexture Int -> Void;
 extern bindFramebuffer: Framebuffer -> Void;
