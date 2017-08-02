@@ -326,6 +326,20 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
 }
 
 /**
+ * Get the 6 face indices of a cube map texture.
+ *
+ * We use this to map the sequence of image arguments to each of the face
+ * components in the WebGL API call.
+ */
+function cubemapTargets(gl: WebGLRenderingContext) {
+  return [
+    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+}
+
+/**
  * Convert an image into a WebGL texture.
  *
  * glTextureType is either gl.TEXTURE_2D or gl.TEXTURE_CUBE_MAP. If no images
@@ -333,14 +347,6 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
  */
 function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
   glTextureType: number) {
-
-  // The 6 faces of a cube map. We use this to map the sequence of image
-  // arguments to each of the face components in the WebGL API call.
-  let cubemapTargets = [
-    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
-  ];
 
   let tex = gl.createTexture();
   gl.bindTexture(glTextureType, tex);
@@ -356,7 +362,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
                     gl.UNSIGNED_BYTE, null);
     } else {
       // Create an empty cube texture
-      cubemapTargets.forEach((target, idx) => (
+      cubemapTargets(gl).forEach((target, idx) => (
         gl.texImage2D(target, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA,
                       gl.UNSIGNED_BYTE, null)
       ));
@@ -382,7 +388,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
       // Map each image to its corresponding face.
-      cubemapTargets.forEach((target, idx) => (
+      cubemapTargets(gl).forEach((target, idx) => (
         gl.texImage2D(target, 0, gl.RGBA, gl.RGBA,
           gl.UNSIGNED_BYTE, imgs[idx])
       ));
@@ -439,12 +445,8 @@ function createFramebuffer(gl: WebGLRenderingContext) {
  */
 function framebufferTexture(gl: WebGLRenderingContext,
   fbo: WebGLFramebuffer, tex: WebGLTexture, target: number) {
-  let cubemapTargets = [
-    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
-  ];
-  let glTextureType = target === -1 ? gl.TEXTURE_2D : cubemapTargets[target];
+  let glTextureType = target === -1 ? gl.TEXTURE_2D :
+    cubemapTargets(gl)[target];
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, glTextureType,
                           tex, 0);
   gl.clearColor(0,0,0,1);
@@ -642,7 +644,8 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-        // The size of viewport should be consistent with the size of framebuffer
+        // The size of viewport should be consistent with the size of the
+        // framebuffer.
         gl.viewport(0, 0, 1024, 1024);
       }
     },
