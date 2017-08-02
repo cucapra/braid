@@ -49,8 +49,10 @@ You can also create type aliases. The syntax is `type NewType = OldType`. Here's
 
 There are also tuples (product types), which use Rust-like constructor and destructor syntax:
     
-    let t = 42, "the answer";
-    (t).0
+    def first(t: Int * String)
+      (t).0;
+    var questions = 42, "the question";
+    first(questions)
 
 ## Interoperation via `extern` {#extern}
 
