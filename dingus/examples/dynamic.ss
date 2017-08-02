@@ -30,43 +30,35 @@ var teapotNormalTrans = mat4();
 mat4.transpose(teapotNormalTrans, teapotTrans);
 mat4.invert(teapotNormalTrans, teapotNormalTrans);
 
+# create a framebuffer object
 var fbo = createFramebuffer();
 
 # Load a cube texture six images.
 var tex = cubeTexture(load_image("posx.jpg"), load_image("negx.jpg"), load_image("posy.jpg"), load_image("negy.jpg"), load_image("posz.jpg"), load_image("negz.jpg"));
+# create a empty cube map texture to store the dynamic environment
 var environment = cubeTexture();
+# create a projection matrix for the dynamic environment
 var envProjection = mat4();
 mat4.perspective(envProjection, 90 / 180 * 3.14, 1024/1024, 0.1, 2000.0);
 
+# define light position
 var lightPos = vec3(8, 15, 8);
 
 var initTime = Date.now();
 
-# var boxCode = glsl<vec4(1.0, 0.0, 0.0, 1.0)>; # Red color for box
-# var envCode = glsl<textureCube(tex, frag_pos * vec3(-1.0, 1.0, 1.0))>; # cube map
-
-# def dynamicEnv(vert_position: Float3 Array, envLookAt: Mat4, trans: Mat4, fragCode: glsl<Float4>) (
-#   var envMVP = envProjection * envLookAt;
-#   vertex glsl<
-#     gl_Position = envMVP * trans * vec4(vert_position, 1.0);
-#     var frag_pos = vec3(trans * vec4(vert_position, 1.0));
-#     fragment glsl<
-#       gl_FragColor = 2[fragCode];
-#     >
-#   >
-# );
-
-def dynamicEnv(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, trans: Mat4) (
+# skybox shader 
+def dynamicSkybox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4) (
   var mvp = projection * modelView;
   vertex glsl<
-    gl_Position = mvp * trans * vec4(vert_position, 1.0);
-    var frag_pos = vec3(trans * vec4(vert_position, 1.0));
+    gl_Position = mvp * vec4(vert_position, 1.0);
+    var frag_pos = vert_position;
     fragment glsl<
       gl_FragColor = textureCube(tex, frag_pos * vec3(-1.0 ,1.0, 1.0));
     >
   >;
 );
 
+# box shader
 def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, normalMatrix: Mat4, trans: Mat4, color: Float3) (
   var boxNormalTrans = mat4();
   mat4.transpose(boxNormalTrans, trans);
@@ -78,9 +70,6 @@ def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, n
     var vPosition = modelView * trans * vec4(vert_position, 1.0);
     var vNormal = normalize(vec3(normalMatrix * boxNormalTrans * vec4(boxNormal, 0.0)));
     fragment glsl<
-      # the default color of teapot
-      # var color = vec3(0.5, 0.0, 0.0);
-
       # diffuse shader
       var N = normalize(vNormal);
       var V = normalize(vec3(-vPosition));
@@ -98,7 +87,6 @@ def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, n
       ) (
         specular = 0.0;
       );
-
       # ambient shading + diffuse shading + phong shading
       gl_FragColor = vec4((0.3 * color +
                       1.0 * lambertian * color +
@@ -107,26 +95,37 @@ def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, n
   >;
 );
 
+# render the dynamic environment per face
+# target is the index of [posx, negx, posy, negy, posz, negz]
 def drawEnvFace(fbo: Framebuffer, environment: CubeTexture, target: Int, envLookDir: Float3, envLookUp: Float3, trans1: Mat4, trans2: Mat4, trans3: Mat4) (
+  # bind one face of a cube texture to the framebuffer
   framebufferTexture(fbo, environment, target);
+  
+  # construct a modelview matrix towards the target face
   var envLookAt = mat4();
   var envOrigin = vec3(0, 0, 0);
   mat4.lookAt(envLookAt, envOrigin, envLookDir, envLookUp);
-  dynamicEnv(skyBoxPosition, envProjection, envLookAt, mat4());
-  draw_mesh(skyBoxIndices, skyBoxSize);
-
+  # calculate the corresponding normal matrix
   var envNormalMatrix = mat4();
   mat4.transpose(envNormalMatrix, envLookAt);
   mat4.invert(envNormalMatrix, envNormalMatrix);
 
+  # render the skybox
+  dynamicSkybox(skyBoxPosition, envProjection, envLookAt);
+  draw_mesh(skyBoxIndices, skyBoxSize);
+
+  # render a red box
   dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans1, vec3(0.5, 0.0, 0.0));
   draw_mesh(boxIndices, boxSize);
+  # render a green box
   dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans2, vec3(0.0, 0.5, 0.0));
   draw_mesh(boxIndices, boxSize);
+  # render a blue box
   dynamicBox(boxPosition, envProjection, envLookAt, envNormalMatrix, trans3, vec3(0.0, 0.0, 0.5));
   draw_mesh(boxIndices, boxSize);
 );
 
+# render six faces of the dynamic environment
 def drawEnv(fbo: Framebuffer, environment: CubeTexture, trans1: Mat4, trans2: Mat4, trans3: Mat4) (
   drawEnvFace(fbo, environment, 0, vec3(1, 0, 0), vec3(0, -1, 0), trans1, trans2, trans3);
   drawEnvFace(fbo, environment, 1, vec3(-1, 0, 0), vec3(0, -1, 0), trans1, trans2, trans3);
@@ -136,6 +135,8 @@ def drawEnv(fbo: Framebuffer, environment: CubeTexture, trans1: Mat4, trans2: Ma
   drawEnvFace(fbo, environment, 5, vec3(0, 0, -1), vec3(0, -1, 0), trans1, trans2, trans3);
 );
 
+# create a box translation matrix
+# based on three rotation coefficients and a translation vector
 def createBoxTrans(rX: Float, rY: Float, rZ: Float, pos: Float3) (
   var boxTrans = mat4();
   mat4.rotateY(boxTrans, boxTrans, (Date.now() - initTime) / rX / 180.0 * 3.14);
@@ -145,9 +146,8 @@ def createBoxTrans(rX: Float, rY: Float, rZ: Float, pos: Float3) (
   boxTrans;
 );
 
-
+# rendering loop
 render js<
-
   var modelView = mat4();
   # Apply a translation matrix in y-axis in order to put the teapot at the center
   var T = mat4();
@@ -155,31 +155,28 @@ render js<
   mat4.invert(modelView, view);
   modelView = T * modelView;
   mat4.invert(modelView, modelView);
+  # calculate modelView inverse
   var mvInv = mat4();
   mat4.invert(mvInv, modelView);
   var normalMatrix = mat4();
   mat4.transpose(normalMatrix, modelView);
   mat4.invert(normalMatrix, normalMatrix);
 
-  # create a transformation matrix for box
-  # var boxTrans = mat4();
-  # mat4.rotateY(boxTrans, boxTrans, (Date.now() - initTime) / 20.0 / 180.0 * 3.14);
-  # mat4.rotateX(boxTrans, boxTrans, (Date.now() - initTime) / 40.0 / 180.0 * 3.14);
-  # mat4.rotateZ(boxTrans, boxTrans, (Date.now() - initTime) / 30.0 / 180.0 * 3.14);
-  # mat4.translate(boxTrans, boxTrans, vec3(25.0, 5.0, 25.0));
+  # create a transformation matrix for boxes
   var boxTrans1 = createBoxTrans(40.0, 20.0, 30.0, vec3(25.0, 5.0, 25.0));
   var boxTrans2 = createBoxTrans(20.0, 50.0, 40.0, vec3(0.0, 5.0, 30.0));
   var boxTrans3 = createBoxTrans(35.0, 25.0, 50.0, vec3(40.0, 5.0, 10.0));
 
-
+  # bind to the framebuffer
   bindFramebuffer(fbo);
 
+  # render dynamic environment into a cube texture
   drawEnv(fbo, environment, boxTrans1, boxTrans2, boxTrans3);
   
-  
+  # bind back to the screen
   bindFramebuffer(screenbuffer);
 
-  # box shader
+  # render three boxes
   dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans1, vec3(0.5, 0.0, 0.0));
   draw_mesh(boxIndices, boxSize);  
   dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans2, vec3(0.0, 0.5, 0.0));
@@ -187,16 +184,8 @@ render js<
   dynamicBox(boxPosition, projection, modelView, normalMatrix, boxTrans3, vec3(0.0, 0.0, 0.5));  
   draw_mesh(boxIndices, boxSize);
 
-  # skyBox shader
-  vertex glsl<
-    gl_Position = projection * modelView * vec4(skyBoxPosition, 1.0);
-    var pos = skyBoxPosition;
-    fragment glsl<
-      var eye = vec3(mvInv * vec4(0.0, 0.0, 0.0, 1.0));
-      # Change vector from right-hand coordinate system to left-hand coordinate system, which is a webgl convention
-      gl_FragColor = textureCube(tex, (pos - eye) * vec3(-1.0, 1.0, 1.0));
-    >
-  >;
+  # render the skybox
+  dynamicSkybox(skyBoxPosition, projection, modelView);
   draw_mesh(skyBoxIndices, skyBoxSize);
 
   # mirror teapot shader
