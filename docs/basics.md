@@ -47,6 +47,11 @@ You can also create type aliases. The syntax is `type NewType = OldType`. Here's
       n + m;
     add(12.0, 30.0)
 
+There are also tuples (product types), which use Rust-like constructor and destructor syntax:
+    
+    let t = 42, "the answer";
+    t.0
+
 ## Interoperation via `extern` {#extern}
 
 The language can also interoperate with JavaScript. Use `extern` to declare something from JavaScript land:
