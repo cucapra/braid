@@ -161,13 +161,24 @@ export interface MacroCallNode extends ExpressionNode {
   args: ExpressionNode[];
 }
 
-export interface TypeNode extends SyntaxNode {
-}
-
 export interface TypeAliasNode extends ExpressionNode {
   tag: "type_alias";
   ident: string;
   type: TypeNode;
+}
+
+export interface TupleNode extends ExpressionNode {
+  tag: "tuple";
+  exprs: ExpressionNode[];
+}
+
+export interface TupleIndexNode extends ExpressionNode {
+  tag: "tupleind";
+  tuple: ExpressionNode;
+  index: number;
+}
+
+export interface TypeNode extends SyntaxNode {
 }
 
 export interface OverloadedTypeNode extends TypeNode {

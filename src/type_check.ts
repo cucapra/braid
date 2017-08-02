@@ -1,7 +1,8 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
-  TypeVariable, type_visit, VariadicFunType } from './type';
+  QuantifiedType, TupleType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN,
+  pretty_type, TypeVisit, TypeVariable, type_visit,
+  VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, merge, hd, tl, cons, stack_lookup, zip,
   head_merge } from './util';
@@ -508,6 +509,36 @@ export let gen_check: Gen<TypeCheck> = function(check) {
         throw ret;
       }
     },
+
+    visit_tuple(tree: ast.TupleNode, env: TypeEnv): [Type, TypeEnv] {
+      // Check the types of each tuple component.
+      let e = env;
+      let expr_types: Type[] = [];
+      let expr_type: Type;
+      for (let expr of tree.exprs) {
+        [expr_type, e] = check(expr, e);
+        expr_types.push(expr_type);
+      }
+
+      return [new TupleType(expr_types), e];
+    },
+
+    visit_tupleind(tree: ast.TupleIndexNode, env: TypeEnv): [Type, TypeEnv] {
+      // Check the tuple type.
+      let [tuple_type, e] = check(tree.tuple, env);
+      if (!(tuple_type instanceof TupleType)) {
+        throw error(tree.tuple, "type", "indexing non-tuple");
+      }
+
+      // Check that the index is in range.
+      let num = tuple_type.components.length;
+      if (tree.index >= num) {
+        throw error(tree, "type",
+          `index ${tree.index} out of range for ${num}-ary tuple`);
+      }
+
+      return [tuple_type.components[tree.index], e];
+    },
   };
 
   // The entry point for the recursion.
@@ -833,6 +864,13 @@ const apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
       [tvar, targ]: [TypeVariable, any]): Type
   {
     return type;
+  },
+  visit_tuple(type: TupleType,
+      [tvar, targ]: [TypeVariable, any]): Type
+  {
+    return new TupleType(
+      type.components.map(t => apply_type(t, tvar, targ))
+    );
   },
 };
 

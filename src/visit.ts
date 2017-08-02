@@ -23,6 +23,8 @@ export interface ASTVisit<P, R> {
   visit_while(tree: ast.WhileNode, param: P): R;
   visit_macrocall(tree: ast.MacroCallNode, param: P): R;
   visit_param?(tree: ast.ParamNode, param: P): R;
+  visit_tuple(tree: ast.TupleNode, param: P): R;
+  visit_tupleind(tree: ast.TupleIndexNode, param: P): R;
 }
 
 // Tag-based dispatch to the visit functions. A somewhat messy alternative
@@ -70,6 +72,10 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_macrocall(<ast.MacroCallNode> tree, param);
     case "param":
       return visitor.visit_param!(<ast.ParamNode> tree, param);
+    case "tuple":
+      return visitor.visit_tuple(<ast.TupleNode> tree, param);
+    case "tupleind":
+      return visitor.visit_tupleind(<ast.TupleIndexNode> tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;
@@ -77,33 +83,13 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
 }
 
 // An interface that can handle *some* AST node types.
-// It's a shame this has to be copied n' pasted.
-interface PartialASTVisit<P, R> {
-  visit_root? (tree: ast.RootNode, param: P): R;
-  visit_literal? (tree: ast.LiteralNode, param: P): R;
-  visit_seq? (tree: ast.SeqNode, param: P): R;
-  visit_let? (tree: ast.LetNode, param: P): R;
-  visit_assign? (tree: ast.AssignNode, param: P): R;
-  visit_lookup? (tree: ast.LookupNode, param: P): R;
-  visit_unary? (tree: ast.UnaryNode, param: P): R;
-  visit_binary? (tree: ast.BinaryNode, param: P): R;
-  visit_typealias? (tree: ast.TypeAliasNode, param: P): R;
-  visit_quote? (tree: ast.QuoteNode, param: P): R;
-  visit_escape? (tree: ast.EscapeNode, param: P): R;
-  visit_run? (tree: ast.RunNode, param: P): R;
-  visit_fun? (tree: ast.FunNode, param: P): R;
-  visit_call? (tree: ast.CallNode, param: P): R;
-  visit_extern? (tree: ast.ExternNode, param: P): R;
-  visit_persist? (tree: ast.PersistNode, param: P): R;
-  visit_if? (tree: ast.IfNode, param: P): R;
-  visit_while? (tree: ast.WhileNode, param: P): R;
-  visit_macrocall? (tree: ast.MacroCallNode, param: P): R;
-  visit_param? (tree: ast.ParamNode, param: P): R;
-}
+type PartialASTVisit<P, R> = Partial< ASTVisit<P, R> >;
 
-let AST_TYPES = ["root", "literal", "seq", "let", "assign", "lookup", "unary",
-                 "binary", "typealias", "quote", "escape", "run", "fun", "call", "extern",
-                 "persist", "param", "if", "while", "macro", "macrocall"];
+const AST_TYPES = [
+  "root", "literal", "seq", "let", "assign", "lookup", "unary", "binary",
+  "typealias", "quote", "escape", "run", "fun", "call", "extern", "persist",
+  "param", "if", "while", "macro", "macrocall", "tuple", "tupleind",
+];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!
@@ -258,6 +244,19 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
         args: arg_trees,
       });
     },
+
+    visit_tuple(tree: ast.TupleNode, param: void): ast.SyntaxNode {
+      let expr_trees = tree.exprs.map(fself);
+      return merge(tree, {
+        exprs: expr_trees,
+      });
+    },
+
+    visit_tupleind(tree: ast.TupleIndexNode, param: void): ast.SyntaxNode {
+      return merge(tree, {
+        tuple: fself(tree.tuple),
+      });
+    }
   };
 }
 export function gen_translate(fself: ASTTranslate): ASTTranslate {
@@ -397,6 +396,18 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
         p1 = fself(arg, p1);
       }
       return p1;
+    },
+
+    visit_tuple(tree: ast.TupleNode, p: T): T {
+      let p1 = p;
+      for (let expr of tree.exprs) {
+        p1 = fself(expr, p1);
+      }
+      return p1;
+    },
+
+    visit_tupleind(tree: ast.TupleIndexNode, p: T): T {
+      return fself(tree.tuple, p);
     },
   };
 }

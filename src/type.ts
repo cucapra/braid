@@ -100,6 +100,12 @@ export class OverloadedType extends Type {
   _brand_OverloadedType: void;
 }
 
+// Tuple (product) types.
+export class TupleType extends Type {
+  constructor(public components: Type[]) { super(); }
+  _brand_TupleType: void;
+}
+
 
 // Type variables.
 
@@ -146,6 +152,7 @@ export interface TypeVisit<P, R> {
   visit_quantified(type: QuantifiedType, param: P): R;
   visit_variable(type: VariableType, param: P): R;
   visit_overloaded(type: OverloadedType, param: P): R;
+  visit_tuple(type: TupleType, param: P): R;
 }
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
@@ -170,6 +177,8 @@ export function type_visit<P, R>(visitor: TypeVisit<P, R>,
     return visitor.visit_variable(type, param);
   } else if (type instanceof OverloadedType) {
     return visitor.visit_overloaded(type, param);
+  } else if (type instanceof TupleType) {
+    return visitor.visit_tuple(type, param);
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
@@ -227,6 +236,9 @@ let pretty_type_rules: TypeVisit<void, string> = {
       }
     }
     return out;
+  },
+  visit_tuple(type: TupleType, param: void): string {
+    return type.components.map(pretty_type).join(" * ");
   },
 };
 

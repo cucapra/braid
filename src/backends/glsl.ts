@@ -241,6 +241,14 @@ let compile_rules: ASTVisit<Emitter, string> = {
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
     throw "error: macro invocations are sugar";
   },
+
+  visit_tuple(tree: ast.TupleNode, emitter: Emitter): string {
+    throw "error: tuples not supported in GLSL";
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, emitter: Emitter): string {
+    throw "error: tuple indexing not supported in GLSL";
+  },
 };
 
 

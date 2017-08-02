@@ -33,7 +33,7 @@ Program
 
 Expr
   = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Compare /
-  Binary / Unary / CCall / Call / MacroCall / TermExpr
+  Tuple / TupleIndex / Binary / Unary / CCall / Call / MacroCall / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -46,6 +46,11 @@ TermExpr
 // Expressions that can be operands to binary/unary operators.
 Operand
   = If / Call / MacroCall / Unary / TermExpr
+
+// Expressions than can be arguments to C-style calls. (No commas.)
+CArgument
+  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Compare /
+  TupleIndex / Binary / Unary / CCall / Call / MacroCall / TermExpr
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -171,10 +176,10 @@ CCall
   = i:Lookup paren_open _ as:CArgList? _ paren_close
   { return loc({tag: "call", fun: i, args: as || []}); }
 CArgList
-  = first:Expr rest:CArgMore*
+  = first:CArgument rest:CArgMore*
   { return [first].concat(rest); }
 CArgMore
-  = _ comma _ e:Expr
+  = _ comma _ e:CArgument
   { return e; }
 
 MacroCall
@@ -215,6 +220,15 @@ If
 While
   = while _ c:TermExpr _ b:TermExpr
   { return loc({tag: "while", cond: c, body: b}); }
+
+// Tuples are just pairs for now.
+Tuple
+  = e1:TermExpr _ comma _ e2:TermExpr
+  { return loc({tag: "tuple", exprs: [e1, e2]}); }
+
+TupleIndex
+  = t:TermExpr _ dot _ i:int
+  { return loc({tag: "tupleind", tuple: t, index: i}); }
 
 
 // Type syntax.
@@ -376,6 +390,9 @@ macromark
 
 strquote
   = '"'
+
+dot
+  = '.'
 
 
 // Empty space.

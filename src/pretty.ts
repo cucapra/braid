@@ -139,6 +139,14 @@ let Pretty: ASTVisit<void, string> = {
     }
     return s;
   },
+
+  visit_tuple(tree: ast.TupleNode, _: void): string {
+    return tree.exprs.map(e => pretty_paren(e, nonterm)).join(", ");
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
+    return `${pretty_paren(tree.tuple, nonterm)}.${tree.index}`;
+  },
 };
 
 /**

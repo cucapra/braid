@@ -6,7 +6,7 @@ import { merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | string | boolean | Code | Fun | Extern;
+type Value = number | string | boolean | Code | Fun | Extern | Tuple;
 
 interface Env {
   readonly [key: string]: Value;
@@ -41,6 +41,9 @@ class Extern {
     public name: string
   ) {}
 }
+
+// Tuple values.
+interface Tuple { values: Value[] };
 
 function unwrap_extern(v: Value): Value {
   if (v instanceof Extern) {
@@ -321,6 +324,32 @@ let Interp: ASTVisit<State, [Value, State]> = {
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
     throw "error: macro invocations are sugar";
   },
+
+  visit_tuple(tree: ast.TupleNode, state: State): [Value, State] {
+    // Evaluate the components.
+    let s = state;
+    let values: Value[] = [];
+    for (let expr of tree.exprs) {
+      let value: Value;
+      [value, s] = interp(expr, s);
+      values.push(value);
+    }
+
+    // Return a tuple.
+    return [{ values }, s];
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, state: State): [Value, State] {
+    let [value, s] = interp(tree.tuple, state);
+    if (!value.hasOwnProperty("values")) {
+      throw "indexing a non-tuple";
+    }
+    let tuple = value as Tuple;
+    if (tree.index < 0 || tree.index >= tuple.values.length) {
+      throw "error: tuple index out of range";
+    }
+    return [tuple.values[tree.index], s];
+  },
 };
 
 function interp(tree: ast.SyntaxNode, state: State): [Value, State] {
@@ -558,6 +587,26 @@ let QuoteInterp: ASTVisit<[number, State, Pers],
     let [c, s1, p1] = quote_interp(tree.cond, stage, state, pers);
     let [b, s2, p2] = quote_interp(tree.body, stage, s1, p1);
     return [merge(tree, { cond: c, body: b }), s2, p2];
+  },
+
+  visit_tuple(tree: ast.TupleNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let [s, p] = [state, pers];
+    let expr_trees: ast.SyntaxNode[] = [];
+    for (let expr of tree.exprs) {
+      let expr_tree: ast.SyntaxNode;
+      [expr_tree, s, p] = quote_interp(expr, stage, s, p);
+      expr_trees.push(expr_tree);
+    }
+    return [merge(tree, { exprs: expr_trees }), s, p];
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let [t, s, p] = quote_interp(tree.tuple, stage, state, pers);
+    return [merge(tree, { tuple: t }), s, p];
   },
 };
 

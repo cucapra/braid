@@ -304,6 +304,16 @@ export let compile_rules = {
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
     throw "error: macro invocations are sugar";
   },
+
+  visit_tuple(tree: ast.TupleNode, emitter: Emitter): string {
+    let components = tree.exprs.map(e => paren(emit(emitter, e))).join(', ');
+    return `[${components}]`;
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, emitter: Emitter): string {
+    let tuple = emit(emitter, tree.tuple);
+    return `${ paren(tuple) }[${ tree.index }]`;
+  },
 };
 
 
