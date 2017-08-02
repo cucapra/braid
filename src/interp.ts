@@ -638,6 +638,8 @@ export function pretty_value(v: Value): string {
     return "(fun)";
   } else if (v instanceof Extern) {
     return eval(v.name).toString();
+  } else if (v.hasOwnProperty("values")) {
+    return v.values.map(pretty_value).join(", ");
   } else {
     throw "error: unknown value kind " + typeof(v);
   }
