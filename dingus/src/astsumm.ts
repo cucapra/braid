@@ -64,6 +64,12 @@ let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_typealias(tree: ast.TypeAliasNode, _: void): ast.SyntaxNode[] {
     return [];
   },
+  visit_tuple(tree: ast.TupleNode, _: void): ast.SyntaxNode[] {
+    return tree.exprs;
+  },
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): ast.SyntaxNode[] {
+    return [tree.tuple];
+  },
 };
 
 export function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
@@ -135,6 +141,12 @@ let GetName: ASTVisit<void, string> = {
   },
   visit_typealias(tree: ast.TypeAliasNode, _: void): string {
     return "typealias";
+  },
+  visit_tuple(tree: ast.TupleNode, _: void): string {
+    return "tuple";
+  },
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
+    return "." + tree.index;
   },
 };
 
