@@ -70,6 +70,9 @@ let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_tupleind(tree: ast.TupleIndexNode, _: void): ast.SyntaxNode[] {
     return [tree.tuple];
   },
+  visit_alloc(tree: ast.AllocNode, _: void): ast.SyntaxNode[] {
+    return [tree.expr];
+  },
 };
 
 export function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
@@ -147,6 +150,9 @@ let GetName: ASTVisit<void, string> = {
   },
   visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
     return "." + tree.index;
+  },
+  visit_alloc(tree: ast.AllocNode, _: void): string {
+    return `let ${tree.ident}`;
   },
 };
 
