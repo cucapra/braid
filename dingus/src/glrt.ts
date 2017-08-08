@@ -397,7 +397,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
     // Interpolation.
     gl.generateMipmap(glTextureType);
     gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
 
     // "Wrap around" the texture on overrun.
     gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
