@@ -539,6 +539,10 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
       return [tuple_type.components[tree.index], e];
     },
+
+    visit_alloc(tree: ast.AllocNode, env: TypeEnv): [Type, TypeEnv] {
+      throw "unimplemented";
+    },
   };
 
   // The entry point for the recursion.

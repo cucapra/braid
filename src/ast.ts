@@ -178,6 +178,12 @@ export interface TupleIndexNode extends ExpressionNode {
   index: number;
 }
 
+export interface AllocNode extends ExpressionNode {
+  tag: "alloc";
+  ident: string;
+  expr: ExpressionNode;
+}
+
 export interface TypeNode extends SyntaxNode {
 }
 

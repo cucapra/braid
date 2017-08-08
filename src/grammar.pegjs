@@ -32,8 +32,9 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Compare /
-  Tuple / TupleIndex / Binary / Unary / CCall / Call / MacroCall / TermExpr
+  = Var / Alloc / Extern / TypeAlias / Fun / CDef / If / While / Assign /
+  Compare / Tuple / TupleIndex / Binary / Unary / CCall / Call / MacroCall /
+  TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -49,8 +50,8 @@ Operand
 
 // Expressions than can be arguments to C-style calls. (No commas.)
 CArgument
-  = Var / Extern / TypeAlias / Fun / CDef / If / While / Assign / Compare /
-  TupleIndex / Binary / Unary / CCall / Call / MacroCall / TermExpr
+  = If / While / Assign / Compare / TupleIndex / Binary / Unary / CCall /
+  Call / MacroCall / TermExpr
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -95,6 +96,10 @@ Lookup
 Var
   = var _ i:ident _ eq _ e:Expr
   { return loc({tag: "let", ident: i, expr: e}); }
+
+Alloc
+  = alloc _ i:ident _ eq _ e:Expr
+  { return loc({tag: "alloc", ident: i, expr: e}); }
 
 Unary
   = op:unop _ e:Operand
@@ -401,6 +406,9 @@ dot
 
 star
   = '*'
+
+alloc
+  = 'alloc'
 
 
 // Empty space.

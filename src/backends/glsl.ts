@@ -249,6 +249,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
   visit_tupleind(tree: ast.TupleIndexNode, emitter: Emitter): string {
     throw "error: tuple indexing not supported in GLSL";
   },
+
+  visit_alloc(tree: ast.AllocNode, emitter: Emitter): string {
+    throw "error: allocation not supported in GLSL";
+  },
 };
 
 

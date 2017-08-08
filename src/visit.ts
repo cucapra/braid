@@ -25,6 +25,7 @@ export interface ASTVisit<P, R> {
   visit_param?(tree: ast.ParamNode, param: P): R;
   visit_tuple(tree: ast.TupleNode, param: P): R;
   visit_tupleind(tree: ast.TupleIndexNode, param: P): R;
+  visit_alloc(tree: ast.AllocNode, param: P): R;
 }
 
 // Tag-based dispatch to the visit functions. A somewhat messy alternative
@@ -76,6 +77,8 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_tuple(<ast.TupleNode> tree, param);
     case "tupleind":
       return visitor.visit_tupleind(<ast.TupleIndexNode> tree, param);
+    case "alloc":
+      return visitor.visit_alloc(<ast.AllocNode> tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;
@@ -88,7 +91,7 @@ type PartialASTVisit<P, R> = Partial< ASTVisit<P, R> >;
 const AST_TYPES = [
   "root", "literal", "seq", "let", "assign", "lookup", "unary", "binary",
   "typealias", "quote", "escape", "run", "fun", "call", "extern", "persist",
-  "param", "if", "while", "macro", "macrocall", "tuple", "tupleind",
+  "param", "if", "while", "macro", "macrocall", "tuple", "tupleind", "alloc",
 ];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
@@ -256,7 +259,13 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
       return merge(tree, {
         tuple: fself(tree.tuple),
       });
-    }
+    },
+
+    visit_alloc(tree: ast.AllocNode, param: void): ast.SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
   };
 }
 export function gen_translate(fself: ASTTranslate): ASTTranslate {
@@ -411,6 +420,10 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
 
     visit_tupleind(tree: ast.TupleIndexNode, p: T): T {
       return fself(tree.tuple, p);
+    },
+
+    visit_alloc(tree: ast.AllocNode, p: T): T {
+      return fself(tree.expr, p);
     },
   };
 }

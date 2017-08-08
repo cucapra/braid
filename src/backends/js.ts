@@ -314,6 +314,10 @@ export let compile_rules = {
     let tuple = emit(emitter, tree.tuple);
     return `${ paren(tuple) }[${ tree.index }]`;
   },
+
+  visit_alloc(tree: ast.AllocNode, emitter: Emitter): string {
+    throw "unimplemented";
+  },
 };
 
 

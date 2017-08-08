@@ -350,6 +350,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
     }
     return [tuple.values[tree.index], s];
   },
+
+  visit_alloc(tree: ast.AllocNode, state: State): [Value, State] {
+    throw "unimplemented";
+  },
 };
 
 function interp(tree: ast.SyntaxNode, state: State): [Value, State] {
@@ -607,6 +611,13 @@ let QuoteInterp: ASTVisit<[number, State, Pers],
       [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.tuple, stage, state, pers);
     return [merge(tree, { tuple: t }), s, p];
+  },
+
+  visit_alloc(tree: ast.AllocNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let [t, s, p] = quote_interp(tree.expr, stage, state, pers);
+    return [merge(tree, { expr: t }), s, p];
   },
 };
 

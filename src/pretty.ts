@@ -147,6 +147,11 @@ let Pretty: ASTVisit<void, string> = {
   visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
     return `${pretty_paren(tree.tuple, nonterm)}.${tree.index}`;
   },
+
+  visit_alloc(tree: ast.AllocNode, _: void): string {
+    return `alloc ${tree.ident} = ${pretty(tree.expr)}`;
+  },
+
 };
 
 /**
