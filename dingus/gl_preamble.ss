@@ -14,6 +14,8 @@ var view = dingus.view;
 extern bunny: Mesh;
 extern teapot: Mesh;
 extern snowden: Mesh;
+extern test_vertex_list: List;
+extern test_index_list: List;
 
 # Mesh asset wrangling.
 extern mesh_indices: Mesh -> (Int3 Array);
@@ -25,6 +27,8 @@ extern mesh_texcoords: Mesh -> (Float2 Array);
 extern mesh_tangents: Mesh -> (Float3 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
 extern draw_arrays: Int -> Void;
+extern array_buffer: List -> (Float3 Array);
+extern element_buffer: List -> (Int3 Array);
 
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;

@@ -33,6 +33,7 @@ export const FLOAT4X4 = new PrimitiveType("Float4x4");
 export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
+export const LIST = new PrimitiveType("List");
 
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
@@ -54,6 +55,7 @@ export const GL_TYPES: TypeMap = {
   "Int3": INT3,
   "Int4": INT4,
   "Array": ARRAY,
+  "List": LIST,
 
   // TODO This Mesh type is used by the dingus. It is an opaque type. It would
   // be nice if the dingus could declare the Mesh type itself rather than
