@@ -2,7 +2,7 @@
 # mode: webgl
 # ---
 
-def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
+def solid(pos: Float3 Buffer, model: Mat4, color: Vec3) (
   var camera_pos = eye(view);
 
   vertex glsl<

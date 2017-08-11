@@ -2,8 +2,8 @@
 extern dingus.projection: Mat4;
 extern dingus.model: Mat4;
 extern dingus.view: Mat4;
-extern bunny.positions: Vec3 Array;
-extern bunny.normals: Vec3 Array;
+extern bunny.positions: Vec3 Buffer;
+extern bunny.normals: Vec3 Buffer;
 
 # Our variables.
 var projection = dingus.projection;

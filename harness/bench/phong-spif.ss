@@ -3,7 +3,7 @@ def spif(c:Bool, t:$<Float3>, f:$<Float3>)
   if c t f;
 
 # Phong shader.
-def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
+def phong(pos: Float3 Buffer, norm: Float3 Buffer, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
 
   var matte = random.flip();

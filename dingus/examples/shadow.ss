@@ -43,7 +43,7 @@ var fbo = createFramebuffer();
 
 
 # shadow shader
-def shadow(vert_position: Float3 Array, mvp: Mat4, trans: Mat4) (
+def shadow(vert_position: Float3 Buffer, mvp: Mat4, trans: Mat4) (
   vertex glsl<
     gl_Position = mvp * trans * vec4(vert_position, 1.0);
     fragment glsl<
