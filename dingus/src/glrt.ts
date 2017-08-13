@@ -541,39 +541,14 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       drawtime(end - start);
     },
 
-    array_buffer(data: number[]) {
+    array_buffer(array: number[][]) {
+      let data = flat_array(array);
       return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
     element_buffer(data: number[]) {
       return gl_buffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data));
     },
-
-    test_vertex_list: [
-      -0.5, 0.5, -0.5,
-      -0.5, 0.5, 0.5,
-      0.5, 0.5, 0.5,
-      0.5, 0.5, -0.5,
-      -0.5, -0.5, -0.5,
-      -0.5, -0.5, 0.5,
-      0.5, -0.5, 0.5,
-      0.5, -0.5, -0.5
-    ],
-
-    test_index_list: [
-      5, 1, 0,
-      5, 0, 4,
-      7, 3, 2,
-      7, 2, 6,
-      7, 6, 5,
-      7, 5, 4,
-      2, 3, 0,
-      2, 0, 1,
-      4, 0, 3,
-      4, 3, 7,
-      6, 2, 1,
-      6, 1, 5
-    ],
 
     // Expose the gl-matrix library's components.
     mat4,

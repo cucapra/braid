@@ -31,9 +31,9 @@ export const FLOAT4 = new PrimitiveType("Float4");
 export const FLOAT3X3 = new PrimitiveType("Float3x3");
 export const FLOAT4X4 = new PrimitiveType("Float4x4");
 export const BUFFER = new ConstructorType("Buffer");
+export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
-export const LIST = new PrimitiveType("List");
 
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
@@ -54,7 +54,7 @@ export const GL_TYPES: TypeMap = {
   "Mat4": FLOAT4X4,
   "Int3": INT3,
   "Int4": INT4,
-  "List": LIST,
+  "Array": ARRAY,
   "Buffer": BUFFER,
 
   // TODO This Mesh type is used by the dingus. It is an opaque type. It would
@@ -258,6 +258,14 @@ export const INTRINSICS: TypeMap = {
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
   float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
+
+  array: new OverloadedType([
+    new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
+    new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+    new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
+    new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
+    new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
+  ]),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

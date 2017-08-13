@@ -283,7 +283,7 @@ function emit_shader_binding(emitter: Emitter, progid: number) {
 let compile_rules: ASTVisit<Emitter, string> =
   compose_visit(js.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
-    visit_call(tree: ast.CallNode, emitter: Emitter): string {
+    visit_call(tree: ast.CallNode, emitter: Emitter): string { 
       // Check for the intrinsic that indicates a shader invocation.
       if (vtx_expr(tree)) {
         // For the moment, we require a literal quote so we can statically
@@ -314,10 +314,9 @@ let compile_rules: ASTVisit<Emitter, string> =
           let [typ] = emitter.ir.type_table[arg.id!];
           argsType.push(typ);
         }
-
         // Get the JavaScript code for this intrinsic call, if it's an
         // intrinsic. If it's not, this returns null.
-        let res = getFunc(func, argsType, args);
+        let res = getFunc(func, argsType, args);  
         if (res) {
           return res;
         }
