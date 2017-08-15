@@ -47,6 +47,16 @@ There's a lot going on even in this small example. The next two sections will in
 
 **TK: Start with a simpler example (no mesh).**
 
+## GL Types
+
+Braid's graphics mode adds a handful of new types to the language that mirror OpenGL types. There are fixed-size vector types, such as `Int2` and `Float4`, as well as small matrix types, such as `Float4x4`. These names are inspired by the more explicit Direct3D style, but the float versions also have aliases that mirror the OpenGL style: for example, `Vec3` is another name for `Float4`, and `Mat4` is the same as `Float4x4`.
+
+There are also new polymorphic types for arrays.
+The type `T Array` for any `T` is implemented as a JavaScript array on the host whose elements are of type `T`.
+A different but related polymorphic type is `T Buffer`, which represents a GPU-allocated buffer filled with `T`-type elements.
+The CPU can hold references to these GPU-side buffers but it cannot modify them directly.
+See [the section on attributes](#attr) for more details on how to use `T Buffer`s to send data from the CPU to the GPU shaders.
+
 ## WebGL and GLSL Intrinsics
 
 BraidGL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s](/basics.md) in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
@@ -54,10 +64,10 @@ BraidGL gives you access to parts of the [WebGL API][webgl] for host-side code a
 [preamble]: https://github.com/cucapra/braid/blob/master/dingus/gl_preamble.ss
 
 * `teapot`, `bunny`, and `snowden`: `Mesh`. Sample object assets.
-* `mesh_positions`: `Mesh -> Float3 Array`. Get the vertex positions from a mesh. Under the hood, a `Float3 Array` is implemented as a WebGL buffer.
-* `mesh_indices`: `Mesh -> Int3 Array`. Get the triangle vertex indices for a mesh.
+* `mesh_positions`: `Mesh -> Float3 Buffer`. Get the vertex positions from a mesh. Under the hood, a `Float3 Buffer` is implemented as a WebGL buffer.
+* `mesh_indices`: `Mesh -> Int3 Buffer`. Get the triangle vertex indices for a mesh.
 * `mesh_size`: `Mesh -> Int`. Get the size (in triangles) of a mesh.
-* `draw_mesh`: `(Int3 Array) Int -> Void`. Draw an object given its index array and the length of the array using the currently bound shader. Uses [`gl.drawElements`][drawelements] under the hood.
+* `draw_mesh`: `(Int3 Buffer) Int -> Void`. Draw an object given its index array and the length of the array using the currently bound shader. Uses [`gl.drawElements`][drawelements] under the hood.
 * `projection` and `view`: `Float4x4`. Transform matrices corresponding to the viewer's canvas shape and camera position.
 
 These intrinsics use matrix and vector types such as `Float4` (a 4-element float vector) and `Int3x3` (a 3-by-3 matrix of integers). We provide aliases to make these comfortable for people coming from Direct3D and HLSL (`Float3` and `Float3x3`) and from OpenGL (`Vec3` and `Mat4`). These alternate names can be used interchangeably.
@@ -78,11 +88,11 @@ It is also possible to share uniform data directly from the CPU to the fragment 
 
 If different stages use the same uniform variable, BraidGL only needs to bind it once.
 
-### Vertex Attributes
+### Vertex Attributes {#attr}
 
 Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called *vertex attributes*. In our above example, the `position` variable is an array of vectors indicating the location of each vertex. We don't want to pass the entire array to every invocation of the vertex shader---instead, each invocation should get a different vector, as if we had called `map` on the array.
 
-To this end, BraidGL handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Array`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
+To this end, BraidGL handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Buffer`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
 
 When a program uses an attribute at the fragment stage, OpenGL can't communicate the value directly. (There is no such thing as a "fragment attribute.") Instead, BraidGL implements the communication by generated code at the vertex stage to pass the current value to the fragment stage.
 
@@ -99,7 +109,7 @@ So far, our example has statically inlined the shading code with the host code. 
 
 In BraidGL, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
 
-    def solid(pos: Float3 Array, model: Mat4, color: Vec3)
+    def solid(pos: Float3 Buffer, model: Mat4, color: Vec3)
       vertex glsl<
         gl_Position = projection * view * model * vec4(pos, 1.0);
         fragment glsl<
