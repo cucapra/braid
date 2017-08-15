@@ -32,7 +32,10 @@ export const FLOAT3X3 = new PrimitiveType("Float3x3");
 export const FLOAT4X4 = new PrimitiveType("Float4x4");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
-// Constructor types, Array and Buffer, stand for an array in cpu and gpu side respectively
+
+// The polymorphic types Array and Buffer stand for an array of values on the
+// CPU and on the GPU, respectively. The CPU can create and mutate Array
+// values before turning them into GPU-side Buffer values for use in shaders.
 export const ARRAY = new ConstructorType("Array");
 export const BUFFER = new ConstructorType("Buffer");
 
