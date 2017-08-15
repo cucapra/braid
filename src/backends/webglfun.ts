@@ -16,24 +16,6 @@ interface FuncMap {
   [func: string]: ParamsRetType[];
 }
 
-// TODO: Switch to ES6?
-interface Set<T> {
-    add(value: T): Set<T>;
-    clear(): void;
-    delete(value: T): boolean;
-    entries(): Array<[T, T]>;
-    forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
-    has(value: T): boolean;
-    keys(): Array<T>;
-    size: number;
-}
-interface SetConstructor {
-    new <T>(): Set<T>;
-    new <T>(iterable: Array<T>): Set<T>;
-    prototype: Set<any>;
-}
-declare var Set: SetConstructor;
-
 /**
  * This funcMapList contains rules that describe the corresponding JS code of
  * each braid built-in WebGL function. This map is structured like this:

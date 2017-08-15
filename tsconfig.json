@@ -6,7 +6,7 @@
         "allowJs": true,
         "outDir": "build",
 
-        "lib": ["dom", "es5", "es2015.promise", "es2015.core"],
+        "lib": ["dom", "es2015"],
 
         "plugins": [
             { "name": "tslint-language-service" }
