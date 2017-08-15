@@ -30,15 +30,16 @@ export const FLOAT3 = new PrimitiveType("Float3");
 export const FLOAT4 = new PrimitiveType("Float4");
 export const FLOAT3X3 = new PrimitiveType("Float3x3");
 export const FLOAT4X4 = new PrimitiveType("Float4x4");
-export const BUFFER = new ConstructorType("Buffer");
-export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
+// Constructor types, Array and Buffer, stand for an array in cpu and gpu side respectively
+export const ARRAY = new ConstructorType("Array");
+export const BUFFER = new ConstructorType("Buffer");
 
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
 export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
-// A type for the framebuffer in webgl
+// A type for the framebuffer in webgl.
 export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
@@ -255,10 +256,13 @@ export const INTRINSICS: TypeMap = {
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
   textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
+  // TODO: Remove this function?
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
   float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
 
+  // An array constructor.
+  // It would be better to use generics here.
   array: new OverloadedType([
     new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
     new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),

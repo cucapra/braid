@@ -560,6 +560,9 @@ export function getFunc(func: string, params: Type[],
       let isEqual: boolean = true;
       let limit: number;
       if (isVariadic) { // variadic functions
+        // If the function is variadic, the length of params types 
+        // match the length of arguments while in the funcMap, 
+        // the length of params types is always 1.
         limit = paramsRet.params.length;
       } else { // normal functions
         limit = Math.max(params.length, paramsRet.params.length);        

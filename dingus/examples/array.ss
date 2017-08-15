@@ -7,77 +7,51 @@ var model = mat4.create();
 mat4.scale(model, model, vec3(10.0, 10.0, 10.0));
 mat4.rotateY(model, model, 1.0);
 
+# Define vertex positions of this cube.
 var positionArray = array(
   # front
-  vec3(-1, -1,  1),
-  vec3(1, -1, 1),
-  vec3(1, 1, 1),
-  vec3(-1, 1, 1),
+  vec3(-1, -1,  1), vec3(1, -1, 1),
+  vec3(1, 1, 1), vec3(-1, 1, 1),
   # back
-  vec3(-1, -1, -1),
-  vec3(-1, 1, -1),
-  vec3(1, 1, -1),
-  vec3(1, -1, -1),
+  vec3(-1, -1, -1), vec3(-1, 1, -1),
+  vec3(1, 1, -1), vec3(1, -1, -1),
   # top
-  vec3(-1, 1, -1),
-  vec3(-1, 1, 1),
-  vec3(1, 1, 1),
-  vec3(1, 1, -1),
+  vec3(-1, 1, -1), vec3(-1, 1, 1),
+  vec3(1, 1, 1), vec3(1, 1, -1),
   # bottom
-  vec3(-1, -1, -1),
-  vec3(1, -1, -1),
-  vec3(1, -1, 1),
-  vec3(-1, -1, 1),
+  vec3(-1, -1, -1), vec3(1, -1, -1),
+  vec3(1, -1, 1), vec3(-1, -1, 1),
   # right
-  vec3(1, -1, -1),
-  vec3(1, 1, -1),
-  vec3(1, 1, 1),
-  vec3(1, -1, 1),
+  vec3(1, -1, -1), vec3(1, 1, -1),
+  vec3(1, 1, 1), vec3(1, -1, 1),
   # left
-  vec3(-1, -1, -1),
-  vec3(-1, -1, 1),
-  vec3(-1, 1, 1),
-  vec3(-1, 1, -1)
+  vec3(-1, -1, -1), vec3(-1, -1, 1),
+  vec3(-1, 1, 1), vec3(-1, 1, -1)
 );
 
+# Define texture coordinates of this cube.
 var texcoordArray = array(
   # front
-  vec2(0, 0),
-  vec2(1, 0),
-  vec2(1, 1),
-  vec2(0, 1),
-
+  vec2(0, 0), vec2(1, 0),
+  vec2(1, 1), vec2(0, 1),
   # back
-  vec2(1, 0),
-  vec2(1, 1),
-  vec2(0, 1),
-  vec2(0, 0),
-
+  vec2(1, 0), vec2(1, 1),
+  vec2(0, 1), vec2(0, 0),
   # top
-  vec2(0, 1),
-  vec2(0, 0),
-  vec2(1, 0),
-  vec2(1, 1),
-
+  vec2(0, 1), vec2(0, 0),
+  vec2(1, 0), vec2(1, 1),
   # bottom
-  vec2(1, 1),
-  vec2(0, 1),
-  vec2(0, 0),
-  vec2(1, 0),
-
+  vec2(1, 1), vec2(0, 1),
+  vec2(0, 0), vec2(1, 0),
   # right
-  vec2(1, 0),
-  vec2(1, 1),
-  vec2(0, 1),
-  vec2(0, 0),
-
+  vec2(1, 0), vec2(1, 1),
+  vec2(0, 1), vec2(0, 0),
   # left
-  vec2(0, 0),
-  vec2(1, 0),
-  vec2(1, 1),
-  vec2(0, 1)
+  vec2(0, 0), vec2(1, 0),
+  vec2(1, 1), vec2(0, 1)
 );
 
+# Define vertex indices of this cube.
 var indicesArray = array(
   0, 1, 2,      0, 2, 3,    # Front face
   4, 5, 6,      4, 6, 7,    # Back face
@@ -87,7 +61,7 @@ var indicesArray = array(
   20, 21, 22,   20, 22, 23  # Left face
 );
 
-# Load buffers and parameters for the model.
+# Construct buffers for this cube
 var position = array_buffer(positionArray);
 var texcoord = array_buffer(texcoordArray);
 var indices = element_buffer(indicesArray);
