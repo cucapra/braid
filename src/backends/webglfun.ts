@@ -16,6 +16,24 @@ interface FuncMap {
   [func: string]: ParamsRetType[];
 }
 
+// TODO: Switch to ES6?
+interface Set<T> {
+    add(value: T): Set<T>;
+    clear(): void;
+    delete(value: T): boolean;
+    entries(): Array<[T, T]>;
+    forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
+    has(value: T): boolean;
+    keys(): Array<T>;
+    size: number;
+}
+interface SetConstructor {
+    new <T>(): Set<T>;
+    new <T>(iterable: Array<T>): Set<T>;
+    prototype: Set<any>;
+}
+declare var Set: SetConstructor;
+
 /**
  * This funcMapList contains rules that describe the corresponding JS code of
  * each braid built-in WebGL function. This map is structured like this:
@@ -493,8 +511,32 @@ let funcMap: FuncMap = {
       params: [FLOAT3, FLOAT3, FLOAT],
       ret: (args) => `vec3.lerp(vec3.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     },
+  ], "array": [ // variadic function
+    {
+      params: [INT], 
+      ret: (args) => `[${args.join(", ")}]`,
+    }, {
+      params: [FLOAT],
+      ret: (args) => `[${args.join(", ")}]`,
+    }, {
+      params: [FLOAT2],
+      ret: (args) => `[${args.join(", ")}]`,
+    }, {
+      params: [FLOAT3],
+      ret: (args) => `[${args.join(", ")}]`,
+    }, {
+      params: [FLOAT4],
+      ret: (args) => `[${args.join(", ")}]`,
+    }
   ]
 };
+
+/**
+ * A set contains all variadic functions.
+ */
+let variadic = new Set([
+  "array",
+]);
 
 /**
  * Generate the JavaScript code for a special WebGL call given the Braid
@@ -511,17 +553,28 @@ let funcMap: FuncMap = {
 export function getFunc(func: string, params: Type[],
                         args: string[]): string | null
 {
+  let isVariadic = variadic.has(func);
+
   if (funcMap[func]) {
     for (let paramsRet of funcMap[func]) {
       let isEqual: boolean = true;
-      for (let i = 0; i < Math.max(params.length, paramsRet.params.length); i++) {
-        if (!((params[i] === paramsRet.params[i]) || (params[i] === INT && paramsRet.params[i] === FLOAT) || (params[i] === FLOAT && paramsRet.params[i] === INT))) {
+      let limit: number;
+      if (isVariadic) { // variadic functions
+        // If the function is variadic, the length of params types 
+        // match the length of arguments while in the funcMap, 
+        // the length of params types is always 1.
+        limit = paramsRet.params.length;
+      } else { // normal functions
+        limit = Math.max(params.length, paramsRet.params.length);        
+      }
+      for (let i = 0; i < limit; i++) {
+        if (!((params[i] === paramsRet.params[i]) || (params[i] === INT && paramsRet.params[i] === FLOAT))) {
           isEqual = false;
           break;
         }
       }
 
-      if (isEqual && params.length === paramsRet.params.length) {
+      if (isEqual && (params.length === paramsRet.params.length || isVariadic)) {
         // Call the code-generation lambda for this function.
         return paramsRet.ret(args);
       }

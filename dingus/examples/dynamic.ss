@@ -47,7 +47,7 @@ var lightPos = vec3(8, 15, 8);
 var initTime = Date.now();
 
 # skybox shader 
-def dynamicSkybox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4) (
+def dynamicSkybox(vert_position: Float3 Buffer, projection: Mat4, modelView: Mat4) (
   var mvp = projection * modelView;
   vertex glsl<
     gl_Position = mvp * vec4(vert_position, 1.0);
@@ -59,7 +59,7 @@ def dynamicSkybox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4
 );
 
 # box shader
-def dynamicBox(vert_position: Float3 Array, projection: Mat4, modelView: Mat4, normalMatrix: Mat4, trans: Mat4, color: Float3) (
+def dynamicBox(vert_position: Float3 Buffer, projection: Mat4, modelView: Mat4, normalMatrix: Mat4, trans: Mat4, color: Float3) (
   var boxNormalTrans = mat4();
   mat4.transpose(boxNormalTrans, trans);
   mat4.invert(boxNormalTrans, boxNormalTrans);

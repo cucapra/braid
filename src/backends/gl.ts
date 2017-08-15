@@ -30,14 +30,16 @@ export const FLOAT3 = new PrimitiveType("Float3");
 export const FLOAT4 = new PrimitiveType("Float4");
 export const FLOAT3X3 = new PrimitiveType("Float3x3");
 export const FLOAT4X4 = new PrimitiveType("Float4x4");
-export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
+// Constructor types, Array and Buffer, stand for an array in cpu and gpu side respectively
+export const ARRAY = new ConstructorType("Array");
+export const BUFFER = new ConstructorType("Buffer");
 
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
 export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
-// A type for the framebuffer in webgl
+// A type for the framebuffer in webgl.
 export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
@@ -54,6 +56,7 @@ export const GL_TYPES: TypeMap = {
   "Int3": INT3,
   "Int4": INT4,
   "Array": ARRAY,
+  "Buffer": BUFFER,
 
   // TODO This Mesh type is used by the dingus. It is an opaque type. It would
   // be nice if the dingus could declare the Mesh type itself rather than
@@ -253,9 +256,20 @@ export const INTRINSICS: TypeMap = {
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
   textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
+  // TODO: Remove this function?
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
-  float_array: new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+  float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
+
+  // An array constructor.
+  // It would be better to use generics here.
+  array: new OverloadedType([
+    new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
+    new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+    new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
+    new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
+    new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
+  ]),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is
@@ -372,7 +386,7 @@ export function shadervarsym(scopeid: number, varid: number) {
 // attribute: i.e., it is an array type.
 export function _attribute_type(t: Type) {
   if (t instanceof InstanceType) {
-    return t.cons === ARRAY;
+    return t.cons === BUFFER;
   }
   return false;
 }
@@ -380,7 +394,7 @@ export function _attribute_type(t: Type) {
 // A helper function that unwraps array types. Non-array types are unaffected.
 export function _unwrap_array(t: Type): Type {
   if (t instanceof InstanceType) {
-    if (t.cons === ARRAY) {
+    if (t.cons === BUFFER) {
       // Get the inner type: the array element type.
       return t.arg;
     }

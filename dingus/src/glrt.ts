@@ -397,7 +397,7 @@ function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
     // Interpolation.
     gl.generateMipmap(glTextureType);
     gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
 
     // "Wrap around" the texture on overrun.
     gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
@@ -539,6 +539,21 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       gl.drawArrays(gl.TRIANGLES, 0, size / 3);
       let end = performance.now();
       drawtime(end - start);
+    },
+
+    /**
+     * Create a glArrayBuffer from a two dimensional array.
+     */
+    array_buffer(array: number[][]) {
+      let data = flat_array(array);
+      return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
+    },
+
+    /**
+     * Create a glElementArrayBuffer from an int array
+     */
+    element_buffer(data: number[]) {
+      return gl_buffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data));
     },
 
     // Expose the gl-matrix library's components.

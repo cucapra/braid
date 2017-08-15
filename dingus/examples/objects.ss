@@ -23,7 +23,7 @@ var t_size = mesh_size(t_mesh);
 var t_model_base = mat4.create();
 mat4.scale(t_model_base, t_model_base, vec3(0.5, 0.5, 0.5));
 
-def simple_shader(pos: Float3 Array, norm: Float3 Array, model: Mat4) (
+def simple_shader(pos: Float3 Buffer, norm: Float3 Buffer, model: Mat4) (
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
     fragment glsl<
