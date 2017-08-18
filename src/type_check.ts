@@ -628,7 +628,13 @@ function check_call(target: Type, args: Type[]): Type | string {
     } else if (snippet_var !== null) {
       return check_call(apply_quantified_type(target, snippet_var), args);
     } else {
-      return "unsupported polymorphism";
+      let inner = target.inner;
+      let ret = check_quantified(target.variable, inner, args);
+      if (ret instanceof Type) {
+        return check_call(apply_quantified_type(target, ret), args);
+      } else {
+        return ret;
+      }
     }
 
   } else {
@@ -637,7 +643,7 @@ function check_call(target: Type, args: Type[]): Type | string {
 }
 
 // Check type compatibility.
-function compatible(ltype: Type, rtype: Type): boolean {
+function compatible(ltype: Type, rtype: Type): boolean | Type {
   if (ltype === rtype) {
     return true;
 
@@ -695,6 +701,97 @@ function compatible(ltype: Type, rtype: Type): boolean {
   }
 
   return false;
+}
+
+function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type | string {
+  if (target instanceof VariadicFunType) {
+    if (target.params.length !== 1) {
+      return "variadic function with multiple argument types";
+    }
+    let param = target.params[0];
+    let vType: Type | null = null;
+    for (let i = 0; i < args.length; ++i) {
+      let arg = args[i];
+      let ret = unify(tvar, param, arg);
+      if (ret instanceof Type) {
+        if (vType === null) {
+          vType = ret;
+        } else if (vType !== ret) {
+          return param_error(i, param, arg);
+        }
+      } else if (ret === false) {
+        return param_error(i, param, arg);
+      }
+    }
+
+    if (vType) {
+      return vType;
+    } else {
+      return "cannot unify the generic type";
+    }
+
+  } else if (target instanceof FunType) {
+    if (args.length !== target.params.length) {
+      return "mismatched argument length";
+    }
+    let vType: Type | null = null;
+    for (let i = 0; i < args.length; ++i) {
+      let param = target.params[i];
+      let arg = args[i];
+      let ret = unify(tvar, param, arg);
+      if (ret instanceof Type) {
+        if (vType === null) {
+          vType = ret;
+        } else if (vType !== ret) {
+          return param_error(i, param, arg);
+        }
+      } else if (ret === false) {
+        return param_error(i, param, arg);
+      }
+    }
+
+    if (vType) {
+      return vType;
+    } else {
+      return "cannot unify the generic type";
+    }
+
+  } else if (target instanceof OverloadedType) {
+    for (let sub of target.types) {
+      let ret = check_quantified(tvar, sub, args);
+      if (ret instanceof Type) {
+        return ret;
+      }
+    }
+    return "no overloaded type applies";
+
+  } else if (target instanceof QuantifiedType) {
+    let inner = target.inner;
+    let ret = check_quantified(target.variable, inner, args);
+    if (ret instanceof Type) {
+      return check_quantified(tvar, apply_quantified_type(target, ret), args);
+    } else {
+      return ret;
+    }
+
+  } else {
+    return "quantified type's inner function is illegal";
+  }
+}
+
+function unify(tvar: TypeVariable, param: Type, arg: Type): boolean | Type {
+  if (param instanceof VariableType) {
+      if (tvar === param.variable) {
+        return arg;
+      } else {
+        return true;
+      }
+  } else if (param instanceof InstanceType &&
+     arg instanceof InstanceType && param.cons === arg.cons) {
+    return unify(tvar, param.arg, arg.arg);
+  } else {
+    return compatible(param, arg);
+  }
 }
 
 /**

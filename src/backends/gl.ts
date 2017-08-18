@@ -12,7 +12,10 @@ import {
   ANY,
   VOID,
   STRING,
-  BOOLEAN
+  BOOLEAN,
+  TypeVariable,
+  QuantifiedType,
+  VariableType
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -154,6 +157,7 @@ const _GL_COMPARE_TYPE = new OverloadedType([
 const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
   _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
+const tvar = new TypeVariable("T");
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
@@ -266,13 +270,14 @@ export const INTRINSICS: TypeMap = {
 
   // An array constructor.
   // It would be better to use generics here.
-  array: new OverloadedType([
-    new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
-    new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
-    new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
-    new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
-    new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
-  ]),
+  // array: new OverloadedType([
+  //   new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
+  //   new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+  //   new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
+  //   new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
+  //   new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
+  // ]),
+  array: new QuantifiedType(tvar, new VariadicFunType([new VariableType(tvar)], new InstanceType(ARRAY, new VariableType(tvar)))),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

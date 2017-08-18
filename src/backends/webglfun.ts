@@ -264,7 +264,7 @@ let funcMap: FuncMap = {
     {
       params: [],
       ret: (args) => `vec4.create()`,
-    }, 
+    },
     {
       params: [FLOAT3, FLOAT],
       ret: (args) => `vec4fromvec3(${args[0]}, ${args[1]})`,
@@ -495,7 +495,7 @@ let funcMap: FuncMap = {
     },
   ], "array": [ // variadic function
     {
-      params: [INT], 
+      params: [INT],
       ret: (args) => `[${args.join(", ")}]`,
     }, {
       params: [FLOAT],
@@ -542,12 +542,12 @@ export function getFunc(func: string, params: Type[],
       let isEqual: boolean = true;
       let limit: number;
       if (isVariadic) { // variadic functions
-        // If the function is variadic, the length of params types 
-        // match the length of arguments while in the funcMap, 
+        // If the function is variadic, the length of params types
+        // match the length of arguments while in the funcMap,
         // the length of params types is always 1.
         limit = paramsRet.params.length;
       } else { // normal functions
-        limit = Math.max(params.length, paramsRet.params.length);        
+        limit = Math.max(params.length, paramsRet.params.length);
       }
       for (let i = 0; i < limit; i++) {
         if (!((params[i] === paramsRet.params[i]) || (params[i] === INT && paramsRet.params[i] === FLOAT))) {
