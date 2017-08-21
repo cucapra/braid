@@ -532,7 +532,7 @@ let variadic = new Set([
  * @param args JavaScript code for the arguments as a string list.
  * @return The compiled JavaScript function including arguments.
  */
-export function getFunc(func: string, params: Type[],
+export function get_func(func: string, params: Type[],
                         args: string[]): string | null
 {
   let isVariadic = variadic.has(func);
@@ -564,4 +564,9 @@ export function getFunc(func: string, params: Type[],
     return null;
   }
   return null;
+}
+
+function check_type(func: string, params: Type[],
+  args: string[]): boolean {
+  return true;
 }

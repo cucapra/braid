@@ -10,7 +10,7 @@ import { Type, PrimitiveType, FLOAT, INT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import * as ast from '../ast';
-import { getFunc } from './webglfun';
+import { get_func } from './webglfunc';
 
 // Run-time functions invoked by generated code. These could eventually be
 // moved to the `glrt` library.
@@ -316,7 +316,7 @@ let compile_rules: ASTVisit<Emitter, string> =
         }
         // Get the JavaScript code for this intrinsic call, if it's an
         // intrinsic. If it's not, this returns null.
-        let res = getFunc(func, argsType, args);
+        let res = get_func(func, argsType, args);
         if (res) {
           return res;
         }
@@ -331,12 +331,12 @@ let compile_rules: ASTVisit<Emitter, string> =
     visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
       let [typExpr] = emitter.ir.type_table[tree.expr.id!];
       let expr = paren(emit(emitter, tree.expr));
-      let res = getFunc(tree.op, [typExpr], [expr]);
+      let res = get_func(tree.op, [typExpr], [expr]);
       if (res) {
         return res;
       }
 
-      // If no library call was emitted by `getFunc`, fall back to using the
+      // If no library call was emitted by `get_func`, fall back to using the
       // ordinary JavaScript binary operator.
       return ast_visit(js.compile_rules, tree, emitter);
     },
@@ -347,7 +347,7 @@ let compile_rules: ASTVisit<Emitter, string> =
       let [typR] = emitter.ir.type_table[tree.rhs.id!];
       let lhs = paren(emit(emitter, tree.lhs));
       let rhs = paren(emit(emitter, tree.rhs));
-      let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
+      let res = get_func(tree.op, [typL, typR], [lhs, rhs]);
       if (res) {
         return res;
       }
