@@ -269,15 +269,27 @@ export const INTRINSICS: TypeMap = {
   float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
 
   // An array constructor.
-  // It would be better to use generics here.
-  // array: new OverloadedType([
-  //   new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
-  //   new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
-  //   new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
-  //   new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
-  //   new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
-  // ]),
-  array: new QuantifiedType(tvar, new VariadicFunType([new VariableType(tvar)], new InstanceType(ARRAY, new VariableType(tvar)))),
+  array: new QuantifiedType(tvar, 
+    new VariadicFunType(
+      [new VariableType(tvar)], 
+      new InstanceType(ARRAY, new VariableType(tvar))
+    )
+  ),
+  get: new QuantifiedType(tvar,
+    new FunType(
+      [new InstanceType(ARRAY, new VariableType(tvar)), INT],
+      new VariableType(tvar)
+    )
+  ),
+  set: new QuantifiedType(tvar,
+    new FunType(
+      [
+        new InstanceType(ARRAY, new VariableType(tvar)), 
+        INT, 
+        new VariableType(tvar)
+      ], VOID
+    )
+  ),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

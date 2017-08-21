@@ -642,67 +642,6 @@ function check_call(target: Type, args: Type[]): Type | string {
   }
 }
 
-// Check type compatibility.
-function compatible(ltype: Type, rtype: Type): boolean | Type {
-  if (ltype === rtype) {
-    return true;
-
-  } else if (ltype === FLOAT && rtype === INT) {
-    return true;
-
-  } else if (ltype === ANY) {
-    return true;
-
-  } else if (ltype instanceof FunType && rtype instanceof FunType) {
-    if (ltype.params.length !== rtype.params.length) {
-      return false;
-    }
-    for (let i = 0; i < ltype.params.length; ++i) {
-      let lparam = ltype.params[i];
-      let rparam = rtype.params[i];
-      if (!compatible(rparam, lparam)) {  // Contravariant.
-        return false;
-      }
-    }
-    return compatible(ltype.ret, rtype.ret);  // Covariant.
-
-  } else if (ltype instanceof InstanceType && rtype instanceof InstanceType) {
-    if (ltype.cons === rtype.cons) {
-      // Invariant.
-      return compatible(ltype.arg, rtype.arg) &&
-        compatible(rtype.arg, ltype.arg);
-    }
-
-  } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
-    return compatible(ltype.inner, rtype.inner) &&
-      ltype.annotation === rtype.annotation &&
-      ltype.snippet === rtype.snippet &&
-      ltype.snippet_var === rtype.snippet_var;
-
-  } else if (ltype instanceof TupleType && rtype instanceof TupleType) {
-    if (ltype.components.length !== rtype.components.length) {
-      return false;
-    }
-    for (let i = 0; i < ltype.components.length; ++i) {
-      let lcomp = ltype.components[i];
-      let rcomp = rtype.components[i];
-      if (!compatible(lcomp, rcomp)) {
-        return false;
-      }
-    }
-    return true;
-
-  } else if (ltype instanceof OverloadedType) {
-    for (let t of ltype.types) {
-      if (compatible(t, rtype)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type | string {
   if (target instanceof VariadicFunType) {
     if (target.params.length !== 1) {
@@ -793,6 +732,68 @@ function unify(tvar: TypeVariable, param: Type, arg: Type): boolean | Type {
     return compatible(param, arg);
   }
 }
+
+// Check type compatibility.
+export function compatible(ltype: Type, rtype: Type): boolean | Type {
+  if (ltype === rtype) {
+    return true;
+
+  } else if (ltype === FLOAT && rtype === INT) {
+    return true;
+
+  } else if (ltype === ANY) {
+    return true;
+
+  } else if (ltype instanceof FunType && rtype instanceof FunType) {
+    if (ltype.params.length !== rtype.params.length) {
+      return false;
+    }
+    for (let i = 0; i < ltype.params.length; ++i) {
+      let lparam = ltype.params[i];
+      let rparam = rtype.params[i];
+      if (!compatible(rparam, lparam)) {  // Contravariant.
+        return false;
+      }
+    }
+    return compatible(ltype.ret, rtype.ret);  // Covariant.
+
+  } else if (ltype instanceof InstanceType && rtype instanceof InstanceType) {
+    if (ltype.cons === rtype.cons) {
+      // Invariant.
+      return compatible(ltype.arg, rtype.arg) &&
+        compatible(rtype.arg, ltype.arg);
+    }
+
+  } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
+    return compatible(ltype.inner, rtype.inner) &&
+      ltype.annotation === rtype.annotation &&
+      ltype.snippet === rtype.snippet &&
+      ltype.snippet_var === rtype.snippet_var;
+
+  } else if (ltype instanceof TupleType && rtype instanceof TupleType) {
+    if (ltype.components.length !== rtype.components.length) {
+      return false;
+    }
+    for (let i = 0; i < ltype.components.length; ++i) {
+      let lcomp = ltype.components[i];
+      let rcomp = rtype.components[i];
+      if (!compatible(lcomp, rcomp)) {
+        return false;
+      }
+    }
+    return true;
+
+  } else if (ltype instanceof OverloadedType) {
+    for (let t of ltype.types) {
+      if (compatible(t, rtype)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 
 /**
  * To make these polymorphic snippet code types possible to write down, we
@@ -955,7 +956,11 @@ const apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
       params.push(apply_type(param, tvar, targ));
     }
     let ret = apply_type(type.ret, tvar, targ);
-    return new FunType(params, ret);
+    if (type instanceof VariadicFunType) {
+      return new VariadicFunType(params, ret);      
+    } else {
+      return new FunType(params, ret);
+    }
   },
   visit_any(type: AnyType, [tvar, targ]: [TypeVariable, any]): Type {
     return type;
