@@ -564,7 +564,7 @@ function param_error(i: number, param: Type, arg: Type): string {
  * Check that a function call is well-typed. Return the result type or a
  * string indicating the error.
  */
-function check_call(target: Type, args: Type[]): Type | string {
+export function check_call(target: Type, args: Type[]): Type | string {
   // The target is a variadic function.
   if (target instanceof VariadicFunType) {
     if (target.params.length !== 1) {
@@ -734,7 +734,7 @@ function unify(tvar: TypeVariable, param: Type, arg: Type): boolean | Type {
 }
 
 // Check type compatibility.
-export function compatible(ltype: Type, rtype: Type): boolean | Type {
+function compatible(ltype: Type, rtype: Type): boolean | Type {
   if (ltype === rtype) {
     return true;
 

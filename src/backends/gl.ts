@@ -98,6 +98,8 @@ export const TYPE_NAMES: { [_: string]: string } = {
 export const FRAG_INTRINSIC = "fragment";
 export const VTX_INTRINSIC = "vertex";
 export const SHADER_ANNOTATION = "glsl";
+export const TVAR = new TypeVariable("T");
+
 
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
@@ -157,7 +159,6 @@ const _GL_COMPARE_TYPE = new OverloadedType([
 const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
   _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
-const tvar = new TypeVariable("T");
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
@@ -242,7 +243,7 @@ export const INTRINSICS: TypeMap = {
   // `mix` is a GLSL interpolation operator. The last operand is the amount.
   mix: new OverloadedType([
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
-    new FunType([FLOAT2, FLOAT2, FLOAT], FLOAT2),
+    new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
     new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
   ]),
 
@@ -269,24 +270,24 @@ export const INTRINSICS: TypeMap = {
   float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
 
   // An array constructor.
-  array: new QuantifiedType(tvar, 
+  array: new QuantifiedType(TVAR, 
     new VariadicFunType(
-      [new VariableType(tvar)], 
-      new InstanceType(ARRAY, new VariableType(tvar))
+      [new VariableType(TVAR)], 
+      new InstanceType(ARRAY, new VariableType(TVAR))
     )
   ),
-  get: new QuantifiedType(tvar,
+  get: new QuantifiedType(TVAR,
     new FunType(
-      [new InstanceType(ARRAY, new VariableType(tvar)), INT],
-      new VariableType(tvar)
+      [new InstanceType(ARRAY, new VariableType(TVAR)), INT],
+      new VariableType(TVAR)
     )
   ),
-  set: new QuantifiedType(tvar,
+  set: new QuantifiedType(TVAR,
     new FunType(
       [
-        new InstanceType(ARRAY, new VariableType(tvar)), 
+        new InstanceType(ARRAY, new VariableType(TVAR)), 
         INT, 
-        new VariableType(tvar)
+        new VariableType(TVAR)
       ], VOID
     )
   ),
