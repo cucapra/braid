@@ -98,6 +98,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
 export const FRAG_INTRINSIC = "fragment";
 export const VTX_INTRINSIC = "vertex";
 export const SHADER_ANNOTATION = "glsl";
+// A type variable used in quantified type.
 export const TVAR = new TypeVariable("T");
 
 
@@ -243,7 +244,7 @@ export const INTRINSICS: TypeMap = {
   // `mix` is a GLSL interpolation operator. The last operand is the amount.
   mix: new OverloadedType([
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
-    new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+    new FunType([FLOAT2, FLOAT2, FLOAT], FLOAT2),
     new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
   ]),
 
@@ -264,29 +265,26 @@ export const INTRINSICS: TypeMap = {
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
   textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
-  // TODO: Remove this function?
-  // Buffer construction. Eventually, it would be nice to use overloading here
-  // instead of distinct names for each type.
-  float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
-
-  // An array constructor.
-  array: new QuantifiedType(TVAR, 
+  // Array constructor.
+  array: new QuantifiedType(TVAR,
     new VariadicFunType(
-      [new VariableType(TVAR)], 
+      [new VariableType(TVAR)],
       new InstanceType(ARRAY, new VariableType(TVAR))
     )
   ),
+  // Array getter.
   get: new QuantifiedType(TVAR,
     new FunType(
       [new InstanceType(ARRAY, new VariableType(TVAR)), INT],
       new VariableType(TVAR)
     )
   ),
+  // Array setter.
   set: new QuantifiedType(TVAR,
     new FunType(
       [
-        new InstanceType(ARRAY, new VariableType(TVAR)), 
-        INT, 
+        new InstanceType(ARRAY, new VariableType(TVAR)),
+        INT,
         new VariableType(TVAR)
       ], VOID
     )

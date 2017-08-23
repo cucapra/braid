@@ -18,21 +18,21 @@ interface FuncMap {
 }
 
 /**
- * This funcMapList contains rules that describe the corresponding JS code of
- * each braid built-in WebGL function. This map is structured like this:
+ * This funcMap contains rules that describe the corresponding JS code
+ * of each braid built-in WebGL function. This map is structured like this:
  *
  * {
- *  func1: [
+ *  "func1": [
  *    {
- *      params: [args1type, arg2type...],
+ *      funcType: the func1 type,
  *      ret: (args) => `the compiled javascript code`,
  *    }, {
- *      params: [...]
+ *      funcType: [...]
  *      ret: ...
  *    },
  *    ...
  *  ],
- *  func2: [...],
+ *  "func2: [...],
  *  ...
  * }
  */
@@ -496,9 +496,9 @@ let funcMap: FuncMap = {
     },
   ], "array": [ // variadic function
     {
-      funcType: new QuantifiedType(TVAR, 
+      funcType: new QuantifiedType(TVAR,
         new VariadicFunType(
-          [new VariableType(TVAR)], 
+          [new VariableType(TVAR)],
           new InstanceType(ARRAY, new VariableType(TVAR))
         )
       ),
@@ -519,8 +519,8 @@ let funcMap: FuncMap = {
       funcType: new QuantifiedType(TVAR,
         new FunType(
           [
-            new InstanceType(ARRAY, new VariableType(TVAR)), 
-            INT, 
+            new InstanceType(ARRAY, new VariableType(TVAR)),
+            INT,
             new VariableType(TVAR)
           ], VOID
         )
