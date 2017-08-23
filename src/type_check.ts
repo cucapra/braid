@@ -653,9 +653,9 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
       let arg = args[i];
       let ret = unify(tvar, param, arg);
       if (ret instanceof Type) {
-        if (vType === null) {
+        if (vType === null || compatible(ret, vType)) {
           vType = ret;
-        } else if (vType !== ret) {
+        } else {
           return param_error(i, param, arg);
         }
       } else if (ret === false) {
