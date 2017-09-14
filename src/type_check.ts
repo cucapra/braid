@@ -670,7 +670,7 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
         // is at right hand side and the current type (ret) is at left
         // hand side. If it is compatible, we can choose the current type
         // to be our generic type of the type variable.
-        if (vType === null || compatible(ret, vType)) {
+        if (vType === null || ret === vType) {
           vType = ret;
         } else {
           return param_error(i, param, arg);
@@ -698,7 +698,7 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
       // Same mechanism as the variadic function above.
       let ret = unify(tvar, param, arg);
       if (ret instanceof Type) {
-        if (vType === null || compatible(ret, vType)) {
+        if (vType === null || ret === vType) {
           vType = ret;
         } else {
           return param_error(i, param, arg);
