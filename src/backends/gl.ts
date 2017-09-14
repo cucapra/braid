@@ -289,6 +289,15 @@ export const INTRINSICS: TypeMap = {
       ], VOID
     )
   ),
+  push: new QuantifiedType(TVAR,
+    new FunType(
+      [
+        new InstanceType(ARRAY, new VariableType(TVAR)),
+        new VariableType(TVAR)
+      ],
+      VOID
+    )
+  ),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

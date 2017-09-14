@@ -527,7 +527,20 @@ let funcMap: FuncMap = {
       ),
       ret: (args) => `(${args[0]}[${args[1]}]) = (${args[2]})`,
     },
-  ]
+  ], "push": [
+    {
+      funcType: new QuantifiedType(TVAR,
+        new FunType(
+          [
+            new InstanceType(ARRAY, new VariableType(TVAR)),
+            new VariableType(TVAR)
+          ],
+          VOID
+        )
+      ),
+      ret: (args) => `${args[0]}.push(${args[1]})`,
+    },
+  ],
 };
 
 /**
