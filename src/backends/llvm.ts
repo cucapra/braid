@@ -103,7 +103,9 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   // construct pointer to func
   let _func_type: [llvm.Type, llvm.Type[]] = get_func_type(emitter, func_as_proc.body.id!, func_as_proc.params);
   let func_type: llvm.FunctionType = llvm.FunctionType.create(_func_type[0], _func_type[1]);
-  let func_ptr: llvm.Value = emitter.builder.buildAlloca(func_type, "funcptr");
+  //let func_ptrptr: llvm.Value = emitter.builder.buildAlloca(llvm.PointerType.create(func_type, 0), "funcptrptr");
+  //let func_ptr: llvm.Value = emitter.builder.buildLoad(func_ptrptr, "funcptr");
+
 
   // get values/types of free vars
   let free_ids: number[] = emitter.ir.procs[tree.id!].free;
@@ -115,11 +117,16 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // build an environment structure that wraps around free vals
-  let env_struct: llvm.Value = llvm.ConstStruct.create(free_vals, true);
   let env_type: llvm.StructType = llvm.StructType.create(free_types, true);
+  var env_struct: llvm.Value = llvm.Value.getUndef(env_type);
+
+  for (let i = 0; i < free_ids.length; i++) {
+    env_struct = emitter.builder.buildInsertValue(env_struct, free_vals[i], i, "");
+  }
   let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
   emitter.builder.buildStore(env_struct, env_struct_ptr);
-  let env_void_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0), "vdptr");
+
+  let env_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.IntType.int8(), 0), "envptr");
 
   // The function captures its closed-over references and any persists
   // used inside.
@@ -128,7 +135,7 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   }
 
   // return struct that wraps the function and its environment
-  return llvm.ConstStruct.create([func_ptr, env_void_ptr], true);
+  return llvm.ConstStruct.create([func, env_ptr], true);
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
@@ -186,11 +193,12 @@ function emit_fun(emitter: LLVMEmitter, name: string, arg_ids: number[], free_id
     let type: llvm.Type = llvm_type(emitter.ir.type_table[id][0]);
     free_types.push(type);
   }
+
   let env_ptr_type: llvm.Type = llvm.PointerType.create(llvm.StructType.create(free_types, true), 0);
 
   // get ptr to environment struct
-  let _env_ptr: llvm.Value = func.getParam(arg_ids.length);
-  let env_ptr: llvm.Value = emitter.builder.buildBitCast(_env_ptr, env_ptr_type, "");
+  let env_ptr_uncasted: llvm.Value = func.getParam(arg_ids.length);
+  let env_ptr: llvm.Value = emitter.builder.buildBitCast(env_ptr_uncasted, env_ptr_type, "");
 
   for (let i = 0; i < free_ids.length; i++) {
     // get id and type
@@ -325,6 +333,7 @@ function emit_prog_variant() {
  * Get the LLVM type represented by a Braid type.
  */
 function llvm_type(type: Type): llvm.Type {
+
   if (type === INT) {
     return llvm.IntType.int32();
   } else if (type === FLOAT) {
@@ -332,9 +341,10 @@ function llvm_type(type: Type): llvm.Type {
   } else if (type instanceof FunType) {
     // get types of args and return value
     let arg_types: llvm.Type[] = [];
-    for (let arg of type.params)
+    for (let arg of type.params) {
       arg_types.push(llvm_type(arg));
-    arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0));
+    }
+    arg_types.push(llvm.PointerType.create(llvm.IntType.int8(), 0));
     let ret_type: llvm.Type = llvm_type(type.ret);
 
     // construct appropriate func type & wrap in ptr
@@ -342,7 +352,7 @@ function llvm_type(type: Type): llvm.Type {
     let func_type_ptr: llvm.PointerType = llvm.PointerType.create(func_type, 0);
 
     // create struct environment: {function, closure environment}
-    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.VoidType.create(), 0)], true);
+    let struct_type: llvm.StructType = llvm.StructType.create([func_type_ptr, llvm.PointerType.create(llvm.IntType.int8(), 0)], true);
     return struct_type;
   } else {
     throw "Unsupported type in LLVM backend: " + type;
@@ -355,9 +365,10 @@ function llvm_type(type: Type): llvm.Type {
 function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]): [llvm.Type, llvm.Type[]] {
   let ret_type: llvm.Type = llvm_type(emitter.ir.type_table[ret_id][0]);
   let arg_types: llvm.Type[] = [];
-  for (let id of arg_ids)
+  for (let id of arg_ids) {
     arg_types.push(llvm_type(emitter.ir.type_table[id][0]));
-  arg_types.push(llvm.PointerType.create(llvm.VoidType.create(), 0)); // closure environment struct ptr
+  }
+  arg_types.push(llvm.PointerType.create(llvm.IntType.int8(), 0)); // closure environment struct ptr
   return [ret_type, arg_types];
 }
 
@@ -487,6 +498,7 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_call(tree: ast.CallNode, emitter: LLVMEmitter): llvm.Value {
+
     // Get pointer to function struct
     let func_struct: llvm.Value = emit(emitter, tree.fun);
     if (!func_struct)
