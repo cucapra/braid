@@ -123,10 +123,11 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
   for (let i = 0; i < free_ids.length; i++) {
     env_struct = emitter.builder.buildInsertValue(env_struct, free_vals[i], i, "");
   }
-  let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "strctptr");
+  let env_struct_ptr: llvm.Value = emitter.builder.buildAlloca(env_type, "envptr");
   emitter.builder.buildStore(env_struct, env_struct_ptr);
 
-  let env_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, llvm.PointerType.create(llvm.IntType.int8(), 0), "envptr");
+  let hidden_env_type: llvm.Type = llvm.PointerType.create(llvm.IntType.int8(), 0);
+  let env_ptr: llvm.Value = emitter.builder.buildBitCast(env_struct_ptr, hidden_env_type, "envptr_hidden");
 
   // The function captures its closed-over references and any persists
   // used inside.
@@ -134,8 +135,14 @@ function emit_func(emitter: LLVMEmitter, tree: ast.FunNode): llvm.Value {
     throw "persists not implemented yet"
   }
 
+  let func_ptr_type: llvm.Type = llvm.PointerType.create(func_type, 0);
+  let closure_type: llvm.Type = llvm.StructType.create([func_ptr_type, hidden_env_type] , true);
+  var closure: llvm.Value = llvm.Value.getUndef(closure_type);
+  closure = emitter.builder.buildInsertValue(closure, func, 0, "");
+  closure = emitter.builder.buildInsertValue(closure, env_ptr, 1, "");
+
   // return struct that wraps the function and its environment
-  return llvm.ConstStruct.create([func, env_ptr], true);
+  return closure;
 }
 
 function emit_extern(name: string, type: Type): llvm.Value {
