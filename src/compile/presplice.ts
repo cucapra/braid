@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons, assign, set_add, set_diff, set_union } from '../util';
+import { hd, tl, cons, set_add, set_diff, set_union } from '../util';
 import { Prog, Proc, Scope, Variant, is_prog } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -51,7 +51,7 @@ function substitute(tree: SyntaxNode, subs: SyntaxNode[]): SyntaxNode {
 function scope_variant<T extends Scope>(orig: T, config: number[],
                                         progs: Prog[]): T {
   // Copy the original program.
-  let var_scope: T = assign({}, orig);
+  let var_scope: T = Object.assign({}, orig);
 
   // Get a map from old (escape) IDs to new (quote body) trees. Also,
   // accumulate each selected quote's splices, persists, free variables, and
@@ -183,10 +183,10 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] | nul
         if (!parent) {
           if (procs[parent_id]) {
             let old_parent = procs[parent_id];
-            variant.procs[parent_id] = parent = assign({}, old_parent);
+            variant.procs[parent_id] = parent = Object.assign({}, old_parent);
           } else {
             let old_parent = progs[parent_id];
-            variant.progs[parent_id] = parent = assign({}, old_parent);
+            variant.progs[parent_id] = parent = Object.assign({}, old_parent);
           }
         }
 
@@ -203,7 +203,7 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] | nul
           trickle_free(parent.id, parent_newly_free);
         }
       }
-    }
+    };
     for (let id in variant.progs) {
       let old_prog = progs[id];
       let new_prog = variant.progs[id];

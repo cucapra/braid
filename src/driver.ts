@@ -1,9 +1,9 @@
-import { SyntaxNode } from './ast';
+import { SyntaxNode, RootNode, ExpressionNode } from './ast';
 import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
 import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
 import { desugar_cross_stage, desugar_macros } from './sugar';
 import * as interp from './interp';
-import { compose, assign, Gen, scope_eval } from './util';
+import { compose, Gen, scope_eval } from './util';
 import { TypeTable, elaborate } from './type_elaborate';
 import * as webgl from './backends/webgl';
 import * as gl from './backends/gl';
@@ -14,6 +14,7 @@ import { CompilerIR } from './compile/ir';
 import { semantically_analyze } from './compile/compile';
 import parser = require('../parser');
 import { pretty } from './pretty';
+import * as error from './error';
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
@@ -40,7 +41,7 @@ export interface Config {
 
   parsed: (tree: SyntaxNode) => void;
   typed: (type: string) => void;
-  error: (err: string) => void;
+  error: (err: error.Error | string) => void;
   log: (...msg: any[]) => void;
 
   /**
@@ -67,7 +68,7 @@ function _runtime(config: Config): string {
 
 function _types(config: Config): TypeMap {
   if (config.webgl) {
-    return assign({}, BUILTIN_TYPES, gl.GL_TYPES);
+    return Object.assign({}, BUILTIN_TYPES, gl.GL_TYPES);
   } else {
     return BUILTIN_TYPES;
   }
@@ -81,46 +82,64 @@ function _check(config: Config): Gen<TypeCheck> {
   return check;
 }
 
-export function frontend(config: Config, source: string,
-    filename: string | null,
-    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
+/**
+ * Parse, type-check, and desugar source files. Return a parsed AST and
+ * type information or an Error if parsing or typing fails.
+ */
+export function frontend(config: Config, sources: string[],
+    filenames: string[] | null):
+    [SyntaxNode, TypeTable] | error.Error
 {
-  // Parse.
-  let tree: SyntaxNode;
-  try {
-    tree = parser.parse(source);
-  } catch (e) {
-    if (e instanceof parser.SyntaxError) {
-      let loc = e.location.start;
-      let err = 'parse error at ';
-      if (filename) {
-        err += filename + ':';
+  let emptyExpressionNodeArray: ExpressionNode[] = [];
+  let root: RootNode = { tag: "root", children: emptyExpressionNodeArray };
+
+  for (let i = 0; i < sources.length; i++) {
+    let source: string = sources[i];
+    let filename: string | null = (filenames !== null && i < sources.length) ? filenames[i] : null;
+
+    // Parse.
+    let tree: SyntaxNode;
+    try {
+      // Give the parser the filename
+      let options = { filename: filename };
+
+      tree = parser.parse(source, options);
+    } catch (e) {
+      if (e instanceof parser.SyntaxError) {
+        let loc = {
+          filename: filename || '?',
+          start: e.location.start,
+          end: e.location.end,
+        };
+        return new error.Error(loc, "parse", e.message);
+      } else {
+        throw e;
       }
-      err += loc.line + ',' + loc.column + ': ' + e.message;
-      config.error(err);
-      return;
-    } else {
-      throw e;
     }
+    config.log(tree);
+
+    root.children.push(tree);
   }
-  config.log(tree);
 
   // Check and elaborate types.
   let elaborated: SyntaxNode;
   let type_table: TypeTable;
   try {
     [elaborated, type_table] =
-      elaborate(tree, _intrinsics(config), _types(config),
+      elaborate(root, _intrinsics(config), _types(config),
           _check(config));
     let [type, _] = type_table[elaborated.id!];
     config.typed(pretty_type(type));
   } catch (e) {
-    config.error(e);
-    return;
+    if (e instanceof error.Error) {
+      return e;
+    } else {
+      throw e;
+    }
   }
   config.log('type table', type_table);
 
-  checked(elaborated, type_table);
+  return [elaborated, type_table];
 }
 
 export function compile(config: Config, tree: SyntaxNode,
@@ -180,12 +199,17 @@ export function interpret(config: Config, tree: SyntaxNode,
   }
 }
 
-// Get the complete, `eval`-able JavaScript program, including the runtime
-// code.
+/**
+ * Get the complete, `eval`-able JavaScript program, including the runtime
+ * code.
+ */
 export function full_code(config: Config, jscode: string): string {
   return _runtime(config) + jscode;
 }
 
+/**
+ * Run compiled JavaScript code.
+ */
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
@@ -210,3 +234,35 @@ export function execute(config: Config, jscode: string,
     executed(js.pretty_value(res));
   }
 }
+
+/**
+ * Check the output of a test. Log a message and return a success flag.
+ */
+export function check_output(name: string, source: string,
+                             result: string): boolean
+{
+  // Look for the special expected output marker.
+  let [, expected] = source.split('# -> ');
+  if (expected === undefined) {
+    console.log(`${name} ✘: ${result} (no expected result found)`);
+    return false;
+  }
+  expected = expected.trim();
+  result = result.trim();
+
+  let match: boolean;
+  if (expected === "type error") {
+    match = result.indexOf(expected) !== -1;
+  } else {
+    match = expected === result;
+  }
+
+  if (match) {
+    console.log(`${name} ✓`);
+    return true;
+  } else {
+    console.log(`${name} ✘: ${result} (${expected})`);
+    return false;
+  }
+}
+

@@ -48,7 +48,7 @@ $(MUNGE):
 
 EXAMPLES := basics splice persist progfunc extern \
 	presplice macro normcolor objects phong texture head \
-	couch
+	couch environment shadow dynamic multitexture array
 EXAMPLE_FILES := $(EXAMPLES:%=examples/%.ss)
 examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@

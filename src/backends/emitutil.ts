@@ -72,7 +72,7 @@ function repeat(s: string, n: number): string {
 }
 
 // Indent a string by a given number of spaces.
-export function indent(s: string, first=false, spaces=2): string {
+export function indent(s: string, first = false, spaces = 2): string {
   let space = repeat(" ", spaces);
   let out = s.replace(/\n/g, "\n" + space);
   if (first) {
@@ -94,10 +94,51 @@ export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
   return out;
 }
 
+// A helper for emitting children of a root node.
+export function emit_exprs(emitter: Emitter, exprs: ast.ExpressionNode[], sep: string,
+  pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
+{
+  let out = "";
+  for (let i = 0; i < exprs.length; i++) {
+    out += emit(emitter, exprs[i]);
+    if (i !== exprs.length - 1)
+      out += sep;
+  }
+  return out;
+}
+
+// Helper for emitting a header file. Same as normal, but checks both LHS and RHS of seq
+export function check_header(emitter: Emitter, expr: ast.ExpressionNode, sep: string,
+  pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
+  {
+    let out = "";
+    let rules = complete_visit(
+      function (tree: ast.SyntaxNode) {
+        return emit(emitter, tree);
+      },
+      {
+        visit_seq(seq: ast.SeqNode, p: void): string {
+          let result = "";
+          if (pred(seq.lhs)) {
+            let lhs = check_header(emitter, seq.lhs, sep);
+            result += (lhs !== "") ? lhs + sep : "";
+          }
+          if (pred(seq.rhs)) {
+            let rhs = check_header(emitter, seq.rhs, sep);
+            // Don't add sep on RHS
+            result += (rhs !== "") ? rhs : "";
+          }
+          return result;
+        }
+      }
+    );
+    return ast_visit(rules, expr, null);
+  }
+
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
 export function emit_assign(emitter: Emitter,
-    tree: ast.AssignNode, get_varsym=varsym): string {
+    tree: ast.AssignNode, get_varsym = varsym): string {
   let defid = emitter.ir.defuse[tree.id!];
   let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
@@ -115,7 +156,7 @@ export function emit_assign(emitter: Emitter,
 export function emit_lookup(emitter: Emitter,
     emit_extern: (name: string, type: Type) => string,
     tree: ast.LookupNode,
-    get_varsym=varsym): string {
+    get_varsym = varsym): string {
   let defid = emitter.ir.defuse[tree.id!];
   let name = emitter.ir.externs[defid];
   if (name !== undefined) {
@@ -162,7 +203,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
     }
   );
   return ast_visit(rules, tree, null);
-};
+}
 
 /**
  * A predicate for use with `emit_body` that decides whether an expression is
@@ -171,7 +212,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
  * results are actually used.
  */
 export function useful_pred(tree: ast.ExpressionNode): boolean {
-  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
+  return ["extern", "lookup", "literal", "type_alias"].indexOf(tree.tag) === -1;
 }
 
 /**
@@ -200,11 +241,18 @@ function statement_pred(tree: ast.ExpressionNode): boolean {
  * returned instead.
  */
 export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
-    ret="return ", sep=";",
+    ret = "return ", sep = ";",
     pred: (_: ast.ExpressionNode) => boolean = useful_pred,
     stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {
-  let exprs = flatten_seq(tree);
+  let exprs: ast.ExpressionNode[] = [];
+  if (tree.tag === "root") {
+    for (let child of (tree as ast.RootNode).children) {
+      exprs = exprs.concat(flatten_seq(child));
+    }
+  } else {
+    exprs = flatten_seq(tree);
+  }
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
     let expr = exprs[i];

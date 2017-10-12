@@ -16,15 +16,17 @@ extern teapot: Mesh;
 extern snowden: Mesh;
 
 # Mesh asset wrangling.
-extern mesh_indices: Mesh -> (Int3 Array);
-extern mesh_positions: Mesh -> (Float3 Array);
-extern mesh_normals: Mesh -> (Float3 Array);
+extern mesh_indices: Mesh -> (Int3 Buffer);
+extern mesh_positions: Mesh -> (Float3 Buffer);
+extern mesh_normals: Mesh -> (Float3 Buffer);
 extern mesh_size: Mesh -> Int;
 extern mesh_count: Mesh -> Int;
-extern mesh_texcoords: Mesh -> (Float2 Array);
-extern mesh_tangents: Mesh -> (Float3 Array);
-extern draw_mesh: (Int3 Array) Int -> Void;
+extern mesh_texcoords: Mesh -> (Float2 Buffer);
+extern mesh_tangents: Mesh -> (Float3 Buffer);
+extern draw_mesh: (Int3 Buffer) Int -> Void;
 extern draw_arrays: Int -> Void;
+extern array_buffer: (Int Buffer) -> (Int Array) | (Float Array) -> (Float Buffer) | (Float2 Array) -> (Float2 Buffer) | (Float3 Array) -> (Float3 Buffer) | (Float4 Array) -> (Float4 Buffer);
+extern element_buffer: (Int Array) -> (Int3 Buffer);
 
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
@@ -34,20 +36,36 @@ extern mat4.rotateY: Mat4 Mat4 Float -> Void;
 extern mat4.rotateZ: Mat4 Mat4 Float -> Void;
 extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
 extern mat4.translate: Mat4 Mat4 Vec3 -> Void;
+extern mat4.fromTranslation: Mat4 Vec3 -> Void;
 extern mat4.transpose: Mat4 Mat4 -> Void;
 extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
 extern mat4.invert: Mat4 Mat4 -> Void;
+extern mat4.perspective: Mat4 Float Float Float Float -> Void;
+extern mat4.lookAt: Mat4 Vec3 Vec3 Vec3 -> Void;
 
 # Get the camera position (in world space) from a view matrix.
 extern eye: Mat4 -> Vec3;
 
-# Textures.
+# Assets: loading images and such.
 extern load_obj: String -> Mesh;
 extern load_texture: String -> Texture;
 extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
-extern texture: Image -> Texture;
 extern average: Image -> Float4;
+
+# Create a standard 2D texture from an image or a blank texture "from scratch."
+extern texture: Image -> Texture | -> Texture;
+# Create a cube-map texture. The arguments are:
+# [posx, negx, posy, negy, posz, negz]
+extern cubeTexture: Image Image Image Image Image Image -> CubeTexture | -> CubeTexture;
+
+# Manage frame buffer objects.
+extern createFramebuffer: -> Framebuffer;
+extern framebufferTexture: Framebuffer Texture -> Void | Framebuffer CubeTexture Int -> Void;
+extern bindFramebuffer: Framebuffer -> Void;
+
+# A framebuffer representing the content to be shown in the canvas
+extern screenbuffer: Framebuffer;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;

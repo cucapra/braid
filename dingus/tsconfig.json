@@ -1,17 +1,11 @@
 {
+    "extends": "../tsconfig.json",
     "compilerOptions": {
-        "noImplicitAny": true,
-        "strictNullChecks": true,
-        "noImplicitThis": true,
-        "noImplicitReturns": true,
-
-        "allowJs": true,
         "outDir": "build",
-
-        "module": "commonjs",
-        "lib": ["dom", "es5", "es2015.promise"]
+        "module": "commonjs"
     },
     "files": [
-        "src/dingus.ts"
+        "src/dingus.ts",
+        "../parser.js"
     ]
 }

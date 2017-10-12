@@ -3,7 +3,7 @@
 # ---
 
 # Compile-time parameters.
-var use_bumpmapping = (1);  # knob: 0
+var use_bumpmapping = (true);  # knob: false
 
 def bump?(bumpnorm: $<Vec3>, default: $<Vec3>)
   if use_bumpmapping
@@ -39,13 +39,13 @@ var model = mat4.create();
 # A triply-nested loop to draw lots of objects in a grid.
 def grid(count: Int, f:(Int Int Int -> Void)) (
   var x = count;
-  while (x) (
+  while (x != 0) (
     x = x - 1;
     var y = count;
-    while (y) (
+    while (y != 0) (
       y = y - 1;
       var z = count;
-      while (z) (
+      while (z != 0) (
         z = z - 1;
         f(x, y, z);
       )

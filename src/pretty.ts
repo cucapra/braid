@@ -13,6 +13,15 @@ function nonterm(tree: ast.SyntaxNode) {
 }
 
 let Pretty: ASTVisit<void, string> = {
+  visit_root(tree: ast.RootNode, _: void): string {
+    let s = "root ";
+    for (let child of tree.children) {
+      s += pretty_paren(child, t => true); // Parenthesize always
+    }
+
+    return s;
+  },
+
   visit_literal(tree: ast.LiteralNode, _: void): string {
     if (tree.type === "string") {
       return JSON.stringify(tree.value);
@@ -53,6 +62,10 @@ let Pretty: ASTVisit<void, string> = {
     return pretty_paren(tree.lhs, pred) +
       " " + tree.op +
       " " + pretty_paren(tree.rhs, pred);
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, _: void): string {
+    return `type ${tree.ident} = ${pretty_type_ast(tree.type)}`;
   },
 
   visit_quote(tree: ast.QuoteNode, _: void): string {
@@ -126,7 +139,20 @@ let Pretty: ASTVisit<void, string> = {
     }
     return s;
   },
-}
+
+  visit_tuple(tree: ast.TupleNode, _: void): string {
+    return tree.exprs.map(e => pretty_paren(e, nonterm)).join(", ");
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
+    return `${pretty_paren(tree.tuple, nonterm)}.${tree.index}`;
+  },
+
+  visit_alloc(tree: ast.AllocNode, _: void): string {
+    return `alloc ${tree.ident} = ${pretty(tree.expr)}`;
+  },
+
+};
 
 /**
  * Format an AST as a string.
@@ -179,7 +205,15 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
   visit_instance(tree: ast.InstanceTypeNode, param: void): string {
     return pretty_type_paren(tree.arg) + " " + tree.name;
   },
-}
+
+  visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
+    return tree.types.map(pretty_type_paren).join(" | ");
+  },
+
+  visit_tuple(tree: ast.TupleTypeNode, param: void): string {
+    return tree.components.map(pretty_type_paren).join(" * ");
+  },
+};
 
 /**
  * Pretty-print a type AST.

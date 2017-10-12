@@ -1,7 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
-import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
+import { varsym, indent, emit_seq, emit_exprs, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
-  emit_while, variantsym, is_fun_type } from './emitutil';
+  emit_while, variantsym, is_fun_type, check_header } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
   specialized_prog } from './emitter';
 import * as ast from '../ast';
@@ -98,7 +98,7 @@ export function emit_fun(name: string | null, argnames: string[],
 // Wrap some code in an anonymous JavaScript function (and possibly invoke it)
 // to isolate its variables. The code should define a function called `main`,
 // which we will invoke.
-export function emit_main_wrapper(code: string, call=true): string {
+export function emit_main_wrapper(code: string, call = true): string {
   let inner_code = code + "\n" + "return main();";
   let wrapper = emit_fun(null, [], [], inner_code);
   if (call) {
@@ -130,7 +130,7 @@ export function emit_string(value: string) {
 
 // Emit a JavaScript variable declaration. If `verbose`, then there will be a
 // newline between the name and the beginning of the initialization value.
-export function emit_var(name: string, value: string, verbose=false): string {
+export function emit_var(name: string, value: string, verbose = false): string {
   let out = "var " + name + " =";
   if (verbose) {
     out += "\n";
@@ -148,6 +148,8 @@ export function pretty_value(v: any): string {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
+    return v.toString();
   } else if (v.proc !== undefined) {
     return "(fun)";
   } else if (v.prog !== undefined) {
@@ -163,6 +165,22 @@ export function pretty_value(v: any): string {
 // The core recursive compiler rules.
 
 export let compile_rules = {
+  visit_root(tree: ast.RootNode, emitter: Emitter): string {
+    let out = "";
+    // Do a special check for the first child (header), if there is more than one file
+    if (tree.children.length > 1) {
+      let header = tree.children[0];
+      // See if anything needs to be emitted at all
+      let header_emit = check_header(emitter, header, ",\n");
+      if (header_emit !== "") {
+        out += header_emit;
+        out += ",\n";
+      }
+      return out + emit_exprs(emitter, tree.children.slice(1), ",\n");
+    }
+    return emit_exprs(emitter, tree.children, ",\n");
+  },
+
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     if (tree.type === "string") {
       return JSON.stringify(tree.value);
@@ -190,13 +208,24 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
-    return tree.op + paren(p);
+    let op: string = tree.op;
+
+    // We spell negation as ~, but JavaScript spells it !.
+    if (op === '~') {
+      op = '!';
+    }
+
+    return op + paren(p);
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
     let p1 = emit(emitter, tree.lhs);
     let p2 = emit(emitter, tree.rhs);
     return paren(p1) + " " + tree.op + " " + paren(p2);
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, emitter: Emitter): string {
+    return "void 0";
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
@@ -274,6 +303,20 @@ export let compile_rules = {
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
     throw "error: macro invocations are sugar";
+  },
+
+  visit_tuple(tree: ast.TupleNode, emitter: Emitter): string {
+    let components = tree.exprs.map(e => paren(emit(emitter, e))).join(', ');
+    return `[${components}]`;
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, emitter: Emitter): string {
+    let tuple = emit(emitter, tree.tuple);
+    return `${ paren(tuple) }[${ tree.index }]`;
+  },
+
+  visit_alloc(tree: ast.AllocNode, emitter: Emitter): string {
+    throw "unimplemented";
   },
 };
 
@@ -428,7 +471,7 @@ export function emit_variant_selector(emitter: Emitter, prog: Prog,
     let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
     let condition = cond_parts.join(" && ");
     let progval = emit_variant(variant);
-    body += `if (${condition}) {\n`
+    body += `if (${condition}) {\n`;
     body += `  return ${progval};\n`;
     body += `}\n`;
   }

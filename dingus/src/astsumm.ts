@@ -7,6 +7,9 @@ import * as ast from '../../src/ast';
 import { ASTVisit, ast_visit } from '../../src/visit';
 
 let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
+  visit_root(tree: ast.RootNode, _: void): ast.SyntaxNode[] {
+    return tree.children;
+  },
   visit_literal(tree: ast.LiteralNode, _: void): ast.SyntaxNode[] {
     return [];
   },
@@ -58,13 +61,28 @@ let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_macrocall(tree: ast.MacroCallNode, _: void): ast.SyntaxNode[] {
     return tree.args;
   },
+  visit_typealias(tree: ast.TypeAliasNode, _: void): ast.SyntaxNode[] {
+    return [];
+  },
+  visit_tuple(tree: ast.TupleNode, _: void): ast.SyntaxNode[] {
+    return tree.exprs;
+  },
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): ast.SyntaxNode[] {
+    return [tree.tuple];
+  },
+  visit_alloc(tree: ast.AllocNode, _: void): ast.SyntaxNode[] {
+    return [tree.expr];
+  },
 };
 
 export function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
   return ast_visit(GetChildren, tree, null);
-};
+}
 
 let GetName: ASTVisit<void, string> = {
+  visit_root(tree: ast.RootNode, _: void): string {
+    return "root";
+  },
   visit_literal(tree: ast.LiteralNode, _: void): string {
     return tree.value.toString();
   },
@@ -124,8 +142,20 @@ let GetName: ASTVisit<void, string> = {
   visit_macrocall(tree: ast.MacroCallNode, _: void): string {
     return "@" + tree.macro;
   },
-}
+  visit_typealias(tree: ast.TypeAliasNode, _: void): string {
+    return "typealias";
+  },
+  visit_tuple(tree: ast.TupleNode, _: void): string {
+    return "tuple";
+  },
+  visit_tupleind(tree: ast.TupleIndexNode, _: void): string {
+    return "." + tree.index;
+  },
+  visit_alloc(tree: ast.AllocNode, _: void): string {
+    return `let ${tree.ident}`;
+  },
+};
 
 export function get_name(tree: ast.SyntaxNode): string {
   return ast_visit(GetName, tree, null);
-};
+}

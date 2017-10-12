@@ -1,5 +1,7 @@
 import * as driver from '../../src/driver';
 import * as ast from '../../src/ast';
+import * as error from '../../src/error';
+import { Error } from '../../src/error';
 
 import { tree_canvas } from './tree';
 import { get_children, get_name } from './astsumm';
@@ -25,11 +27,12 @@ const RUN_DELAY_MS = 200;
  * - the complete WebGL code (if in WebGL mode)
  * The mode can be "interp", "compile", or "webgl".
  */
-function ssc_run(code: string, mode: string)
-  : [string, ast.SyntaxNode, string, string, string, string]
+function ssc_run(code: string, mode: string):
+  [string | Error, ast.SyntaxNode | null, string | null, string | null,
+    string | null, string | null]
 {
   // Configure the driver to store a bunch of results.
-  let error: string | null = null;
+  let error: string | Error | null = null;
   let type: string | null = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
@@ -41,7 +44,8 @@ function ssc_run(code: string, mode: string)
       // https://github.com/Microsoft/TypeScript/issues/4759
       (console.log as any)(...msg);
     },
-    error (e: string) {
+    error: e => {
+      console.warn(e.toString());
       error = e;
     },
 
@@ -54,8 +58,9 @@ function ssc_run(code: string, mode: string)
   };
 
   // Add the preamble, if this is WebGL mode.
+  let code_pieces = [code];
   if (mode === "webgl") {
-    code = PREAMBLES[0]['body'] + code;
+    code_pieces.unshift(PREAMBLES[0]['body']);
   }
 
   // Run the driver.
@@ -63,29 +68,33 @@ function ssc_run(code: string, mode: string)
   let jscode: string | null = null;
   let ast: ast.SyntaxNode | null = null;
   let glcode: string | null = null;
-  driver.frontend(config, code, null, function (tree, types) {
-    ast = tree;
 
-    if (mode === "interp") {
-      // Interpreter.
-      driver.interpret(config, tree, types, function (r) {
-        res = r;
-      });
+  let feres = driver.frontend(config, code_pieces, null);
+  if (feres instanceof Error) {
+    return [feres, null, null, null, null, null];
+  }
+  let [tree, types] = feres;
+  ast = tree;
 
-    } else {
-      // Compiler.
-      driver.compile(config, tree, types, function (code) {
-        jscode = code;
-        if (mode === "webgl") {
-          glcode = driver.full_code(config, jscode);
-        } else {
-          driver.execute(config, code, function (r) {
-            res = r;
-          });
-        }
-      });
-    }
-  });
+  if (mode === "interp") {
+    // Interpreter.
+    driver.interpret(config, tree, types, function (r) {
+      res = r;
+    });
+
+  } else {
+    // Compiler.
+    driver.compile(config, tree, types, function (code) {
+      jscode = code;
+      if (mode === "webgl") {
+        glcode = driver.full_code(config, jscode);
+      } else {
+        driver.execute(config, code, function (r) {
+          res = r;
+        });
+      }
+    });
+  }
 
   return [error!, ast!, type!, jscode!, res!, glcode!];
 }
@@ -149,19 +158,13 @@ interface Config {
    * possible instead of respecting the host browser's render loop.
    */
   perfMode?: boolean;
-
-  /**
-   * Permit the dingus to load assets via AJAX.
-   */
-  assets?: boolean;
-};
+}
 
 let DEFAULT: Config = {
   history: true,
   lineNumbers: true,
   scrollbars: true,
   perfMode: false,
-  assets: true,
 };
 
 export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -215,7 +218,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       clearTimeout(tid);
     }
     tid = setTimeout(run_code, RUN_DELAY_MS);
-  };
+  }
 
   if (codemirror) {
     codemirror.on('change', function (cm, change) {
@@ -231,7 +234,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   // Lazily constructed tools.
   let draw_tree: (tree_data: any) => void;
-  let update_gl: (code?: string, dl?: boolean) => void;
+  let update_gl: (code?: string, dl?: boolean) => Promise<void>;
 
   let last_mode: string | null = null;
   let custom_preamble = "";
@@ -256,8 +259,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       let [err, tree, typ, compiled, res, glcode] =
         ssc_run(custom_preamble + code, mode!);
 
+      // Show error message (if any) and the program's type.
       if (errbox) {
-        show(err, errbox);
+        show(err ? err.toString() : null, errbox);
       }
       if (typebox) {
         show(typ, typebox);
@@ -274,7 +278,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
       } else {
         // Draw the syntax tree.
-        if (treebox) {
+        if (tree && treebox) {
           if (!draw_tree) {
             // Lazily initialize the drawing code to avoid D3 invocations when
             // we don't need them.
@@ -286,6 +290,30 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
         if (compiledbox) {
           show(null, compiledbox);
+        }
+      }
+
+      // Mark an error, if there is one, in the editor.
+      if (codemirror) {
+        let doc = codemirror.getDoc();
+        for (let mark of doc.getAllMarks()) {
+          mark.clear();
+        }
+        if (err instanceof error.Error) {
+          let mark = doc.markText(
+            {
+              line: err.location.start.line - 1,
+              ch: err.location.start.column - 1,
+            },
+            {
+              line: err.location.end.line - 1,
+              ch: err.location.end.column - 1,
+            },
+            {
+              className: 'syntax-error',
+              title: err.message,
+            },
+          );
         }
       }
 
@@ -307,14 +335,11 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
 
         console.log(glcode);
-        if (update_gl) {
-          update_gl(glcode);
-        } else {
-          console.log("Loading GL resources...");
-          if (loadingmsg) {
-            loadingmsg.style.display = 'block';
-          }
-          start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
+
+        // Set up the WebGL viewer context. This gives us a function we can
+        // use to update the program in the future.
+        if (!update_gl) {
+          update_gl = start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
             if (config.fpsCallback) {
               config.fpsCallback(frames, ms, latencies, draw_latencies);
             }
@@ -322,15 +347,25 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          }, config.perfMode, config.assets).then((update) => {
-            update_gl = update;
-            console.log("...loaded.");
-            if (loadingmsg) {
-              loadingmsg.style.display = 'none';
-            }
-            update(glcode);
-          });
+          }, config.perfMode);
         }
+
+        // Inject the new code.
+        console.log("Loading GL resources...");
+        if (loadingmsg) {
+          loadingmsg.style.display = 'block';
+        }
+        update_gl(glcode).then(() => {
+          if (loadingmsg) {
+            loadingmsg.style.display = 'none';
+          }
+          console.log("...loaded.");
+        }, (err) => {
+          console.error(`error executing GL code: ${err}`);
+          if (errbox) {
+            show(err.toString(), errbox);
+          }
+        });
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';
@@ -454,7 +489,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   // Handle the "clear" button.
   if (clearbtn) {
     clearbtn.addEventListener('click', function () {
-      if (get_code() != '') {
+      if (get_code() !== '') {
         link_to_code('');
       }
     });
@@ -492,4 +527,4 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       }
     }
   };
-}
+};

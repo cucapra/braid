@@ -397,6 +397,32 @@ function assignment_helper(emitter: LLVMEmitter, val: llvm.Value, id: number): l
  * Core recursive compile rules
  */
 export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
+
+  visit_alloc(tree: ast.AllocNode, emitter: LLVMEmitter): llvm.Value {
+    // TODO
+    return llvm.ConstInt.create(0, llvm.IntType.int32());
+  },
+
+  visit_tupleind(tree: ast.TupleIndexNode, emitter: LLVMEmitter): llvm.Value {
+    // TODO
+    return llvm.ConstInt.create(0, llvm.IntType.int32());
+  },
+
+  visit_tuple(tree: ast.TupleNode, emitter: LLVMEmitter): llvm.Value {
+    // TODO
+    return llvm.ConstInt.create(0, llvm.IntType.int32());
+  },
+
+  visit_root(tree: ast.RootNode, emitter: LLVMEmitter): llvm.Value {
+    // TODO
+    return llvm.ConstInt.create(0, llvm.IntType.int32());
+  },
+
+  visit_typealias(tree: ast.TypeAliasNode, emitter: LLVMEmitter): llvm.Value {
+    // TODO
+    return llvm.ConstInt.create(0, llvm.IntType.int32());
+  },
+
   visit_literal(tree: ast.LiteralNode, emitter: LLVMEmitter): llvm.Value {
     if (tree.type === "int")
       return llvm.ConstInt.create(<number>tree.value, llvm.IntType.int32());

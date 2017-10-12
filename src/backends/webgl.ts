@@ -1,14 +1,16 @@
 import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
-import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
+import {
+  Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
+  FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2, CUBE_TEXTURE
+} from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
-import { Type, PrimitiveType } from '../type';
+import { Type, PrimitiveType, FLOAT, INT } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
-import { assign } from '../util';
 import * as ast from '../ast';
+import { getFunc } from './webglfun';
 
 // Run-time functions invoked by generated code. These could eventually be
 // moved to the `glrt` library.
@@ -37,21 +39,6 @@ function get_shader(gl, vertex_source, fragment_source) {
     console.error("error linking program:", errLog);
   }
   return program;
-}
-
-// WebGL equivalents of GLSL functions.
-function vec3(x, y, z) {
-  var out = new Float32Array(3);
-  out[0] = x || 0.0;
-  out[1] = y || 0.0;
-  out[2] = z || 0.0;
-  return out;
-}
-
-function mat4mult(a, b) {
-  var out = mat4.create();
-  mat4.multiply(out, a, b);
-  return out;
 }
 `.trim();
 
@@ -108,7 +95,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-    varid: number, variant: Variant | null): string
+  varid: number, variant: Variant | null): string
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid) + variant_suffix(variant);
@@ -137,8 +124,7 @@ function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant: Variant | n
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
 function emit_shader_setup(emitter: Emitter, progid: number,
-                           variant: Variant | null): string
-{
+  variant: Variant | null): string {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
@@ -165,17 +151,25 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean, texture_index: number | undefined,
-    variant: Variant | null): string
+  value: string, attribute: boolean, texture_index: number | undefined,
+  variant: Variant | null): string
 {
   if (!attribute) {
-    if (type === TEXTURE) {
-      // Bind a texture sampler.
+    if (type === TEXTURE || type === CUBE_TEXTURE) {
+      // Bind a texture sampler. We get the ID for the sampler by adding the
+      // offset (an integer) to `gl.TEXTURE0`, as suggested in the OpenGL docs
+      // for `glActiveTexture`. This will fail if the index is greater than
+      // GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS.
       if (texture_index === undefined) {
         throw "missing texture index";
       }
       let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
-      out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
+
+      if (type === TEXTURE) {
+        out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
+      } else { // cube texture
+        out += `gl.bindTexture(gl.TEXTURE_CUBE_MAP, ${value}),\n`;
+      }
       let locname = locsym(scopeid, varid) + variant_suffix(variant);
       out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
@@ -202,8 +196,8 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       throw "error: uniforms must be primitive types";
     }
 
-  // Array types are bound as attributes.
   } else {
+    // Array types are bound as attributes.
     if (type instanceof PrimitiveType) {
       // The value is a WebGL buffer object.
       let buf_expr = paren(value);
@@ -237,7 +231,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
  * set up the uniforms and attributes.
  */
 function emit_shader_binding_variant(emitter: Emitter,
-    progid: number, variant: Variant | null) {
+  progid: number, variant: Variant | null) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
@@ -245,7 +239,7 @@ function emit_shader_binding_variant(emitter: Emitter,
   let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
-  let subemitter = assign({}, emitter);
+  let subemitter = Object.assign({}, emitter);
   if (!subemitter.variant) {
     subemitter.variant = variant;
   }
@@ -258,7 +252,7 @@ function emit_shader_binding_variant(emitter: Emitter,
       value = paren(emit(subemitter, g.value_expr!));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id!, g.type, g.id, value,
-        g.attribute, g.texture_index, variant);
+      g.attribute, g.texture_index, variant);
   }
 
   return out;
@@ -305,21 +299,57 @@ let compile_rules: ASTVisit<Emitter, string> =
       } else if (render_expr(tree)) {
         // Pass through the code argument.
         return emit(emitter, tree.args[0]);
+
+      // Check for a few special intrinsic functions that get emitted as
+      // calls to the glrt library.
+      } else if (tree.fun.tag === "lookup") {
+        // Get the function name.
+        let func = (tree.fun as ast.LookupNode).ident;
+
+        // Emit arguments for the intrinsic.
+        let args: string[] = [];
+        let argsType: Type[] = [];
+        for (let arg of tree.args) {
+          args.push(paren(emit(emitter, arg)));
+          let [typ] = emitter.ir.type_table[arg.id!];
+          argsType.push(typ);
+        }
+        // Get the JavaScript code for this intrinsic call, if it's an
+        // intrinsic. If it's not, this returns null.
+        let res = getFunc(func, argsType, args);
+        if (res) {
+          return res;
+        }
       }
 
       // An ordinary function call.
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
+    // Check for unary operators on special WebGL types that get emitted as
+    // calls to the glrt runtime.
+    visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
+      let [typExpr] = emitter.ir.type_table[tree.expr.id!];
+      let expr = paren(emit(emitter, tree.expr));
+      let res = getFunc(tree.op, [typExpr], [expr]);
+      if (res) {
+        return res;
+      }
+
+      // If no library call was emitted by `getFunc`, fall back to using the
+      // ordinary JavaScript binary operator.
+      return ast_visit(js.compile_rules, tree, emitter);
+    },
+
+    // And the same for binary operators on WebGL types.
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
-      // If this is a matrix/matrix multiply, emit a function call.
-      if (tree.op === "*") {
-        let [typ,] = emitter.ir.type_table[tree.id!];
-        if (typ === FLOAT4X4) {
-          let lhs = paren(emit(emitter, tree.lhs));
-          let rhs = paren(emit(emitter, tree.rhs));
-          return `mat4mult(${lhs}, ${rhs})`;
-        }
+      let [typL] = emitter.ir.type_table[tree.lhs.id!];
+      let [typR] = emitter.ir.type_table[tree.rhs.id!];
+      let lhs = paren(emit(emitter, tree.lhs));
+      let rhs = paren(emit(emitter, tree.rhs));
+      let res = getFunc(tree.op, [typL, typR], [lhs, rhs]);
+      if (res) {
+        return res;
       }
 
       // Otherwise, use the ordinary JavaScript backend.
@@ -328,7 +358,7 @@ let compile_rules: ASTVisit<Emitter, string> =
   });
 
 function emit_glsl_prog(emitter: Emitter, prog: Prog,
-                        variant: Variant | null): string {
+  variant: Variant | null): string {
   let out = "";
 
   // Emit subprograms.

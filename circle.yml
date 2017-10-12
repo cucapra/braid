@@ -1,16 +1,21 @@
-dependencies:
-    post:
-        - make
-    cache_directories:
-        - node_modules
-        - typings
-        - dingus/node_modules
-        - dingus/typings
+version: 2
 
-machine:
-    node:
-        version: 4.1.0
-
-test:
-    override:
-        - make test
+jobs:
+    build:
+        docker:
+            - image: circleci/node:8
+        working_directory: ~/repo
+        steps:
+            - checkout
+            - restore_cache:
+                  keys:
+                      - v1-dependencies-{{ checksum "package.json" }}
+                      - v1-dependencies-
+            - run: yarn
+            - save_cache:
+                paths:
+                    - node_modules
+                key: v1-dependencies-{{ checksum "package.json" }}
+            - run: yarn run parser
+            - run: yarn run compile
+            - run: make test

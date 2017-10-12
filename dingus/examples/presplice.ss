@@ -2,16 +2,17 @@
 # mode: compile
 # ---
 
-var flag = 1;
+# Try switching this between true and false.
+var flag = true;
 
-# Try annotating this quote with an `f`; it still works.
+# Try annotating this quote with `js`; it still works.
 !<
   var x = 4;
   var y = 5;
 
-  # The $ stands for "$nippet" and avoids run-time splicing.
+  # The $ indicates open code.
   $[ if flag $<2> $<3> ] +
 
-  # It also lets you share the enclosing scope.
+  # It lets you share the enclosing scope.
   $[ if flag $<x> $<y> ]
 >

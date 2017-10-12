@@ -1,4 +1,14 @@
 teapot.obj
+bunny.obj
 head.obj
 lambertian.jpg
 default.png
+bump-lowRes.png
+negx.jpg
+negy.jpg
+negz.jpg
+posx.jpg
+posy.jpg
+posz.jpg
+*.zip
+couch/

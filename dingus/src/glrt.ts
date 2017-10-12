@@ -14,7 +14,7 @@
 declare function require(name: string): any;
 
 const eye = require('eye-vector');
-const mat4 = require('gl-mat4');
+import { vec2, vec3, vec4, mat3, mat4 } from 'gl-matrix';
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
@@ -31,7 +31,7 @@ interface Mesh {
   texcoords?: Vec2Array;
   normals?: Vec3Array;
   tangents?: Vec3Array;
-};
+}
 
 /**
  * Given a flat array, return an array with the elements grouped into
@@ -84,36 +84,19 @@ export type Asset = string | HTMLImageElement | ArrayBuffer;
 export type Assets = { [path: string]: Asset };
 
 /**
- * Get an asset string or throw an error.
+ * Get an asset string or throw a Loading exception.
  */
 function get_asset(assets: Assets, path: string) {
   let asset = assets[path];
   if (!asset) {
-    throw `asset not loaded: ${path}`;
+    console.log(`asset not loaded: ${path}`);
+    let promise = load_asset(path).then((asset) => {
+      console.log(`asset loaded.`);
+      assets[path] = asset;
+    });
+    throw new Loading(promise);
   }
   return asset;
-}
-
-/**
- * A little stateful wrapper for `seedrandom`.
- */
-class Random {
-  rng: any;
-
-  constructor() {
-    this.seed();
-  }
-
-  seed = (s = 'the seed') => {
-    this.rng = seedrandom(s);
-  }
-
-  /**
-   * Floating point boolean coin flip: returns either 1.0 or 0.0.
-   */
-  flip = () => {
-    return this.rng() > 0.5 ? 1.0 : 0.0;
-  }
 }
 
 /**
@@ -130,7 +113,12 @@ function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
         if (xhr.status === 200) {
           resolve(xhr);
         } else {
-          let err = "asset loading failed with status " + xhr.status;
+          let err = `error loading ${url}: `;
+          if (xhr.status === 404) {
+            err += `not found`;
+          } else {
+            err += `status ${xhr.status}`;
+          }
           console.error(err);
           reject(err);
         }
@@ -161,9 +149,9 @@ function ajax_get_binary(url: string): Promise<ArrayBuffer> {
 function image_get(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     let img = new Image();
-    img.onload = function() {
+    img.onload = () => {
       resolve(img);
-    }
+    };
     img.src = url;
   });
 }
@@ -179,7 +167,7 @@ const IMAGE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif'];
 const BINARY_EXTENSIONS = ['.vtx', '.raw'];
 
 /**
- * Check whether a path seems to be an image.
+ * Check whether a path has a given extension.
  */
 function has_extension(path: string, extensions: string[]): boolean {
   for (let ext of extensions) {
@@ -192,33 +180,83 @@ function has_extension(path: string, extensions: string[]): boolean {
 }
 
 /**
- * Load some assets from the server.
+ * Load an asset from the server.
  */
-export function load_assets(paths: string[], baseurl="assets/"):
-  Promise<Assets>
+export function load_asset(path: string, baseurl = "assets/"):
+  Promise<Asset>
 {
-  // Kick off async requests for all the assets.
-  let requests: Promise<Asset>[] = [];
-  for (let path of paths) {
-    // Fetch the URL either as an image, binary, or string file.
-    let url = baseurl + path;
-    if (has_extension(path, IMAGE_EXTENSIONS)) {
-      requests.push(image_get(url));
-    } else if (has_extension(path, BINARY_EXTENSIONS)) {
-      requests.push(ajax_get_binary(url));
+  // Fetch the URL either as an image, binary, or string file.
+  let url = baseurl + path;
+  if (has_extension(path, IMAGE_EXTENSIONS)) {
+    return image_get(url);
+  } else if (has_extension(path, BINARY_EXTENSIONS)) {
+    return ajax_get_binary(url);
+  } else {
+    return ajax_get(url);
+  }
+}
+
+/**
+ * An exception indicating that an asset is not ready yet.
+ *
+ * The exception wraps a promise that resolves when the asset is finished
+ * loading.
+ */
+class Loading {
+  constructor(
+    public promise: Promise<void>
+  ) { }
+}
+
+/**
+ * Run a function repeatedly to load all the assets it needs.
+ *
+ * This works by catching the `Loading` exception when it's raised, waiting
+ * for the load to complete, and then re-executing the function. The next
+ * time around, the asset *should* be loaded and the exception shouldn't
+ * happen again. I realize that this is extremely messy, but it's a minimally
+ * invasive way to add asynchronous loading to synchronous load calls.
+ */
+export function load_and_run<T>(func: () => T): Promise<T> {
+  let out: T;
+  try {
+    // Try running the function. Assets may not be loaded yet.
+    out = func();
+
+  } catch (e) {
+    if (e instanceof Loading) {
+      // If we're still loading, try again.
+      return e.promise.then(() => load_and_run(func));
     } else {
-      requests.push(ajax_get(url));
+      // Some other exception.
+      throw e;
     }
   }
 
-  // When all return, construct a map from the returned data strings.
-  return Promise.all(requests).then((contents) => {
-    let assets: Assets = {};
-    for (let i = 0; i < paths.length; ++i) {
-      assets[paths[i]] = contents[i];
-    }
-    return assets;
-  });
+  // If no exception occurred, everything is loaded and we're ready.
+  return Promise.resolve(out);
+}
+
+/**
+ * A little stateful wrapper for `seedrandom`.
+ */
+class Random {
+  rng: any;
+
+  constructor() {
+    this.seed();
+  }
+
+  seed = (s = 'the seed') => {
+    this.rng = seedrandom(s);
+  }
+
+  /**
+   * Floating point boolean coin flip: returns either 1.0 or 0.0.
+   */
+  flip = () => {
+    return this.rng() > 0.5 ? 1.0 : 0.0;
+  }
 }
 
 /**
@@ -288,32 +326,131 @@ function load_image(assets: Assets, name: string): HTMLImageElement {
 }
 
 /**
- * Convert an image into a WebGL texture.
+ * Get the 6 face indices of a cube map texture.
+ *
+ * We use this to map the sequence of image arguments to each of the face
+ * components in the WebGL API call.
  */
-function texture(gl: WebGLRenderingContext, img: HTMLImageElement) {
+function cubemapTargets(gl: WebGLRenderingContext) {
+  return [
+    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+}
+
+/**
+ * Convert an image into a WebGL texture.
+ *
+ * glTextureType is either gl.TEXTURE_2D or gl.TEXTURE_CUBE_MAP. If no images
+ * are provided, we create an empty texture.
+ */
+function texture(gl: WebGLRenderingContext, imgs: HTMLImageElement[],
+  glTextureType: number) {
+
   let tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.bindTexture(glTextureType, tex);
 
-  // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
-  // but it appears to have been invented to convert between the DOM
-  // coordinate convention for images and WebGL's convention.
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  // If imgs is null, we need to create an empty texture.
+  if (imgs.length === 0) {
+    // The size of the empty texture is 1024. Larger than 1024 might lead to
+    // low fps.
 
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-                gl.UNSIGNED_BYTE, img);
+    if (glTextureType === gl.TEXTURE_2D) {
+      // Create an empty standard 2D texture.
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA,
+                    gl.UNSIGNED_BYTE, null);
+    } else {
+      // Create an empty cube texture
+      cubemapTargets(gl).forEach((target, idx) => (
+        gl.texImage2D(target, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA,
+                      gl.UNSIGNED_BYTE, null)
+      ));
+    }
 
-  // Interpolation.
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  // "Wrap around" the texture on overrun.
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  // Otherwise, create textures from images.
+  } else {
+    // Create a normal 2D texture.
+    if (glTextureType === gl.TEXTURE_2D) {
+      // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
+      // but it appears to have been invented to convert between the DOM
+      // coordinate convention for images and WebGL's convention.
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
+        gl.UNSIGNED_BYTE, imgs[0]);
+    } else {
+      // Cube mapping. We do not invert Y-coordinate for cubemap textures.
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
-  gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
+      // Map each image to its corresponding face.
+      cubemapTargets(gl).forEach((target, idx) => (
+        gl.texImage2D(target, 0, gl.RGBA, gl.RGBA,
+          gl.UNSIGNED_BYTE, imgs[idx])
+      ));
+    }
 
+    // Interpolation.
+    gl.generateMipmap(glTextureType);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(glTextureType, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+    // "Wrap around" the texture on overrun.
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(glTextureType, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  }
+
+  gl.bindTexture(glTextureType, null);  // Unbind.
   return tex;
+}
+
+/**
+ * Create a framebuffer object and bind a depth render buffer to it.
+ *
+ * @param gl The WebGL context.
+ */
+function createFramebuffer(gl: WebGLRenderingContext) {
+  let framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+  // Bind a depth render buffer to this framebuffer in order to enable the
+  // depth test.
+  let depthBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+
+  // The depth buffer's size should be the same as the texture's (1024x1024).
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024, 1024);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT,
+    gl.RENDERBUFFER, depthBuffer);
+
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);  // Unbind render buffer.
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Unbind framebuffer.
+
+  return framebuffer;
+}
+
+/**
+ * Bind an empty texture to the framebuffer. If the texture is a cube texture,
+ * the target is the index of cubemap target list ([posx, negx, posy, negy,
+ * posz, negz]). If the texture is a 2D texture, the target is -1.
+ *
+ * @param gl A WebGL rendering context.
+ * @param fbo The framebuffer object that the texture is bound to.
+ * @param tex A 2D texture or cube texture.
+ * @param target -1 if 2D texture; index if cube texture.
+ */
+function framebufferTexture(gl: WebGLRenderingContext,
+  fbo: WebGLFramebuffer, tex: WebGLTexture, target: number) {
+  let glTextureType = target === -1 ? gl.TEXTURE_2D :
+    cubemapTargets(gl)[target];
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, glTextureType,
+                          tex, 0);
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
 /**
@@ -404,11 +541,36 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       drawtime(end - start);
     },
 
-    // Matrix manipulation library.
+    /**
+     * Create a glArrayBuffer from a two dimensional array.
+     */
+    array_buffer(array: number[][]) {
+      let data = flat_array(array);
+      return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
+    },
+
+    /**
+     * Create a glElementArrayBuffer from an int array
+     */
+    element_buffer(data: number[]) {
+      return gl_buffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data));
+    },
+
+    // Expose the gl-matrix library's components.
     mat4,
+    mat3,
+    vec4,
+    vec3,
+    vec2,
 
     // Eye vector calculation.
     eye,
+
+    // A framebuffer value representing the content to be shown on screen,
+    // in the canvas. The value is null so that, when we call
+    // gl.bindFrameBuffer(null), we unbind from any other framebuffer and
+    // draw to the canvas.
+    screenbuffer: null,
 
     // Load a mesh from an OBJ file.
     load_obj(name: string) {
@@ -442,10 +604,20 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     },
 
     /**
-     * Convert an image to a texture.
+     * Convert an image, or several images, to a texture. This can be called
+     * either with one image to create a standard 2D texture or six images
+     * to create a cube-map texture.
      */
     texture(img: HTMLImageElement) {
-      return texture(gl, img);
+      if (arguments.length === 0) {
+        return texture(gl, [], gl.TEXTURE_2D)
+      } else {
+        return texture(gl, [img], gl.TEXTURE_2D);
+      }
+    },
+
+    cubeTexture(...imgs: HTMLImageElement[]) {
+      return texture(gl, imgs, gl.TEXTURE_CUBE_MAP)
     },
 
     /**
@@ -453,7 +625,44 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      */
     load_texture(name: string) {
       let img = load_image(assets, name);
-      return texture(gl, img);
+      return texture(gl, [img], gl.TEXTURE_2D);
+    },
+
+    /**
+     * Create a framebuffer object.
+     */
+    createFramebuffer() {
+      return createFramebuffer(gl);
+    },
+
+    /**
+     * Bind a texture to a framebuffer object.
+     */
+    framebufferTexture(fbo: WebGLFramebuffer, tex: WebGLTexture,
+      target: number) {
+      // texture2D if length === 2
+      if (arguments.length === 2) {
+        // target = -1 stands for texture2D
+        framebufferTexture(gl, fbo, tex, -1);
+      } else {
+        // bind cubeTexture to the framebuffer
+        framebufferTexture(gl, fbo, tex, target);
+      }
+    },
+
+    /**
+     * Set the pipeline destination to a framebuffer or the screenbuffer
+     */
+    bindFramebuffer(fbo: WebGLFramebuffer) {
+      if (fbo === null) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      } else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        // The size of viewport should be consistent with the size of the
+        // framebuffer.
+        gl.viewport(0, 0, 1024, 1024);
+      }
     },
 
     /**
@@ -517,6 +726,90 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
         averages[i] = totals[i] / 255 / count;
       }
       return averages;
+    },
+
+    // Helper functions used by the WebGL compiler backend.
+    mat3fromOneValue(x: number) {
+      let out = mat3.fromValues(x, x, x,
+                                x, x, x,
+                                x, x, x);
+      return out;
+    },
+
+    mat4fromOneValue(x: number) {
+      let out = mat4.fromValues(x, x, x, x,
+                                x, x, x, x,
+                                x, x, x, x,
+                                x, x, x, x);
+      return out;
+    },
+
+    mat3div(a: mat3, b: mat3) {
+      let out = mat3.create();
+      out[0] = a[0] / b[0];
+      out[1] = a[1] / b[1];
+      out[2] = a[2] / b[2];
+      out[3] = a[3] / b[3];
+      out[4] = a[4] / b[4];
+      out[5] = a[5] / b[5];
+      out[6] = a[6] / b[6];
+      out[7] = a[7] / b[7];
+      out[8] = a[8] / b[8];
+      return out;
+    },
+
+    mat4div(a: mat4, b: mat4) {
+      let out = mat4.create();
+      out[0] = a[0] / b[0];
+      out[1] = a[1] / b[1];
+      out[2] = a[2] / b[2];
+      out[3] = a[3] / b[3];
+      out[4] = a[4] / b[4];
+      out[5] = a[5] / b[5];
+      out[6] = a[6] / b[6];
+      out[7] = a[7] / b[7];
+      out[8] = a[8] / b[8];
+      out[9] = a[9] / b[9];
+      out[10] = a[10] / b[10];
+      out[11] = a[11] / b[11];
+      out[12] = a[12] / b[12];
+      out[13] = a[13] / b[13];
+      out[14] = a[14] / b[14];
+      out[15] = a[15] / b[15];
+      return out;
+    },
+
+    // Create vec3 using vec4
+    vec3fromvec4(v4: vec4) {
+      let out = vec3.create();
+      out[0] = v4[0] || 0.0;
+      out[1] = v4[1] || 0.0;
+      out[2] = v4[2] || 0.0;
+      return out;
+    },
+
+    // Create vec4 using vec3
+    vec4fromvec3(v3: vec3, x: number) {
+      let out = vec4.create();
+      out[0] = v3[0] || 0.0;
+      out[1] = v3[1] || 0.0;
+      out[2] = v3[2] || 0.0;
+      out[3] = x || 0.0;
+      return out;
+    },
+
+    // normalize a scalar
+    // s > 0: s = 1
+    // s = 0: s = 0
+    // s < 0: s = -1
+    normalizeScalar(s: number) {
+      if (s > 0) {
+        return 1;
+      } else if (s < 0) {
+        return -1;
+      } else {
+        return 0;
+      }
     },
 
     /**

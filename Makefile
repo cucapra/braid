@@ -9,7 +9,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ tool/munge.js node_modules
+	rm -rf parser.js build/ tool/munge.js node_modules _web/
 	make -C dingus clean
 
 include ts.mk
@@ -18,7 +18,7 @@ include ts.mk
 # Build the parser from the grammar.
 
 parser.js: src/grammar.pegjs $(call npmdep,pegjs)
-	$(call npmbin,pegjs) --cache $< $@
+	npm run parser
 
 
 # The command-line Node tool.
@@ -42,7 +42,7 @@ TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
 	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss) \
-	$(wildcard test/error/*.ss)
+	$(wildcard test/error/*.ss) $(wildcard test/type/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
@@ -81,61 +81,35 @@ tool/munge.js: tool/munge.ts $(TSC)
 
 # Documentation.
 
-DOC_PAGES := index hacking
-DOC_BUILD := docs/build
-
-.PHONY: docs watch-docs
-docs: $(DOC_PAGES:%=$(DOC_BUILD)/%.html) $(DOC_BUILD)/docs.js
-
-watch-docs:
-	liveserve -h 0.0.0.0 -w docs -x 'make docs' -i $(DOC_BUILD) $(DOC_BUILD)
-
-$(DOC_BUILD)/%.html: docs/%.md $(call npmdep,madoko)
-	cd docs; $(call npmbin,madoko) --odir=build ../$<
-
-$(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
-	$(TSC) --out $@ $<
+.PHONY: docs
+docs:
+	cd $@ ; gitbook build
 
 
-# Deploy the dingus and docs to the gh-pages branch.
+# Put the dingus and docs together into a _web directory (and publish).
 
-.PHONY: site deploy home
+.PHONY: web deploy
 
-DEPLOY_DIR := _site
+DEPLOY_DIR := _web
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude build
-site: dingus docs home
-	mkdir -p $(DEPLOY_DIR)/docs
-	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
-		--include '*/' --exclude '*' \
-		docs/build/* $(DEPLOY_DIR)/docs
+	--exclude .DS_Store
+web: dingus docs
+	rm -rf $(DEPLOY_DIR)/docs
+	mkdir -p $(DEPLOY_DIR)
+	cp -r docs/_book $(DEPLOY_DIR)/docs
+	rm -rf $(DEPLOY_DIR)/dingus
 	mkdir -p $(DEPLOY_DIR)/dingus
-	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
-		--exclude 'assets/*.zip' --include 'assets/*' --include 'assets/*/*' \
-		--include '*/' --exclude '*' \
-		dingus/* $(DEPLOY_DIR)/dingus
-	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
-	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
+	cp -r dingus/assets $(DEPLOY_DIR)/dingus
+	cp dingus/*.css $(DEPLOY_DIR)/dingus
+	cp dingus/*.html $(DEPLOY_DIR)/dingus
+	cp dingus/ssc.bundle.js $(DEPLOY_DIR)/dingus
+	cp site/index.html site/braid.css site/braid.svg _web
 
-DEPLOY_BRANCH := gh-pages
-deploy: site
-	git symbolic-ref HEAD refs/heads/$(DEPLOY_BRANCH)
-
-	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
-	git --work-tree $(DEPLOY_DIR) add --all
-	if git --work-tree $(DEPLOY_DIR) diff-index --quiet HEAD -- ; then \
-	  echo "no changes" ; \
-	else \
-	  git --work-tree $(DEPLOY_DIR) commit -m "deploy [ci skip]" ; \
-	  git push origin $(DEPLOY_BRANCH) ; \
-	fi
-
-	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
-	git reset --mixed
-
-home:
-	make -C site
-
+RSYNCARGS := --compress --recursive --checksum --itemize-changes \
+	--delete -e ssh --perms --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r
+DEST := courses:coursewww/capra.cs.cornell.edu/htdocs/braid
+deploy: web
+	rsync $(RSYNCARGS) _web/ $(DEST)
 
 
 # Lint.
@@ -143,5 +117,5 @@ home:
 .PHONY: lint
 lint:
 	find src -name '*.ts' | xargs tslint
-	find dingus -name '*.ts' | xargs tslint
+	find dingus/src -name '*.ts' | xargs tslint
 	tslint $(CLI_TS)

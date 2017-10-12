@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Braid</title>
+    <link rel="stylesheet" href="braid.css">
+</head>
+<body>
+    <header>
+        <img src="braid.svg" alt="Braid" width="100" height="192">
+        <div>
+            <h1>Braid</h1>
+            <nav>
+                <a href="docs">docs</a>
+                <a href="dingus">dingus</a>
+                <a href="https://github.com/cucapra/braid">source</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <p>
+        <strong>Braid</strong>
+        is an experimental heterogeneous programming language with an
+        application to real-time graphics.
+        A Braid program controls the CPU and the GPU&apos;s shader stages
+        simultaneously.
+        The compiler emits a mixture of WebGL calls in JavaScript and shader
+        programs in GLSL.
+        Braid uses <i>multi-stage programming</i> to let developers control
+        the placement and specialization of heterogeneous code.
+        </p>
+
+        <p>
+        To get started, see the <a href="docs">documentation</a> for the
+        compiler and the language.
+        You can experiment with Braid with the in-browser
+        <a href="dingus">dingus</a> or browse the
+        <a href="https://github.com/cucapra/braid">source on GitHub</a>.
+        A
+        <a href="http://www.cs.cornell.edu/~asampson/media/papers/braid-oopsla2017-preprint.pdf">paper
+        about Braid</a> will appear at OOPSLA 2017:
+        </p>
+
+        <pre>@inproceedings{braid,
+  title = {Static Stages for Heterogeneous Programming},
+  author = {Adrian Sampson and
+            Kathryn S McKinley and
+            Todd Mytkowicz},
+  booktitle = {OOPSLA},
+  year = 2017,
+}</pre>
+
+        <p>
+        Braid is a project of <a href="https://capra.cs.cornell.edu">Capra</a>
+        at Cornell.
+        It began life at
+        <a href="https://www.microsoft.com/en-us/research/">Microsoft
+        Research</a>.
+    </main>
+
+    <a class="github-fork-ribbon"
+       href="https://github.com/cucapra/braid"
+       data-ribbon="Fork me on GitHub"
+       title="Fork me on GitHub">Fork me on GitHub</a>
+</body>
+</html>

@@ -6,49 +6,11 @@ import * as path from 'path';
 import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
+import { Error } from "./src/error";
+import * as llvm from 'llvmc';
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
-
-function read_string(filename: string, f: (s: string) => void) {
-  fs.readFile(filename, function (err: any, data: any) {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    f(data.toString());
-  });
-}
-
-// Check the output of a test. Return a success flag.
-function check_output(filename: string, source: string, result: string):
-  boolean
-{
-  let name = path.basename(filename, EXTENSION);
-
-  let [,expected] = source.split('# -> ');
-  if (expected === undefined) {
-    console.log(`${name} ✘: ${result} (no expected result found)`);
-    return false;
-  }
-  expected = expected.trim();
-  result = result.trim();
-
-  let match: boolean;
-  if (expected === "type error") {
-    match = result.indexOf(expected) === 0;
-  } else {
-    match = expected === result;
-  }
-
-  if (match) {
-    console.log(`${name} ✓`);
-    return true;
-  } else {
-    console.log(`${name} ✘: ${result} (${expected})`);
-    return false;
-  }
-}
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
@@ -56,6 +18,7 @@ function run(filename: string, source: string, webgl: boolean,
     native: boolean, outfile: string)
 {
   let success = true;
+  let name = path.basename(filename, EXTENSION);
 
   try {
 
@@ -66,11 +29,11 @@ function run(filename: string, source: string, webgl: boolean,
       generate: generate,
 
       log: log,
-      error (e: string) {
+      error: e => {
         if (test) {
-          success = check_output(filename, source, e);
+          success = driver.check_output(name, source, e.toString());
         } else {
-          console.error(e);
+          console.error(e.toString());
           success = false;
         }
       },
@@ -81,47 +44,53 @@ function run(filename: string, source: string, webgl: boolean,
       presplice,
     };
 
-    // Run the driver.
-    driver.frontend(config, source, filename, function (tree, types) {
-      if (compile) {
-        // Compiler.
-        driver.compile(config, tree, types, function (code) {
-          if (execute) {
-            driver.execute(config, code, function (res) {
-              if (test) {
-                success = check_output(filename, source, res);
-              } else {
-                console.log(res);
-              }
-            });
-          } else {
-            console.log(code);
-          }
-        },
+    let sources: string[] = [source];
+    let filenames: string[] = [filename];
 
-        // Native compilation result.
-        (mod) => {
-          if (outfile) {
-            let err = mod.writeBitcodeToFile(outfile);
-            if (err) {
-              throw "error writing bitcode: " + err;
-            }
-          } else {
-            console.log(mod.toString());
-          }
-        });
-
+    let res = driver.frontend(config, sources, filenames);
+    if (res instanceof Error) {
+      if (test) {
+        return driver.check_output(name, source, res.toString());
       } else {
-        // Interpreter.
-        driver.interpret(config, tree, types, function (res) {
-          if (test) {
-            success = check_output(filename, source, res);
-          } else {
-            console.log(res);
-          }
-        });
+        console.error(res.toString());
+        return false;
       }
-    });
+    }
+
+    let [tree, types] = res;
+    if (compile) {
+
+      let if_to_js = (code: string) => {
+        if (execute) {
+          driver.execute(config, code, (res) => {
+            if (test) {
+              success = driver.check_output(name, source, res);
+            } else {
+              console.log(res);
+            }
+          });
+        } else {
+          console.log(code);
+        }
+      }
+
+      let if_to_native = (mod: llvm.Module) => {
+        console.log(mod.toString());
+      }
+
+      // Compiler.
+      driver.compile(config, tree, types, if_to_js, if_to_native);
+
+    } else {
+      // Interpreter.
+      driver.interpret(config, tree, types, (res) => {
+        if (test) {
+          success = driver.check_output(name, source, res);
+        } else {
+          console.log(res);
+        }
+      });
+    }
 
   } catch (e) {
 
@@ -140,7 +109,54 @@ function run(filename: string, source: string, webgl: boolean,
   return success;
 }
 
-function main() {
+/**
+ * Dump a lot of debugging information using Node's `util.inspect`.
+ */
+function verbose_log(...msg: any[]) {
+  let out: string[] = [];
+  for (let m of msg) {
+    if (typeof(m) === "string") {
+      out.push(m);
+    } else if (m instanceof Array) {
+      for (let i = 0; i < m.length; ++i) {
+        out.push("\n" + i + ": " +
+            util.inspect(m[i], { depth: undefined, colors: true }));
+      }
+    } else {
+      out.push(util.inspect(m, { depth: undefined, colors: true }));
+    }
+  }
+  // Work around a TypeScript limitation:
+  // https://github.com/Microsoft/TypeScript/issues/4755
+  console.log(out[0], ...out.slice(1));
+}
+
+/**
+ * Read from a file or, if the filename is "-", from stdin.
+ */
+function read_file_or_stdin(fn: string): Promise<string> {
+  return new Promise(function (resolve, reject) {
+    if (fn === STDIN_FILENAME) {
+      // Read from stdin.
+      let chunks: string[] = [];
+      process.stdin.on("data", (chunk: string) => {
+        chunks.push(chunk);
+      }).on("end", () => {
+        resolve(chunks.join(""));
+      }).setEncoding("utf8");
+    } else {
+      // Read from a file.
+      fs.readFile(fn, (err, data) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(data.toString());
+      });
+    }
+  });
+}
+
+async function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
     boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P', 'n'],
@@ -180,58 +196,18 @@ function main() {
   }
 
   // Log stuff, if in verbose mode.
-  let log: (...msg: any[]) => void;
-  if (verbose) {
-    log = function (...msg: any[]) {
-      let out: string[] = [];
-      for (let m of msg) {
-        if (typeof(m) === "string") {
-          out.push(m);
-        } else if (m instanceof Array) {
-          for (let i = 0; i < m.length; ++i) {
-            out.push("\n" + i + ": " +
-                util.inspect(m[i], { depth: undefined, colors: true }));
-          }
-        } else {
-          out.push(util.inspect(m, { depth: undefined, colors: true }));
-        }
-      }
-      // Work around a TypeScript limitation:
-      // https://github.com/Microsoft/TypeScript/issues/4755
-      console.log(out[0], ...out.slice(1));
-    }
-  } else {
-    log = (_ => void 0);
-  }
+  let log = verbose ? verbose_log : (() => void 0);
 
   // Read each source file and run the driver.
   let success = true;
-  let promises = filenames.map(function (fn) {
-    return new Promise(function (resolve, reject) {
-      let then = function (source: string) {
-        success = run(fn, source, webgl, compile, execute, test,
-            generate, log, !no_presplice, native, outfile) && success;
-        resolve();
-      };
-      if (fn === STDIN_FILENAME) {
-        // Read from stdin.
-        let chunks: string[] = [];
-        process.stdin.on("data", function (chunk: string) {
-          chunks.push(chunk);
-        }).on("end", function () {
-          then(chunks.join(""))
-        }).setEncoding("utf8");
-      } else {
-        // Read from a file.
-        read_string(fn, then);
-      }
-    });
-  });
-  Promise.all(promises).then(function() {
-    if (!success) {
-      process.exit(1);
-    }
-  });
+  await Promise.all(filenames.map(async fn => {
+    let source = await read_file_or_stdin(fn);
+    success = run(fn, source, webgl, compile, execute, test,
+        generate, log, !no_presplice, native, outfile) && success;
+  }));
+  if (!success) {
+    process.exit(1);
+  }
 }
 
 main();

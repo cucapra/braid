@@ -1,4 +1,4 @@
-extern a: Int Array;
+extern a: Int Buffer;
 extern b: Int;
 var c = a;
 vertex glsl<

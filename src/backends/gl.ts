@@ -11,7 +11,8 @@ import {
   FLOAT,
   ANY,
   VOID,
-  STRING
+  STRING,
+  BOOLEAN
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -29,17 +30,26 @@ export const FLOAT3 = new PrimitiveType("Float3");
 export const FLOAT4 = new PrimitiveType("Float4");
 export const FLOAT3X3 = new PrimitiveType("Float3x3");
 export const FLOAT4X4 = new PrimitiveType("Float4x4");
-export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
 
+// The polymorphic types Array and Buffer stand for an array of values on the
+// CPU and on the GPU, respectively. The CPU can create and mutate Array
+// values before turning them into GPU-side Buffer values for use in shaders.
+export const ARRAY = new ConstructorType("Array");
+export const BUFFER = new ConstructorType("Buffer");
+
 // A type for textures (on the CPU) and sampler IDs (on the GPU).
 export const TEXTURE = new PrimitiveType("Texture");
+export const CUBE_TEXTURE = new PrimitiveType("CubeTexture");
+// A type for the framebuffer in webgl.
+export const FRAMEBUFFER = new PrimitiveType("Framebuffer");
 
 export const GL_TYPES: TypeMap = {
   "Float2": FLOAT2,
   "Float3": FLOAT3,
   "Float4": FLOAT4,
+  "Vec2": FLOAT2,
   "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
   "Vec4": FLOAT4,
   "Float3x3": FLOAT3X3,
@@ -49,6 +59,7 @@ export const GL_TYPES: TypeMap = {
   "Int3": INT3,
   "Int4": INT4,
   "Array": ARRAY,
+  "Buffer": BUFFER,
 
   // TODO This Mesh type is used by the dingus. It is an opaque type. It would
   // be nice if the dingus could declare the Mesh type itself rather than
@@ -56,6 +67,8 @@ export const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 
   "Texture": TEXTURE,
+  "CubeTexture": CUBE_TEXTURE,
+  "Framebuffer": FRAMEBUFFER,
   "Image": new PrimitiveType("Image"),
 };
 
@@ -76,6 +89,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Float3x3": "mat3",
   "Float4x4": "mat4",
   "Texture": "sampler2D",
+  "CubeTexture": "samplerCube",
 };
 
 export const FRAG_INTRINSIC = "fragment";
@@ -85,6 +99,7 @@ export const SHADER_ANNOTATION = "glsl";
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),
   new FunType([FLOAT3], FLOAT3),
   new FunType([FLOAT4], FLOAT4),
 ]);
@@ -102,12 +117,47 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT3, FLOAT], FLOAT3),
   new FunType([FLOAT4, FLOAT], FLOAT4),
 ]);
-const _GL_UNARY_BINARY_TYPE = new OverloadedType(
-  _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
+const _GL_ARITH_UNARY_TYPE = new OverloadedType([
+  new FunType([INT], INT),
+  new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT2], FLOAT2),
+  new FunType([FLOAT3], FLOAT3),
+  new FunType([FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4], FLOAT4X4),
+]);
+const _GL_ARITH_BINARY_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector- or matrix-by-scalar.
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT, FLOAT2], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
+  new FunType([FLOAT, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
+  new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+]);
+const _GL_COMPARE_TYPE = new OverloadedType([
+  new FunType([INT, INT], BOOLEAN),
+  new FunType([FLOAT, FLOAT], BOOLEAN),
+]);
+const _GL_ARITH_UNARY_BINARY_TYPE = new OverloadedType(
+  _GL_ARITH_UNARY_TYPE.types.concat(_GL_ARITH_BINARY_TYPE.types)
 );
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
   new FunType([FLOAT3, FLOAT3], FLOAT3),
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
@@ -121,6 +171,12 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT3], FLOAT3),
   new FunType([FLOAT, FLOAT4], FLOAT4),
 
+  // Matrix-by-scalar.
+  new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
+  new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
+  new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
+  new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
+
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
@@ -130,25 +186,38 @@ export const INTRINSICS: TypeMap = {
   vertex: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   fragment: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   gl_Position: FLOAT4,
+  gl_FragCoord: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([
+    new FunType([], FLOAT4),
     new FunType([FLOAT3, FLOAT], FLOAT4),
     new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
     new FunType([FLOAT], FLOAT4),
   ]),
   vec3: new OverloadedType([
+    new FunType([], FLOAT3),
     new FunType([FLOAT4], FLOAT3),
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
     new FunType([FLOAT], FLOAT3),
   ]),
   vec2: new OverloadedType([
+    new FunType([], FLOAT2),
     new FunType([FLOAT, FLOAT], FLOAT2),
+    new FunType([FLOAT], FLOAT2),
   ]),
+  mat3: new FunType([], FLOAT3X3),
+  mat4: new FunType([], FLOAT4X4),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
+  fract: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
-  reflect: _GL_BINARY_TYPE,
+  reflect: new OverloadedType([
+    new FunType([FLOAT2, FLOAT2], FLOAT2),
+    new FunType([FLOAT3, FLOAT3], FLOAT3),
+    new FunType([FLOAT4, FLOAT4], FLOAT4),
+  ]),
   dot: new OverloadedType([
+    new FunType([FLOAT2, FLOAT2], FLOAT),
     new FunType([FLOAT3, FLOAT3], FLOAT),
     new FunType([FLOAT4, FLOAT4], FLOAT),
   ]),
@@ -158,6 +227,10 @@ export const INTRINSICS: TypeMap = {
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
     new FunType([FLOAT2, FLOAT, FLOAT], FLOAT2),
     new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
+    new FunType([FLOAT4, FLOAT, FLOAT], FLOAT4),
+    new FunType([FLOAT2, FLOAT2, FLOAT2], FLOAT2),
+    new FunType([FLOAT3, FLOAT3, FLOAT3], FLOAT3),
+    new FunType([FLOAT4, FLOAT4, FLOAT4], FLOAT4),
   ]),
   exp2: new FunType([FLOAT], FLOAT),
   cross: new FunType([FLOAT3, FLOAT3], FLOAT3),
@@ -170,17 +243,36 @@ export const INTRINSICS: TypeMap = {
   ]),
 
   // Binary operators.
-  '+': _GL_UNARY_BINARY_TYPE,
-  '-': _GL_UNARY_BINARY_TYPE,
+  '+': _GL_ARITH_UNARY_BINARY_TYPE,
+  '-': _GL_ARITH_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
-  '/': _GL_BINARY_TYPE,
+  '/': _GL_ARITH_BINARY_TYPE,
+
+  // Boolean binary operators inherited from core.
+  '~': new FunType([BOOLEAN], BOOLEAN),
+  '==': _GL_COMPARE_TYPE,
+  '!=': _GL_COMPARE_TYPE,
+  '>=': _GL_COMPARE_TYPE,
+  '<=': _GL_COMPARE_TYPE,
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
+  textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
+  // TODO: Remove this function?
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
-  float_array: new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+  float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
+
+  // An array constructor.
+  // It would be better to use generics here.
+  array: new OverloadedType([
+    new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
+    new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+    new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
+    new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
+    new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
+  ]),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is
@@ -297,7 +389,7 @@ export function shadervarsym(scopeid: number, varid: number) {
 // attribute: i.e., it is an array type.
 export function _attribute_type(t: Type) {
   if (t instanceof InstanceType) {
-    return t.cons === ARRAY;
+    return t.cons === BUFFER;
   }
   return false;
 }
@@ -305,7 +397,7 @@ export function _attribute_type(t: Type) {
 // A helper function that unwraps array types. Non-array types are unaffected.
 export function _unwrap_array(t: Type): Type {
   if (t instanceof InstanceType) {
-    if (t.cons === ARRAY) {
+    if (t.cons === BUFFER) {
       // Get the inner type: the array element type.
       return t.arg;
     }
@@ -320,42 +412,42 @@ export interface Glue {
   /**
    * Uniquely identify the original value.
    */
-  id: number,
+  id: number;
 
   /**
    * The GLSL variable name that stores the value as used in this stage.
    */
-  name: string,
+  name: string;
 
   /**
    * The type of the value as it appears in the GLSL program.
    */
-  type: Type,
+  type: Type;
 
   /**
    * The value is either an expression (for escapes) or just another variable
    * name to carry through (for free variables). Only one of these may be set.
    */
-  value_expr?: ast.ExpressionNode,
-  value_name?: string,
+  value_expr?: ast.ExpressionNode;
+  value_name?: string;
 
   /**
    * Whether this variable comes from the host directly (a WebGL binding) or
    * from a previous shader stage (a `varying` variable).
    */
-  from_host: boolean,
+  from_host: boolean;
 
   /**
    * Whether this is the point where the value decays from a `T Array` to a
    * plain old `T`. This occurs only at the first shader stage.
    */
-  attribute: boolean,
+  attribute: boolean;
 
   /**
    * If `type` is `TEXTURE`, the unique index of this texture. Textures are
    * assigned to texture units, which have unique indices.
    */
-  texture_index?: number,
+  texture_index?: number;
 }
 
 // Find all the incoming Glue values for a given shader program.
@@ -365,7 +457,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
   // Get glue for the persists.
   for (let esc of prog.persist) {
-    let [type,] = ir.type_table[esc.body.id!];
+    let [type] = ir.type_table[esc.body.id!];
     let g: Glue = {
       id: esc.id,
       name: shadervarsym(prog.id!, esc.id),
@@ -394,7 +486,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       g.value_expr = esc.body;
 
       // If this is a texture, assign its index.
-      if (g.type === TEXTURE) {
+      if (g.type === TEXTURE || g.type === CUBE_TEXTURE) {
         g.texture_index = texture_index;
         ++texture_index;
       }
@@ -413,7 +505,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
   // Get glue for the free variables.
   for (let fv of prog.free) {
-    let [type,] = ir.type_table[fv];
+    let [type] = ir.type_table[fv];
     let g: Glue = {
       id: fv,
       name: shadervarsym(prog.id!, fv),
@@ -445,7 +537,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
         g.value_name = varsym(fv);
 
         // If this is a texture, assign its index.
-        if (g.type === TEXTURE) {
+        if (g.type === TEXTURE || g.type === CUBE_TEXTURE) {
           g.texture_index = texture_index;
           ++texture_index;
         }

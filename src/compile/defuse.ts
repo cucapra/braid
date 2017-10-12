@@ -1,26 +1,20 @@
-import { hd, tl, cons, overlay, stack_lookup, merge, fix } from '../util';
+import { hd, tl, cons, stack_lookup, merge, fix, head_merge } from '../util';
 import { DefUseTable } from './ir';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import * as ast from '../ast';
 
-export type NameMap = { [name: string]: number };
+export type NameMap = { readonly [name: string]: number };
 
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
 // reflect function scopes, and a stack of *those* to reflect quotes.
 type NameStack = NameMap[];
 
-// Like overlay, but works on the top of a NameStack.
-function head_overlay <T> (a: T[]): T[] {
-  let hm = overlay(hd(a));
-  return cons(hm, tl(a));
-}
-
 // The state structure for the DefUse analysis.
 interface State {
-  ns: NameStack,  // Variable mapping.
-  externs: NameMap,  // Extern mapping.
-  snip: NameStack | null,  // Snippet environment.
+  ns: NameStack;  // Variable mapping.
+  externs: NameMap;  // Extern mapping.
+  snip: NameStack | null;  // Snippet environment.
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
@@ -56,8 +50,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [State, DefUseTable]
     {
       let [s1, t1] = fself(tree.expr, [state, table]);
-      let ns = head_overlay(state.ns);
-      hd(ns)[tree.ident] = tree.id!;
+      let ns = head_merge(state.ns, { [tree.ident]: tree.id! });
       return [merge(s1, {ns}), t1];
     },
 
@@ -67,10 +60,11 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [State, DefUseTable]
     {
       // Update the top map with the function parameters.
-      let ns = head_overlay(state.ns);
+      let params: { [k: string]: number } = {};
       for (let param of tree.params) {
-        hd(ns)[param.name] = param.id!;
+        params[param.name] = param.id!;
       }
+      let ns = head_merge(state.ns, params);
 
       // Traverse the body with this new map.
       let [, t2] = fself(tree.body, [merge(state, {ns}), table]);
@@ -145,8 +139,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
-      let externs = overlay(state.externs);
-      externs[tree.name] = tree.id!;
+      let externs = merge(state.externs, { [tree.name]: tree.id! });
       return [merge(state, {externs}), table];
     },
   });
@@ -157,7 +150,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
   {
     return ast_visit(rules, tree, [state, table]);
   };
-};
+}
 
 // Build a def/use table for lookups that links them to their corresponding
 // "let" or "fun" AST nodes.

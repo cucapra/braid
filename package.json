@@ -1,7 +1,7 @@
 {
-  "name": "alltheworld",
+  "name": "braid",
   "version": "1.0.0",
-  "author": "Adrian Sampson <asampson@cornell.edu>",
+  "author": "Adrian Sampson <asampson@cs.cornell.edu>",
   "license": "MIT",
   "private": true,
   "dependencies": {
@@ -9,17 +9,16 @@
     "minimist": "^1.2.0"
   },
   "devDependencies": {
-    "madoko": "^1.0.0-rc4",
-    "typescript": "^2.0.3",
-    "pegjs": "^0.9.0",
     "@types/minimist": "^1.1.29",
-    "@types/node": "^6.0.42"
+    "@types/node": "^8.0.8",
+    "pegjs": "^0.10.0",
+    "typescript": "^2.4.1"
   },
   "bin": {
     "ssc": "build/ssc.js"
   },
   "scripts": {
-    "parser": "pegjs --cache src/grammar.pegjs parser.js",
+    "parser": "pegjs --cache -o parser.js src/grammar.pegjs",
     "compile": "tsc",
     "build": "npm run parser && npm run compile"
   }

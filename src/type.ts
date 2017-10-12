@@ -9,19 +9,19 @@ export abstract class Type {
  * Primitive types. Each primitive type is a (shared) instance of this class.
  */
 export class PrimitiveType extends Type {
-  constructor(public name: string) { super() };
+  constructor(public name: string) { super(); }
 
   // A workaround to compensate for TypeScript's structural subtyping:
   // https://github.com/Microsoft/TypeScript/issues/202
   _brand_PrimitiveType: void;
-};
+}
 
 /**
  * A "top" type: a supertype of everything.
  */
 export class AnyType extends Type {
   _brand_AnyType: void;
-};
+}
 export const ANY = new AnyType();
 
 /**
@@ -29,7 +29,7 @@ export const ANY = new AnyType();
  */
 export class VoidType extends Type {
   _brand_AnyType: void;
-};
+}
 export const VOID = new VoidType();
 
 /**
@@ -46,9 +46,9 @@ export class FunType extends Type {
      * The return type.
      */
     public ret: Type
-  ) { super() };
+  ) { super(); }
   _brand_FunType: void;
-};
+}
 
 /**
  * Variadic function types. These functions can take any number of arguments
@@ -67,37 +67,43 @@ export class CodeType extends Type {
     public annotation: string,
     public snippet: number | null = null,  // Corresponding escape ID.
     public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
-  ) { super() };
+  ) { super(); }
   _brand_CodeType: void;
-};
+}
 
 // Type constructors: the basic element of parametricity.
 export class ConstructorType extends Type {
-  constructor(public name: string) { super() };
+  constructor(public name: string) { super(); }
   instance(arg: Type) {
     return new InstanceType(this, arg);
-  };
+  }
   _brand_ConstructorType: void;
 }
 export class InstanceType extends Type {
-  constructor(public cons: ConstructorType, public arg: Type) { super() };
+  constructor(public cons: ConstructorType, public arg: Type) { super(); }
   _brand_InstanceType: void;
 }
 
 // Slightly more general parametricity with a universal quantifier.
 export class QuantifiedType extends Type {
-  constructor(public variable: TypeVariable, public inner: Type) { super() };
+  constructor(public variable: TypeVariable, public inner: Type) { super(); }
   _brand_QuantifiedType: void;
 }
 export class VariableType extends Type {
-  constructor(public variable: TypeVariable) { super() };
+  constructor(public variable: TypeVariable) { super(); }
   _brand_VariableType: void;
 }
 
 // Simple overloading.
 export class OverloadedType extends Type {
-  constructor(public types: Type[]) { super() };
+  constructor(public types: Type[]) { super(); }
   _brand_OverloadedType: void;
+}
+
+// Tuple (product) types.
+export class TupleType extends Type {
+  constructor(public components: Type[]) { super(); }
+  _brand_TupleType: void;
 }
 
 
@@ -115,18 +121,21 @@ export class TypeVariable {
 // Type maps are used all over the place: most urgently, as "frames" in the
 // type checker's environment.
 export interface TypeMap {
-  [name: string]: Type;
+  readonly [name: string]: Type;
 }
 
 // The built-in primitive types.
 export const INT = new PrimitiveType("Int");
 export const FLOAT = new PrimitiveType("Float");
 export const STRING = new PrimitiveType("String");
+export const BOOLEAN = new PrimitiveType("Bool");
 export const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
   "Void": VOID,
   "String": STRING,
+  "Bool": BOOLEAN,
+  "Any": ANY,
 };
 
 
@@ -142,6 +151,8 @@ export interface TypeVisit<P, R> {
   visit_instance(type: InstanceType, param: P): R;
   visit_quantified(type: QuantifiedType, param: P): R;
   visit_variable(type: VariableType, param: P): R;
+  visit_overloaded(type: OverloadedType, param: P): R;
+  visit_tuple(type: TupleType, param: P): R;
 }
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
@@ -164,6 +175,10 @@ export function type_visit<P, R>(visitor: TypeVisit<P, R>,
     return visitor.visit_quantified(type, param);
   } else if (type instanceof VariableType) {
     return visitor.visit_variable(type, param);
+  } else if (type instanceof OverloadedType) {
+    return visitor.visit_overloaded(type, param);
+  } else if (type instanceof TupleType) {
+    return visitor.visit_tuple(type, param);
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
@@ -212,7 +227,20 @@ let pretty_type_rules: TypeVisit<void, string> = {
   visit_variable(type: VariableType, param: void): string {
     return type.variable.name;
   },
-}
+  visit_overloaded(type: OverloadedType, param: void): string {
+    let out = "";
+    for (let i = 0; i < type.types.length; i++) {
+      out += pretty_type(type.types[i]);
+      if (i !== type.types.length - 1) {
+        out += " | ";
+      }
+    }
+    return out;
+  },
+  visit_tuple(type: TupleType, param: void): string {
+    return type.components.map(pretty_type).join(" * ");
+  },
+};
 
 export function pretty_type(type: Type) {
   return type_visit(pretty_type_rules, type, null);

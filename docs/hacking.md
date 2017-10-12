@@ -1,54 +1,6 @@
-title: Static Staging Compiler Implementation
-[INCLUDE="docs.mdk"]
-
-[TITLE]
-
-This is the documentation for the static staging compiler (&proj;) implementation.
-You may also be interested in the [language documentation](index.html).
-
-[TOC]
-
-
-# Build and Run
-
-To get the compiler running, install [Node][] and [npm][]. Then, on Unix, just type `make` to install the dependencies and build the project. Or you can run these commands manually:
-
-    $ npm install
-    $ npm run build
-
-Then, you can install the `&tool;` command-line program by typing:
-
-    $ npm link
-
-To make sure it's working, you can try running an example:
-
-    $ &tool; test/basic/add.ss
-
-[npm]: https://www.npmjs.com/
-[Node]: https://nodejs.org/
-
-## Command Line
-
-Type `&tool; -h` for usage. The most important options are:
-
-* `-c`: Use the compiler to JavaScript. Otherwise, the interpreter is used instead. By default, this dumps the compiled JavaScript code to the standard output.
-- `-x`: When in compiler mode, run the resulting JavaScript code with `eval` and print the output. Together, `-cx` should give you the same output as running the interpreter (with no options at all).
-- `-w`: Use the WebGL language extension. (Only valid in compiler mode.)
-
-There's also `-v` for debugging output and `-g` for program generation, as described in the language overview.
-
-## Web Dingus
-
-There's also an interactive browser frontend. On Unix, just type `make` in the `dingus` directory, or otherwise use the same `npm run build` dance. Then, open `index.html` in your browser.
-
-The dingus seems to work in current versions of Safari, Firefox, Chrome, and Microsoft Edge.
-
-
 # Compiler Architecture
 
-~ Figure { caption: "The primary data structures in &proj;." }
-![static staging compiler architecture](alltheworld.svg){ width: 400px; }
-~
+![static staging compiler architecture](alltheworld.svg)
 
 The main phases in the compiler are:
 
@@ -61,7 +13,7 @@ This section gives more overview on how the pieces go together. The latter secti
 
 The *driver* in [`driver.ts`][driver] orchestrates the whole process, so it's useful as a way into the whole system.
 
-[driver]: https://github.com/Microsoft/staticstaging/blob/master/src/driver.ts
+[driver]: https://github.com/cucapra/braid/blob/master/src/driver.ts
 
 ## Parser
 
@@ -70,11 +22,11 @@ The [grammar][] produces an AST as a JSON data structure, which is specified in 
 
 All the other IRs in the compiler are based on variants of this JSON AST, and the major components all dispatch on the tags to recursively process the tree.
 
-[ast]: https://github.com/Microsoft/staticstaging/blob/master/src/ast.ts
-[grammar]: https://github.com/Microsoft/staticstaging/blob/master/src/grammar.pegjs
+[ast]: https://github.com/cucapra/braid/blob/master/src/ast.ts
+[grammar]: https://github.com/cucapra/braid/blob/master/src/grammar.pegjs
 [peg]: https://en.wikipedia.org/wiki/Parsing_expression_grammar
 [peg.js]: http://pegjs.org/
-[dingus]: https://sampsyo.github.io/staticstaging/dingus/
+[dingus]: ../dingus/
 
 ## Type Checking and Elaboration
 
@@ -84,8 +36,8 @@ This lets us build tables that decorate the AST with extra information.
 The [type checker][check] runs next.
 It works as a type *elaborator:* it produces a table mapping node IDs to `TypeEnv` structures that capture the entire type information at every point.
 
-[elaborate]: https://github.com/Microsoft/staticstaging/blob/master/src/type_elaborate.ts
-[check]: https://github.com/Microsoft/staticstaging/blob/master/src/type_check.ts
+[elaborate]: https://github.com/cucapra/braid/blob/master/src/type_elaborate.ts
+[check]: https://github.com/cucapra/braid/blob/master/src/type_check.ts
 
 ## Desugaring
 
@@ -97,7 +49,7 @@ Two features in the language are implemented as [syntactic sugar][sugar]:
 
 Both desugaring steps require type information, so they use the results from type elaboration.
 
-[sugar]: https://github.com/Microsoft/staticstaging/blob/master/src/sugar.ts
+[sugar]: https://github.com/cucapra/braid/blob/master/src/sugar.ts
 
 ## Semantic Analysis and IR
 
@@ -110,8 +62,8 @@ Here are a few of the most interesting pieces of the IR:
 - The *pre-splicing* optimization described in the table produces a set of `Variant` objects for each quote with snippet escapes. The backends use these specific, pre-composed variants instead of the original `Prog`s.
 
 [lambda lifting]: https://en.wikipedia.org/wiki/Lambda_lifting
-[compile]: https://github.com/Microsoft/staticstaging/blob/master/src/compile/compile.ts
-[ir]: https://github.com/Microsoft/staticstaging/blob/master/src/compile/ir.ts
+[compile]: https://github.com/cucapra/braid/blob/master/src/compile/compile.ts
+[ir]: https://github.com/cucapra/braid/blob/master/src/compile/ir.ts
 
 ## Backends
 
@@ -123,16 +75,16 @@ There's also a [`gl.ts`][gl] source file with common logic shared by the GLSL ba
 The most important bit here is the `Glue` object, which keeps track of a bunch of metadata for values that are communicated between shader stages.
 For example, `Glue` records the OpenGL name of the parameter to use for communication and a flag indicating whether the value is an attribute (i.e., an array).
 
-[js]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/js.ts
-[glsl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/glsl.ts
-[webgl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/webgl.ts
-[emitter]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/emitter.ts
-[gl]: https://github.com/Microsoft/staticstaging/blob/master/src/backends/gl.ts
+[js]: https://github.com/cucapra/braid/blob/master/src/backends/js.ts
+[glsl]: https://github.com/cucapra/braid/blob/master/src/backends/glsl.ts
+[webgl]: https://github.com/cucapra/braid/blob/master/src/backends/webgl.ts
+[emitter]: https://github.com/cucapra/braid/blob/master/src/backends/emitter.ts
+[gl]: https://github.com/cucapra/braid/blob/master/src/backends/gl.ts
 
 # Scope Lifting
 
 [Lambda lifting][] is the standard technique for compiling languages with closures.
-&proj; generalizes lambda lifting to apply to both functions and quotes simultaneously.
+Braid generalizes lambda lifting to apply to both functions and quotes simultaneously.
 The compiler calls the combined transformation *scope lifting*.
 
 The idea behind lambda lifting is to take every function and turn it into a *procedure* that doesn't close over any state---all of its parameters must be provided explicitly rather than picked up from the surrounding environment.
@@ -143,11 +95,11 @@ Quote lifting has a similar goal: extract all the quotes mixed into a program an
 (Think of them as strings embedded in the `.text` section of an executable binary.)
 Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment---the environment contains the materialized outer-stage values.
 
-General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. &proj;'s scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
+General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. Braid's scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
 
 ## Materialization Generalizes Free Variables
 
-To compile materialization escapes and free variables in quotes, &proj;'s quote-lifting analysis generalizes the concept of free variables in functions.
+To compile materialization escapes and free variables in quotes, Braid's quote-lifting analysis generalizes the concept of free variables in functions.
 As an example, this program uses a materialization inside of a function body:
 
     var y = 2;
@@ -156,7 +108,7 @@ As an example, this program uses a materialization inside of a function body:
       f 3
     >
 
-After scope lifting, we should have a function contained in a string literal. In &proj;'s JavaScript backend, this looks something like:
+After scope lifting, we should have a function contained in a string literal. In Braid's JavaScript backend, this looks something like:
 
     var prog1 =
     "function func1(x, persist1) {" +
@@ -229,7 +181,7 @@ There are three stages here: the outer stage and two nested quotes. The splicing
     ";
     eval(prog1.replace("__SPLICE__", "5"));
 
-In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the &proj; compiler would have):
+In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the Braid compiler would have):
 
     var prog1 = "eval(prog2)";
     var prog2 = "__SPLICE__ + 4";
@@ -238,7 +190,7 @@ because this would make it impossible to splice into `prog2`'s text when prepari
 
 Incidentally, the correct nesting for $n$-level escapes also makes it possible to *residualize* programs. Since a quote contains everything it needs to execute, it is possible to write the program to a file and execute it later.
 
-The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When &proj; eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
+The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When Braid eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
 
 
 # Emitting JavaScript
@@ -262,7 +214,7 @@ compiles to JavaScript that looks roughly like this (stripping away the details)
 Note that the quotation gets compiled to a global string, `q4`.
 The runtime function `run` binds the materialized names (i.e., `p7`) and calls `eval`.
 
-[splice]: https://sampsyo.github.io/staticstaging/dingus/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
+[splice]: ../dingus/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
 
 ## Expression Chains
 
@@ -286,22 +238,22 @@ compiles to:
 where the three expressions are chained with commas after the `return` keyword.
 The `var` line pre-declares all the variables that we use in the code to make them into local JavaScript variables.
 
-[exprs]: https://sampsyo.github.io/staticstaging/dingus/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y
+[exprs]: ../dingus/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y
 
 ## `extern`
 
-To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your &proj; program. [For example:][extern]
+To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your Braid program. [For example:][extern]
 
     extern Math.pow: Int Int -> Int;
     Math.pow 7 2
 
-That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an &proj; closure value:
+That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an Braid closure value:
 
     var closure = ({ proc: Math.pow, env: [] });
     var args = [(7), (2)].concat(closure.env);
     return closure.proc.apply(void 0, args);
 
-[extern]: https://sampsyo.github.io/staticstaging/dingus/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202
+[extern]: ../dingus/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202
 
 Unlike ordinary variables, `extern`s are "ambient": they're available at all (subsequent) stages without the need for materialization.
 
@@ -311,7 +263,7 @@ The compiler infrastructure also a has a notion of intrinsics, which are just ex
 
 generates code that actually assigns to the variable `gl_Color` defined in the target. (An ordinary mutation would update a new variable generated by the compiler.)
 
-## Function Quotes { #fquote }
+## Function Quotes {#fquote}
 
 When splicing is not required, `eval` shouldn't be required either---all the code can be emitted ahead of time.
 The compiler supports *function quotes*, annotated like `js< ... >`, that get compiled as plain JavaScript functions instead of strings.
@@ -335,7 +287,7 @@ The type system is also aware of annotations: for example, you will get an error
 
 ## Render Stage and Unmetaprogrammed Quotes
 
-The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging---clearly, the same issues of persistence and deferral arise. So we use a "render" stage, which must be a [`js<...>` function quote][#fquote] that emits JavaScript code that draws stuff.
+The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging---clearly, the same issues of persistence and deferral arise. So we use a "render" stage, which must be a [`js<...>` function quote](#fquote) that emits JavaScript code that draws stuff.
 
 ## Declaring In/Out Variables
 
@@ -378,7 +330,7 @@ See [`gl.ts`][gl] for the type declarations and aliases.
 
 To define attributes, the compiler uses a limited form of polymorphic type constructors. For the gory details, see `ConstructorType` and `InstanceType` from [`type.ts`][type].
 
-[type]: https://github.com/Microsoft/staticstaging/blob/master/src/type.ts
+[type]: https://github.com/cucapra/braid/blob/master/src/type.ts
 
 These type constructors let you declare values of type `T Array` where `T` is some other type.
 For the moment, user code can't construct and destruct these types---doing so would require something like full Hindley--Millner type inference.

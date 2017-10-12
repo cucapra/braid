@@ -1,0 +1,10 @@
+{
+    "title": "Braid",
+    "author": "Adrian Sampson",
+    "plugins": ["katex", "typogr", "scripts"],
+    "pluginsConfig": {
+        "scripts": {
+            "files": ["fix.js"]
+        }
+    }
+}

@@ -1,7 +1,7 @@
-def spif(c:Int, t:$<Int>, f:$<Int>)
+def spif(c:Bool, t:$<Int>, f:$<Int>)
   if c t f;
 
-var z = 1;
+var z = true;
 !<
   var x = 5;
   var y = 9;

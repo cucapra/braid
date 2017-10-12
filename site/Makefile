@@ -1,28 +1,8 @@
-.PHONY: all
-all: index.html main.css main.js
+SASS_DEP := node_modules/shevy/package.json \
+	node_modules/github-fork-ribbon-css/gh-fork-ribbon.css
 
-PANDOC_ARGS := --standalone -t html5 --section-divs \
-	--template template.html --smart
-%.html: %.md template.html
-	pandoc $(PANDOC_ARGS) -o $@ $<
+braid.css: braid.scss $(SASS_DEP)
+	sassc --style compressed $< $@
 
-FRAMEWORK := bower_components/bootstrap/scss/bootstrap.scss
-RIBBON := bower_components/github-fork-ribbon-css/gh-fork-ribbon.css
-%.css: %.scss $(FRAMEWORK) dingus/dingus.tools.scss $(RIBBON)
-	sassc $< > $@
-
-$(FRAMEWORK):
-	bower install bootstrap\#v4.0.0-alpha.2
-	@touch $@
-
-$(RIBBON):
-	bower install github-fork-ribbon-css
-	@touch $@
-
-%.js: %.ts
-	tsc $^
-
-.PHONY: serve
-SOURCE := index.md main.scss main.ts
-serve:
-	liveserve -h 0.0.0.0 $(SOURCE:%=-w %) -x make
+$(SASS_DEP):
+	yarn

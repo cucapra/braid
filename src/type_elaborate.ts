@@ -12,7 +12,7 @@ function _is_fun(tree: ast.SyntaxNode): tree is ast.FunNode {
 
 // A functional mixin for the type checker that stores the results in a table
 // on the side. The AST must be stamped with IDs.
-function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
+function elaborate_mixin(type_table: TypeTable): Gen<TypeCheck> {
   return function(fsuper: TypeCheck): TypeCheck {
     return function(tree: ast.SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = fsuper(tree, env);
@@ -26,7 +26,7 @@ function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
 function stamp <T> (o: T, start: number = 0): T & { id: number } {
   let id = start;
 
-  function helper (o: any): any {
+  function helper(o: any): any {
     if (o instanceof Array) {
       let out: any[] = [];
       for (let el of o) {
@@ -49,7 +49,7 @@ function stamp <T> (o: T, start: number = 0): T & { id: number } {
     } else {
       return o;
     }
-  };
+  }
 
   return helper(o);
 }
@@ -81,12 +81,12 @@ export function elaborate(tree: ast.SyntaxNode, externs: TypeMap = BUILTIN_TYPES
   named_types: TypeMap = BUILTIN_TYPES, check: Gen<TypeCheck> = gen_check):
   [ast.SyntaxNode, TypeTable]
 {
-  let table : TypeTable = [];
+  let table: TypeTable = [];
   let env: TypeEnv = {
     stack: [{}],
     anns: [null],
     externs: externs,
-    named: named_types,
+    named: merge(named_types),
     snip: null,
   };
   let elaborated = elaborate_subtree(tree, env, table, check);

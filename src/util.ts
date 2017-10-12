@@ -1,56 +1,31 @@
-import * as ast from './ast';
-
-// Create a copy of an object `obj`, optionally with its fields updated
-// according to `values`.
-// TODO Opportunistically avoid copying identical expressions? This would work
-// best combined with full-on hash consing, which in turn would be painful
-// without using ES6 Map.
-export function merge<T extends Object>(obj: T, values: Object = {}): T {
-  let out = <T> {};
-  for (let key in obj) {
-    if (values.hasOwnProperty(key)) {
-      (<any> out)[key] = (<any> values)[key];
-    } else if (obj.hasOwnProperty(key)) {
-      (<any> out)[key] = (<any> obj)[key];
-    }
-  }
-  return out;
-}
-
-// An alternative that more closely matches ES6 Object.assign.
-export function assign <T, U> (target: T, ...sources: U[]): T & U {
-  var t: any = {};
-  for (var i = 0; i < arguments.length; ++i) {
-    for (var k in arguments[i]) {
-      t[k] = arguments[i][k];
-    }
-  }
-  return t;
-};
-
-// A bit of a hack that abuses prototypes to create overlay. Return a copy of
-// the argument where changing the new object won't affect the original.
-export function overlay<T>(base: T): T {
-  return <T> Object.create(base);
+/**
+ * Create a new JavaScript object that is a copy of `obj`. If `values`
+ * is provided, the new copy has its values merged in.
+ *
+ * This is just ES6's Object.assign with a fresh, empty object {} as its
+ * first parameter.
+ */
+export function merge<S, T>(obj: S, ...values: T[]): S {
+  return Object.assign({}, obj, ...values);
 }
 
 // Lispy list manipulation.
-export function hd<T> (list: T[]): T {
+export function hd<T> (list: ReadonlyArray<T>): T {
   if (list.length === 0) {
     throw "error: head of empty list";
   }
   return list[0];
 }
 
-export function tl<T> (list: T[]): T[] {
+export function tl<T> (list: ReadonlyArray<T>): T[] {
   if (list.length === 0) {
     throw "error: tail of empty list";
   }
   return list.slice(1);
 }
 
-export function cons<T> (x: T, xs: T[]): T[] {
-  return [x].concat(xs);
+export function cons<T> (x: T, xs: ReadonlyArray<T>): T[] {
+  return [x].concat(xs as T[]);
 }
 
 export function zip<A, B> (a: A[], b: B[]): [A, B][] {
@@ -61,23 +36,23 @@ export function zip<A, B> (a: A[], b: B[]): [A, B][] {
   return out;
 }
 
-export type Gen <T> = (_:T) => T;
+export type Gen <T> = (_: T) => T;
 
 // A fixed-point combinator.
-export function fix <T extends Function> (f : Gen<T>) : T {
+export function fix <T extends Function> (f: Gen<T>): T {
   return <any> function (...args: any[]) {
     return (f(fix(f)))(...args);
   };
 }
 
 // Function composition.
-export function compose <A, B, C> (g : (_:B) => C, f : (_:A) => B): (_:A) => C {
-  return function (x : A): C {
+export function compose <A, B, C> (g: (_: B) => C, f: (_: A) => B): (_: A) => C {
+  return function (x: A): C {
     return g(f(x));
-  }
+  };
 }
 
-type MapStack <T> = { [key: string]: T }[];
+type MapStack <T> = { readonly [key: string]: T }[];
 
 // Look up a key in a stack of maps, from left to right. Return the value and
 // the position where it was found (or [undefined, undefined] if not found).
@@ -97,16 +72,11 @@ export function stack_lookup <T> (
   return [undefined, undefined];
 }
 
-// Assign a value in the topmost map in a stack of maps.
-export function stack_put <T> (
-  mapstack: MapStack<T>,
-  key: string,
-  value: T):
-  MapStack<T>
-{
-  let head = overlay(hd(mapstack));
-  head[key] = value;
-  return cons(head, tl(mapstack));
+/**
+ * Merge some additional values onto the head element of a stack (immutably).
+ */
+export function head_merge<T>(a: ReadonlyArray<T>, hv: T): T[] {
+  return cons(merge(hd(a), hv), tl(a));
 }
 
 // Treat an array as a set and insert into it. That is, do nothing if the
@@ -162,19 +132,4 @@ export function scope_eval(code: string): any {
   return (function () {
     return eval("'use strict'; " + code);
   })();
-}
-
-// toString for an AST SyntaxNode's location
-export function location(node: ast.SyntaxNode): string {
-  if (node.location === undefined) {
-    return "No location found";
-  }
-  let start: ast.LocationData = node.location.start;
-  let end: ast.LocationData = node.location.end;
-  return "(" + start.line + "," + start.column + ") to (" 
-    + end.line + "," + end.column + ")";
-}
-
-export function locationError(node: ast.SyntaxNode): string {
-  return " at " + location(node);
 }

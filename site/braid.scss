@@ -1,0 +1,70 @@
+// A color scheme.
+$dark-color: #152023;
+$highlight-color: #EAC162;
+$gray1-color: #565356;
+$gray2-color: #A9AAAF;
+$light-color: #F0E9E8;
+
+// Shevy is a typography library.
+@import 'node_modules/shevy/core/shevy';
+$shevy: (
+  base-font-size: 16px,
+);
+@include headings;
+@include body;
+@include content;
+
+// GitHub banner.
+@import 'node_modules/github-fork-ribbon-css/gh-fork-ribbon';
+.github-fork-ribbon:before {
+    background-color: $highlight-color;
+}
+
+body {
+    font-family: sans-serif;
+    background: $dark-color;
+    color: $light-color;
+}
+
+a {
+    color: $highlight-color;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+header, main {
+    margin: 1rem auto;
+}
+
+header {
+    max-width: 45rem;
+    display: flex;
+    align-items: center;
+    div {
+        margin-left: 2rem;
+    }
+    h1 {
+        margin: 0.5rem 0;
+    }
+    nav {
+        margin: 0;
+        a {
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        a:hover {
+            text-decoration: none;
+        }
+    }
+}
+
+main {
+    max-width: 35rem;
+}
+
+pre {
+    overflow-x: auto;
+    font-size: 90%;
+}

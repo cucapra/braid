@@ -1,2 +1,2 @@
-var g = x;
+g = 5
 # -> type error

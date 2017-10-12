@@ -32,7 +32,7 @@ def get_latencies(data):
     # print(data['fn'], file=sys.stderr)
     for l, dl in zip(all_latencies, all_draw_latencies):
         # print(l, dl, file=sys.stderr)
-        assert dl < l
+        assert dl <= l
 
     return all_latencies, all_draw_latencies
 

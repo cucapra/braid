@@ -1,9 +1,9 @@
-Static Staging Compiler
-=======================
+Braid: a Static Staging Compiler
+================================
 
-[![build status](https://circleci.com/gh/Microsoft/staticstaging.svg?style=shield&circle-token=c39f027c650d4a4e2c6f9b59868309c210228de3)](https://circleci.com/gh/Microsoft/staticstaging)
+[![build status](https://circleci.com/gh/cucapra/braid.svg?style=shield)](https://circleci.com/gh/cucapra/braid)
 
-This is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
+Braid is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
 
 The compiler is written in [TypeScript][] and runs on [Node][].
 You can build the compiler and run a few small programs by typing `make test` (if you have [npm][]).
@@ -12,8 +12,8 @@ Check out the [code documentation][hacking] for an introduction to the compiler'
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
 [TypeScript]: http://www.typescriptlang.org/
-[docs]: http://microsoft.github.io/staticstaging/docs/
-[hacking]: http://microsoft.github.io/staticstaging/docs/hacking.html
+[docs]: https://capra.cs.cornell.edu/braid/docs/
+[hacking]: https://capra.cs.cornell.edu/braid/docs/hacking.html
 
 ## Using and Hacking
 
@@ -32,11 +32,12 @@ to install an alias to the `ssc` command. Then, type:
 
 to see some options. In particular, run `ssc example.ss` to interpret programs; run `ssc -c example.ss` to compile programs to JavaScript; and run `ssc -cx example.ss` to compile programs and then execute the resulting JavaScript.
 
-## Details
+## Credits
 
-The license is [MIT][].
-This project uses the [Microsoft Open Source Code of Conduct][coc]; check out the [FAQ about the CoC][cocfaq].
+This is a project of [Capra][] at Cornell. The license is [MIT][].
+
+[Adrian Sampson](http://www.cs.cornell.edu/~asampson/) started this project in collaboration with [Kathryn S McKinley](http://www.cs.utexas.edu/users/mckinley/) and [Todd Mytkowicz](https://www.microsoft.com/en-us/research/people/toddm/) at Microsoft Research, where it was released as [open source][ssc]. It has since been improved by [Richie Henwood](https://github.com/rhenwood39), [Eric Lin](https://github.com/eric780), and [Yiteng Guo](https://github.com/guoyiteng).
 
 [MIT]: https://opensource.org/licenses/MIT
-[coc]: https://opensource.microsoft.com/codeofconduct/
-[cocfaq]: https://opensource.microsoft.com/codeofconduct/faq/
+[ssc]: https://github.com/microsoft/staticstaging
+[capra]: https://capra.cs.cornell.edu

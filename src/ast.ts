@@ -1,15 +1,19 @@
 /**
- * Information about one location in the source file
+ * The character position in a source file.
  */
-export interface LocationData {
+export interface Position {
   offset: number;
   line: number;
   column: number;
 }
 
+/**
+ * The source location for an AST node.
+ */
 export interface Location {
-  start: LocationData;
-  end: LocationData;
+  start: Position;
+  end: Position;
+  filename: string;
 }
 
 /**
@@ -31,8 +35,19 @@ export interface SyntaxNode {
    */
   id?: number;
 
+  /**
+   * The source file position of this AST node.
+   */
   location?: Location;
 }
+
+/**
+ * A root AST node that acts as a parent for joining several source ASTs together
+ */
+ export interface RootNode extends SyntaxNode {
+   tag: "root";
+   children: ExpressionNode[];
+ }
 
 /**
  * An AST node that's an expression. This is almost everything---just not
@@ -43,8 +58,8 @@ export interface ExpressionNode extends SyntaxNode {
 
 export interface LiteralNode extends ExpressionNode {
   tag: "literal";
-  value: number | string;
-  type: "int" | "float" | "string";
+  value: number | string | boolean;
+  type: "int" | "float" | "string" | "boolean";
 }
 
 export interface SeqNode extends ExpressionNode {
@@ -72,13 +87,13 @@ export interface LookupNode extends ExpressionNode {
 
 export interface UnaryNode extends ExpressionNode {
   tag: "unary";
-  op: string;
+  op: "+" | "-" | "~";
   expr: ExpressionNode;
 }
 
 export interface BinaryNode extends ExpressionNode {
   tag: "binary";
-  op: string;
+  op: "+" | "-" | "*" | "/" | "==" | "!=" | ">=" | "<=";
   lhs: ExpressionNode;
   rhs: ExpressionNode;
 }
@@ -146,7 +161,35 @@ export interface MacroCallNode extends ExpressionNode {
   args: ExpressionNode[];
 }
 
+export interface TypeAliasNode extends ExpressionNode {
+  tag: "type_alias";
+  ident: string;
+  type: TypeNode;
+}
+
+export interface TupleNode extends ExpressionNode {
+  tag: "tuple";
+  exprs: ExpressionNode[];
+}
+
+export interface TupleIndexNode extends ExpressionNode {
+  tag: "tupleind";
+  tuple: ExpressionNode;
+  index: number;
+}
+
+export interface AllocNode extends ExpressionNode {
+  tag: "alloc";
+  ident: string;
+  expr: ExpressionNode;
+}
+
 export interface TypeNode extends SyntaxNode {
+}
+
+export interface OverloadedTypeNode extends TypeNode {
+  tag: "type_overloaded";
+  types: TypeNode[];
 }
 
 export interface PrimitiveTypeNode extends TypeNode {
@@ -171,6 +214,11 @@ export interface CodeTypeNode extends TypeNode {
   inner: TypeNode;
   annotation: string;
   snippet: boolean;
+}
+
+export interface TupleTypeNode extends TypeNode {
+  tag: "type_tuple";
+  components: TypeNode[];
 }
 
 /**
