@@ -1,4 +1,4 @@
-import { SyntaxNode } from '../ast';
+import { SyntaxNode, ExpressionNode } from '../ast';
 import { hd, tl, cons, set_add, set_diff, set_union } from '../util';
 import { Prog, Proc, Scope, Variant, is_prog } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
@@ -105,7 +105,7 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
   }
 
   // Generate the program body using these substitutions.
-  var_scope.body = substitute(orig.body, substitutions);
+  var_scope.body = <ExpressionNode> substitute(orig.body, substitutions);
 
   return var_scope;
 }

@@ -2,7 +2,7 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
   QuantifiedType, TupleType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN,
   pretty_type, TypeVisit, TypeVariable, type_visit,
-  VariadicFunType } from './type';
+  VariadicFunType, TypeType } from './type';
 import * as ast from './ast';
 import { Gen, merge, hd, tl, cons, stack_lookup, zip,
   head_merge } from './util';
@@ -80,7 +80,7 @@ function te_pop(env: TypeEnv, count: number = 1,
 // A utility used here, in the type checker, and also during desugaring when
 // processing macro invocations.
 export function unquantified_type(type: Type): Type {
-  if (type instanceof QuantifiedType) {
+  if (type.type === TypeType.QUANTIFIED) {
     return type.inner;
   } else {
     return type;
@@ -139,16 +139,17 @@ export let gen_check: Gen<TypeCheck> = function(check) {
     },
 
     visit_literal(tree: ast.LiteralNode, env: TypeEnv): [Type, TypeEnv] {
-      if (tree.type === "int") {
-        return [INT, env];
-      } else if (tree.type === "float") {
-        return [FLOAT, env];
-      } else if (tree.type === "string") {
-        return [STRING, env];
-      } else if (tree.type === "boolean") {
-        return [BOOLEAN, env];
-      } else {
-        throw "error: unknown literal type";
+      switch (tree.type) {
+        case "int":
+          return [INT, env];
+        case "float":
+          return [FLOAT, env];
+        case "string":
+          return [STRING, env];
+        case "boolean":
+          return [BOOLEAN, env];
+        default:
+          throw "error: unknown literal type";
       }
     },
 
@@ -217,7 +218,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       // ordinary variable.
       let fun = env.externs[tree.op];
       let ret = check_call(fun, [t]);
-      if (ret instanceof Type) {
+      if (typeof(ret) === 'object') {
         return [ret, e];
       } else {
         throw error(tree, "type",
@@ -232,7 +233,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       // Use extern functions, as with unary operators.
       let fun = env.externs[tree.op];
       let ret = check_call(fun, [t1, t2]);
-      if (ret instanceof Type) {
+      if (typeof(ret) === 'object') {
         return [ret, e2];
       } else {
         throw error(tree, "type",
@@ -320,7 +321,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       if (tree.kind === "splice") {
         // The result of the escape's expression must be code, so it can be
         // spliced.
-        if (t instanceof CodeType) {
+        if (t.type === TypeType.CODE) {
           if (t.snippet !== null) {
             throw error(tree, "type", 'snippet quote in non-snippet splice');
           } else if (t.annotation !== env.anns[0]) {
@@ -337,7 +338,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
         return [t, env];
 
       } else if (tree.kind === "snippet") {
-        if (t instanceof CodeType) {
+        if (t.type === TypeType.CODE) {
           if (t.snippet === null) {
             throw error(tree, "type", "non-snippet code in snippet splice");
           } else if (t.snippet !== tree.id) {
@@ -355,7 +356,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
     visit_run(tree: ast.RunNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
-      if (t instanceof CodeType) {
+      if (t.type === TypeType.CODE) {
         if (t.snippet) {
           throw error(tree, "type", "cannot run splice quotes individually");
         }
@@ -409,7 +410,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
       // Check the call itself.
       let ret = check_call(target_type, arg_types);
-      if (ret instanceof Type) {
+      if (typeof(ret) === 'object') {
         return [ret, e];
       } else {
         throw error(tree, "type", ret);
@@ -466,8 +467,9 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
       // Get the function type (we need its arguments).
       let unq_type = unquantified_type(macro_type);
-      let fun_type: FunType;
-      if (unq_type instanceof FunType) {
+      let fun_type: FunType | VariadicFunType;
+      if (unq_type.type === TypeType.FUN ||
+        unq_type.type === TypeType.VARIADIC_FUN) {
         fun_type = unq_type;
       } else {
         throw error(tree, "type", `macro must be a function`);
@@ -481,7 +483,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
         // Check whether the parameter is a snippet (open code), an ordinary
         // code type, or an eager non-code value.
         let as_snippet = false;
-        if (param instanceof CodeType) {
+        if (param.type === TypeType.CODE) {
           // Code type, either ordinary or snippet.
           let as_snippet = !!param.snippet_var;
 
@@ -498,9 +500,9 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
       // Get the return type of the macro function.
       let ret = check_call(macro_type, arg_types);
-      if (ret instanceof Type) {
+      if (typeof(ret) === 'object') {
         // Macros return code, and we splice in the result here.
-        if (ret instanceof CodeType) {
+        if (ret.type === TypeType.CODE) {
           return [ret.inner, env];
         } else {
           throw error(tree, "type", "macro must return code");
@@ -526,7 +528,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
     visit_tupleind(tree: ast.TupleIndexNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the tuple type.
       let [tuple_type, e] = check(tree.tuple, env);
-      if (!(tuple_type instanceof TupleType)) {
+      if (tuple_type.type !== TypeType.TUPLE) {
         throw error(tree.tuple, "type", "indexing non-tuple");
       }
 
@@ -565,74 +567,76 @@ function param_error(i: number, param: Type, arg: Type): string {
  * string indicating the error.
  */
 function check_call(target: Type, args: Type[]): Type | string {
-  // The target is a variadic function.
-  if (target instanceof VariadicFunType) {
-    if (target.params.length !== 1) {
-      return "variadic function with multiple argument types";
-    }
-    let param = target.params[0];
-    for (let i = 0; i < args.length; ++i) {
-      let arg = args[i];
-      if (!compatible(param, arg)) {
-        return param_error(i, param, arg);
+  switch (target.type) {
+    // The target is a variadic function.
+    case TypeType.VARIADIC_FUN: {
+      if (target.params.length !== 1) {
+        return "variadic function with multiple argument types";
       }
-    }
-
-    return target.ret;
-
-  // The target is an ordinary function.
-  } else if (target instanceof FunType) {
-    // Check that the arguments are the right type.
-    if (args.length !== target.params.length) {
-      return "mismatched argument length";
-    }
-    for (let i = 0; i < args.length; ++i) {
-      let param = target.params[i];
-      let arg = args[i];
-      if (!compatible(param, arg)) {
-        return param_error(i, param, arg);
-      }
-    }
-
-    return target.ret;
-
-  // An overloaded type. Try each component type.
-  } else if (target instanceof OverloadedType) {
-    for (let sub of target.types) {
-      let ret = check_call(sub, args);
-      if (ret instanceof Type) {
-        return ret;
-      }
-    }
-    return "no overloaded type applies";
-
-  // Polymorphic functions.
-  } else if (target instanceof QuantifiedType) {
-    // Special case for unifying polymorphic snippet function types with
-    // snippet arguments.
-    let snippet: number | null = null;
-    let snippet_var: TypeVariable | null = null;
-    for (let arg of args) {
-      if (arg instanceof CodeType) {
-        if (arg.snippet) {
-          snippet = arg.snippet;
-          break;
-        } else if (arg.snippet_var) {
-          snippet_var = arg.snippet_var;
-          break;
+      let param = target.params[0];
+      for (let i = 0; i < args.length; ++i) {
+        let arg = args[i];
+        if (!compatible(param, arg)) {
+          return param_error(i, param, arg);
         }
       }
-    }
-    if (snippet !== null) {
-      return check_call(apply_quantified_type(target, snippet), args);
-    } else if (snippet_var !== null) {
-      return check_call(apply_quantified_type(target, snippet_var), args);
-    } else {
-      return "unsupported polymorphism";
-    }
 
-  } else {
-    return "call of non-function";
+      return target.ret;
+    }
+    // The target is an ordinary function.
+    case TypeType.FUN: {
+      // Check that the arguments are the right type.
+      if (args.length !== target.params.length) {
+        return "mismatched argument length";
+      }
+      for (let i = 0; i < args.length; ++i) {
+        let param = target.params[i];
+        let arg = args[i];
+        if (!compatible(param, arg)) {
+          return param_error(i, param, arg);
+        }
+      }
+
+      return target.ret;
+    }
+    // An overloaded type. Try each component type.
+    case TypeType.OVERLOADED: {
+      for (let sub of target.types) {
+        let ret = check_call(sub, args);
+        if (typeof(ret) === 'object') {
+          return ret;
+        }
+      }
+      return "no overloaded type applies";
+    }
+    // Polymorphic functions.
+    case TypeType.QUANTIFIED: {
+      // Special case for unifying polymorphic snippet function types with
+      // snippet arguments.
+      let snippet: number | null = null;
+      let snippet_var: TypeVariable | null = null;
+      for (let arg of args) {
+        if (arg.type === TypeType.CODE) {
+          if (arg.snippet) {
+            snippet = arg.snippet;
+            break;
+          } else if (arg.snippet_var) {
+            snippet_var = arg.snippet_var;
+            break;
+          }
+        }
+      }
+      if (snippet !== null) {
+        return check_call(apply_quantified_type(target, snippet), args);
+      } else if (snippet_var !== null) {
+        return check_call(apply_quantified_type(target, snippet_var), args);
+      } else {
+        return "unsupported polymorphism";
+      }
+    }
+    default: {
+      return "call of non-function";
+    }
   }
 }
 
@@ -647,7 +651,9 @@ function compatible(ltype: Type, rtype: Type): boolean {
   } else if (ltype === ANY) {
     return true;
 
-  } else if (ltype instanceof FunType && rtype instanceof FunType) {
+  } else if (
+    (ltype.type === TypeType.FUN || ltype.type === TypeType.VARIADIC_FUN) &&
+    (rtype.type == TypeType.FUN || rtype.type === TypeType.VARIADIC_FUN)) {
     if (ltype.params.length !== rtype.params.length) {
       return false;
     }
@@ -660,20 +666,21 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
     return compatible(ltype.ret, rtype.ret);  // Covariant.
 
-  } else if (ltype instanceof InstanceType && rtype instanceof InstanceType) {
+  } else if (ltype.type === TypeType.INSTANCE &&
+    rtype.type === TypeType.INSTANCE) {
     if (ltype.cons === rtype.cons) {
       // Invariant.
       return compatible(ltype.arg, rtype.arg) &&
         compatible(rtype.arg, ltype.arg);
     }
 
-  } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
+  } else if (ltype.type === TypeType.CODE && rtype.type === TypeType.CODE) {
     return compatible(ltype.inner, rtype.inner) &&
       ltype.annotation === rtype.annotation &&
       ltype.snippet === rtype.snippet &&
       ltype.snippet_var === rtype.snippet_var;
 
-  } else if (ltype instanceof TupleType && rtype instanceof TupleType) {
+  } else if (ltype.type === TypeType.TUPLE && rtype.type === TypeType.TUPLE) {
     if (ltype.components.length !== rtype.components.length) {
       return false;
     }
@@ -686,7 +693,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
     return true;
 
-  } else if (ltype instanceof OverloadedType) {
+  } else if (ltype.type === TypeType.OVERLOADED) {
     for (let t of ltype.types) {
       if (compatible(t, rtype)) {
         return true;
@@ -709,7 +716,7 @@ function rectify_fun_type(type: FunType): Type {
 
   // Do the same for the return value.
   let ret = type.ret;
-  if (ret instanceof CodeType && ret.snippet_var) {
+  if (ret.type === TypeType.CODE && ret.snippet_var) {
     if (tvar === null) {
       tvar = ret.snippet_var;
     } else {
@@ -733,7 +740,7 @@ function rectify_fun_params(params: Type[]): TypeVariable | null {
   let tvar: TypeVariable | null = null;
 
   for (let param of params) {
-    if (param instanceof CodeType && param.snippet_var) {
+    if (param.type === TypeType.CODE && param.snippet_var) {
       if (tvar === null) {
         // Take the first variable found.
         tvar = param.snippet_var;
@@ -752,7 +759,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_primitive(tree: ast.PrimitiveTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t instanceof ConstructorType) {
+      if (t.type === TypeType.CONSTRUCTOR) {
         throw error(tree, "type", `${tree.name} needs a parameter`);
       } else {
         return t;
@@ -786,7 +793,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_instance(tree: ast.InstanceTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t instanceof ConstructorType) {
+      if (t.type === TypeType.CONSTRUCTOR) {
         let arg = get_type(tree.arg, types);
         return t.instance(arg);
       } else {

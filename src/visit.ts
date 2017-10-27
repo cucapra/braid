@@ -34,51 +34,51 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
                                 tree: ast.SyntaxNode, param: P): R {
   switch (tree.tag) {
     case "root":
-      return visitor.visit_root(<ast.RootNode> tree, param);
+      return visitor.visit_root(tree, param);
     case "literal":
-      return visitor.visit_literal(<ast.LiteralNode> tree, param);
+      return visitor.visit_literal(tree, param);
     case "seq":
-      return visitor.visit_seq(<ast.SeqNode> tree, param);
+      return visitor.visit_seq(tree, param);
     case "let":
-      return visitor.visit_let(<ast.LetNode> tree, param);
+      return visitor.visit_let(tree, param);
     case "assign":
-      return visitor.visit_assign(<ast.AssignNode> tree, param);
+      return visitor.visit_assign(tree, param);
     case "lookup":
-      return visitor.visit_lookup(<ast.LookupNode> tree, param);
+      return visitor.visit_lookup(tree, param);
     case "unary":
-      return visitor.visit_unary(<ast.UnaryNode> tree, param);
+      return visitor.visit_unary(tree, param);
     case "binary":
-      return visitor.visit_binary(<ast.BinaryNode> tree, param);
+      return visitor.visit_binary(tree, param);
     case "type_alias":
-      return visitor.visit_typealias(<ast.TypeAliasNode> tree, param);
+      return visitor.visit_typealias(tree, param);
     case "quote":
-      return visitor.visit_quote(<ast.QuoteNode> tree, param);
+      return visitor.visit_quote(tree, param);
     case "escape":
-      return visitor.visit_escape(<ast.EscapeNode> tree, param);
+      return visitor.visit_escape(tree, param);
     case "run":
-      return visitor.visit_run(<ast.RunNode> tree, param);
+      return visitor.visit_run(tree, param);
     case "fun":
-      return visitor.visit_fun(<ast.FunNode> tree, param);
+      return visitor.visit_fun(tree, param);
     case "call":
-      return visitor.visit_call(<ast.CallNode> tree, param);
+      return visitor.visit_call(tree, param);
     case "extern":
-      return visitor.visit_extern(<ast.ExternNode> tree, param);
+      return visitor.visit_extern(tree, param);
     case "persist":
-      return visitor.visit_persist(<ast.PersistNode> tree, param);
+      return visitor.visit_persist(tree, param);
     case "if":
-      return visitor.visit_if(<ast.IfNode> tree, param);
+      return visitor.visit_if(tree, param);
     case "while":
-      return visitor.visit_while(<ast.WhileNode> tree, param);
+      return visitor.visit_while(tree, param);
     case "macrocall":
-      return visitor.visit_macrocall(<ast.MacroCallNode> tree, param);
+      return visitor.visit_macrocall(tree, param);
     case "param":
-      return visitor.visit_param!(<ast.ParamNode> tree, param);
+      return visitor.visit_param!(tree, param);
     case "tuple":
-      return visitor.visit_tuple(<ast.TupleNode> tree, param);
+      return visitor.visit_tuple(tree, param);
     case "tupleind":
-      return visitor.visit_tupleind(<ast.TupleIndexNode> tree, param);
+      return visitor.visit_tupleind(tree, param);
     case "alloc":
-      return visitor.visit_alloc(<ast.AllocNode> tree, param);
+      return visitor.visit_alloc(tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;
@@ -290,20 +290,22 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
                                      tree: ast.TypeNode, param: P): R {
   switch (tree.tag) {
     case "type_primitive":
-      return visitor.visit_primitive(<ast.PrimitiveTypeNode> tree, param);
+      return visitor.visit_primitive(tree, param);
     case "type_fun":
-      return visitor.visit_fun(<ast.FunTypeNode> tree, param);
+      return visitor.visit_fun(tree, param);
     case "type_code":
-      return visitor.visit_code(<ast.CodeTypeNode> tree, param);
+      return visitor.visit_code(tree, param);
     case "type_instance":
-      return visitor.visit_instance(<ast.InstanceTypeNode> tree, param);
+      return visitor.visit_instance(tree, param);
     case "type_overloaded":
-      return visitor.visit_overloaded(<ast.OverloadedTypeNode> tree, param);
+      return visitor.visit_overloaded(tree, param);
     case "type_tuple":
-      return visitor.visit_tuple(<ast.TupleTypeNode> tree, param);
+      return visitor.visit_tuple(tree, param);
 
     default:
-      throw "error: unknown type syntax node " + tree.tag;
+      // Note: Typecast to 'any' because TypeScript does not believe this
+      // case is possible.
+      throw "error: unknown type syntax node " + (<any> tree).tag;
   }
 }
 

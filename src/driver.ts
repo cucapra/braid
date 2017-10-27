@@ -116,7 +116,7 @@ export function frontend(config: Config, sources: string[],
     }
     config.log(tree);
 
-    root.children.push(tree);
+    root.children.push(<ExpressionNode> tree);
   }
 
   // Check and elaborate types.

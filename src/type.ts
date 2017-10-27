@@ -1,41 +1,53 @@
+export const enum TypeType {
+  PRIMITIVE,
+  ANY,
+  VOID,
+  FUN,
+  VARIADIC_FUN,
+  CODE,
+  CONSTRUCTOR,
+  INSTANCE,
+  QUANTIFIED,
+  VARIABLE,
+  OVERLOADED,
+  TUPLE
+}
+
 /**
  * The base type for all types.
  */
-export abstract class Type {
-  _brand_Type: void;
+interface BaseType {
+  type: TypeType;
 }
 
 /**
  * Primitive types. Each primitive type is a (shared) instance of this class.
  */
-export class PrimitiveType extends Type {
-  constructor(public name: string) { super(); }
-
-  // A workaround to compensate for TypeScript's structural subtyping:
-  // https://github.com/Microsoft/TypeScript/issues/202
-  _brand_PrimitiveType: void;
+export class PrimitiveType implements BaseType {
+  public type: TypeType.PRIMITIVE;
+  constructor(public name: string) { }
 }
+PrimitiveType.prototype.type = TypeType.PRIMITIVE;
 
 /**
  * A "top" type: a supertype of everything.
  */
-export class AnyType extends Type {
-  _brand_AnyType: void;
+export class AnyType implements BaseType {
+  public type: TypeType.ANY;
 }
+AnyType.prototype.type = TypeType.ANY;
 export const ANY = new AnyType();
 
 /**
  * A "bottom" type: a subtype of everything.
  */
-export class VoidType extends Type {
-  _brand_AnyType: void;
+export class VoidType implements BaseType {
+  public type: TypeType.VOID;
 }
+VoidType.prototype.type = TypeType.VOID;
 export const VOID = new VoidType();
 
-/**
- * Function types.
- */
-export class FunType extends Type {
+abstract class BaseFunType {
   constructor(
     /**
      * The parameter types.
@@ -46,66 +58,87 @@ export class FunType extends Type {
      * The return type.
      */
     public ret: Type
-  ) { super(); }
-  _brand_FunType: void;
+  ) {}
 }
+
+/**
+ * Function types.
+ */
+export class FunType extends BaseFunType implements BaseType {
+  public type: TypeType.FUN;
+}
+FunType.prototype.type = TypeType.FUN;
 
 /**
  * Variadic function types. These functions can take any number of arguments
  * of a single type: the `params` array must have length 1.
  */
-export class VariadicFunType extends FunType {
-  _brand_VariadicFunType: void;
+export class VariadicFunType extends BaseFunType implements BaseType {
+  public type: TypeType.VARIADIC_FUN;
 }
+VariadicFunType.prototype.type = TypeType.VARIADIC_FUN;
+
 
 /**
  * Code types.
  */
-export class CodeType extends Type {
+export class CodeType implements BaseType {
+  public type: TypeType.CODE;
   constructor(
     public inner: Type,
     public annotation: string,
     public snippet: number | null = null,  // Corresponding escape ID.
     public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
-  ) { super(); }
-  _brand_CodeType: void;
+  ) {}
 }
+CodeType.prototype.type = TypeType.CODE;
 
 // Type constructors: the basic element of parametricity.
-export class ConstructorType extends Type {
-  constructor(public name: string) { super(); }
+export class ConstructorType implements BaseType {
+  public type: TypeType.CONSTRUCTOR;
+  constructor(public name: string) { }
   instance(arg: Type) {
     return new InstanceType(this, arg);
   }
-  _brand_ConstructorType: void;
 }
-export class InstanceType extends Type {
-  constructor(public cons: ConstructorType, public arg: Type) { super(); }
-  _brand_InstanceType: void;
+ConstructorType.prototype.type = TypeType.CONSTRUCTOR;
+
+export class InstanceType implements BaseType {
+  public type: TypeType.INSTANCE;
+  constructor(public cons: ConstructorType, public arg: Type) { }
 }
+InstanceType.prototype.type = TypeType.INSTANCE;
 
 // Slightly more general parametricity with a universal quantifier.
-export class QuantifiedType extends Type {
-  constructor(public variable: TypeVariable, public inner: Type) { super(); }
-  _brand_QuantifiedType: void;
+export class QuantifiedType implements BaseType {
+  public type: TypeType.QUANTIFIED;
+  constructor(public variable: TypeVariable, public inner: Type) { }
 }
-export class VariableType extends Type {
-  constructor(public variable: TypeVariable) { super(); }
-  _brand_VariableType: void;
+QuantifiedType.prototype.type = TypeType.QUANTIFIED;
+
+export class VariableType implements BaseType {
+  public type: TypeType.VARIABLE;
+  constructor(public variable: TypeVariable) { }
 }
+VariableType.prototype.type = TypeType.VARIABLE;
 
 // Simple overloading.
-export class OverloadedType extends Type {
-  constructor(public types: Type[]) { super(); }
-  _brand_OverloadedType: void;
+export class OverloadedType implements BaseType {
+  public type: TypeType.OVERLOADED;
+  constructor(public types: Type[]) { }
 }
+OverloadedType.prototype.type = TypeType.OVERLOADED;
 
 // Tuple (product) types.
-export class TupleType extends Type {
-  constructor(public components: Type[]) { super(); }
-  _brand_TupleType: void;
+export class TupleType implements BaseType {
+  public type: TypeType.TUPLE;
+  constructor(public components: Type[]) { }
 }
+TupleType.prototype.type = TypeType.TUPLE;
 
+export type Type = PrimitiveType | AnyType | VoidType | FunType |
+  VariadicFunType | CodeType | ConstructorType | InstanceType | QuantifiedType |
+  VariableType | OverloadedType | TupleType;
 
 // Type variables.
 
@@ -157,30 +190,31 @@ export interface TypeVisit<P, R> {
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
                           type: Type, param: P): R {
-  if (type instanceof PrimitiveType) {
-    return visitor.visit_primitive(type, param);
-  } else if (type instanceof FunType) {
-    return visitor.visit_fun(type, param);
-  } else if (type instanceof CodeType) {
-    return visitor.visit_code(type, param);
-  } else if (type instanceof AnyType) {
-    return visitor.visit_any(type, param);
-  } else if (type instanceof VoidType) {
-    return visitor.visit_void(type, param);
-  } else if (type instanceof ConstructorType) {
-    return visitor.visit_constructor(type, param);
-  } else if (type instanceof InstanceType) {
-    return visitor.visit_instance(type, param);
-  } else if (type instanceof QuantifiedType) {
-    return visitor.visit_quantified(type, param);
-  } else if (type instanceof VariableType) {
-    return visitor.visit_variable(type, param);
-  } else if (type instanceof OverloadedType) {
-    return visitor.visit_overloaded(type, param);
-  } else if (type instanceof TupleType) {
-    return visitor.visit_tuple(type, param);
-  } else {
-    throw "error: unknown type kind " + typeof(type);
+  switch (type.type) {
+    case TypeType.PRIMITIVE:
+      return visitor.visit_primitive(type, param);
+    case TypeType.FUN:
+      return visitor.visit_fun(type, param);
+    case TypeType.CODE:
+      return visitor.visit_code(type, param);
+    case TypeType.ANY:
+      return visitor.visit_any(type, param);
+    case TypeType.VOID:
+      return visitor.visit_void(type, param);
+    case TypeType.CONSTRUCTOR:
+      return visitor.visit_constructor(type, param);
+    case TypeType.INSTANCE:
+      return visitor.visit_instance(type, param);
+    case TypeType.QUANTIFIED:
+      return visitor.visit_quantified(type, param);
+    case TypeType.VARIABLE:
+      return visitor.visit_variable(type, param);
+    case TypeType.OVERLOADED:
+      return visitor.visit_overloaded(type, param);
+    case TypeType.TUPLE:
+      return visitor.visit_tuple(type, param);
+    default:
+      throw "error: unknown type kind " + typeof(type);
   }
 }
 

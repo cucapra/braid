@@ -6,7 +6,7 @@ import {
   FLOAT4X4, FLOAT3X3, FLOAT4, SHADER_ANNOTATION, TEXTURE, FLOAT3, FLOAT2, CUBE_TEXTURE
 } from './gl';
 import { progsym, paren, variant_suffix } from './emitutil';
-import { Type, PrimitiveType, FLOAT, INT } from '../type';
+import { Type, PrimitiveType, FLOAT, INT, TypeType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import * as ast from '../ast';
@@ -174,7 +174,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
 
-    } else if (type instanceof PrimitiveType) {
+    } else if (type.type === TypeType.PRIMITIVE) {
       // Ordinary uniform.
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
@@ -198,7 +198,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 
   } else {
     // Array types are bound as attributes.
-    if (type instanceof PrimitiveType) {
+    if (type.type === TypeType.PRIMITIVE) {
       // The value is a WebGL buffer object.
       let buf_expr = paren(value);
 

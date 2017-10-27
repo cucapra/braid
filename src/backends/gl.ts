@@ -1,4 +1,4 @@
-import { Type, TypeMap } from '../type';
+import { Type, TypeMap, TypeType } from '../type';
 import {
   PrimitiveType,
   FunType,
@@ -292,8 +292,7 @@ export const INTRINSICS: TypeMap = {
 
 function is_intrinsic(tree: ast.CallNode, name: string) {
   if (tree.fun.tag === "lookup") {
-    let fun = <ast.LookupNode> tree.fun;
-    return fun.ident === name;
+    return tree.fun.ident === name;
   }
   return false;
 }
@@ -388,15 +387,12 @@ export function shadervarsym(scopeid: number, varid: number) {
 // Check whether the type of a value implies that it needs to be passed as an
 // attribute: i.e., it is an array type.
 export function _attribute_type(t: Type) {
-  if (t instanceof InstanceType) {
-    return t.cons === BUFFER;
-  }
-  return false;
+  return t.type === TypeType.INSTANCE && t.cons === BUFFER;
 }
 
 // A helper function that unwraps array types. Non-array types are unaffected.
 export function _unwrap_array(t: Type): Type {
-  if (t instanceof InstanceType) {
+  if (t.type === TypeType.INSTANCE) {
     if (t.cons === BUFFER) {
       // Get the inner type: the array element type.
       return t.arg;
