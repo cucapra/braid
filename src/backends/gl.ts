@@ -387,12 +387,12 @@ export function shadervarsym(scopeid: number, varid: number) {
 // Check whether the type of a value implies that it needs to be passed as an
 // attribute: i.e., it is an array type.
 export function _attribute_type(t: Type) {
-  return t.type === TypeKind.INSTANCE && t.cons === BUFFER;
+  return t.kind === TypeKind.INSTANCE && t.cons === BUFFER;
 }
 
 // A helper function that unwraps array types. Non-array types are unaffected.
 export function _unwrap_array(t: Type): Type {
-  if (t.type === TypeKind.INSTANCE) {
+  if (t.kind === TypeKind.INSTANCE) {
     if (t.cons === BUFFER) {
       // Get the inner type: the array element type.
       return t.arg;

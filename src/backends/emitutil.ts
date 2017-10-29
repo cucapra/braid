@@ -281,7 +281,7 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
  * type.
  */
 export function is_fun_type(type: Type): boolean {
-  switch (type.type) {
+  switch (type.kind) {
     case TypeKind.FUN:
     case TypeKind.VARIADIC_FUN:
       return true;

@@ -54,7 +54,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
         if (tree.snippet) {
           ei = ei.slice(0);
           let [t] = type_table[tree.id!];
-          if (t.type === TypeKind.CODE) {
+          if (t.kind === TypeKind.CODE) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
             }

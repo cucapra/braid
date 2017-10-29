@@ -91,7 +91,7 @@ function _desugar_macros(type_table: TypeTable,
         let macro_args: ast.ExpressionNode[] = [];
         let has_snippets = false;
         for (let [param, arg] of zip(fun_type.params, tree.args)) {
-          if (param.type === TypeKind.CODE) {
+          if (param.kind === TypeKind.CODE) {
             // Code parameter. Wrap the argument in a quote.
             let as_snippet = !!param.snippet_var;
             has_snippets = has_snippets || as_snippet;

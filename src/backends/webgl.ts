@@ -174,7 +174,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
 
-    } else if (type.type === TypeKind.PRIMITIVE) {
+    } else if (type.kind === TypeKind.PRIMITIVE) {
       // Ordinary uniform.
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
@@ -198,7 +198,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 
   } else {
     // Array types are bound as attributes.
-    if (type.type === TypeKind.PRIMITIVE) {
+    if (type.kind === TypeKind.PRIMITIVE) {
       // The value is a WebGL buffer object.
       let buf_expr = paren(value);
 

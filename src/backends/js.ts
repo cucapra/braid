@@ -250,7 +250,7 @@ export let compile_rules = {
     let progex = emit(emitter, tree.expr);
 
     let [t, _] = emitter.ir.type_table[tree.expr.id!];
-    if (t.type === TypeKind.CODE) {
+    if (t.kind === TypeKind.CODE) {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
       // `eval` trick for ordinary string code.

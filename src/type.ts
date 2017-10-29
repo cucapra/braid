@@ -20,34 +20,34 @@ export const enum TypeKind {
  * The base type for all types.
  */
 interface BaseType {
-  type: TypeKind;
+  kind: TypeKind;
 }
 
 /**
  * Primitive types. Each primitive type is a (shared) instance of this class.
  */
 export class PrimitiveType implements BaseType {
-  public type: TypeKind.PRIMITIVE;
+  public kind: TypeKind.PRIMITIVE;
   constructor(public name: string) { }
 }
-PrimitiveType.prototype.type = TypeKind.PRIMITIVE;
+PrimitiveType.prototype.kind = TypeKind.PRIMITIVE;
 
 /**
  * A "top" type: a supertype of everything.
  */
 export class AnyType implements BaseType {
-  public type: TypeKind.ANY;
+  public kind: TypeKind.ANY;
 }
-AnyType.prototype.type = TypeKind.ANY;
+AnyType.prototype.kind = TypeKind.ANY;
 export const ANY = new AnyType();
 
 /**
  * A "bottom" type: a subtype of everything.
  */
 export class VoidType implements BaseType {
-  public type: TypeKind.VOID;
+  public kind: TypeKind.VOID;
 }
-VoidType.prototype.type = TypeKind.VOID;
+VoidType.prototype.kind = TypeKind.VOID;
 export const VOID = new VoidType();
 
 abstract class BaseFunType {
@@ -68,25 +68,25 @@ abstract class BaseFunType {
  * Function types.
  */
 export class FunType extends BaseFunType implements BaseType {
-  public type: TypeKind.FUN;
+  public kind: TypeKind.FUN;
 }
-FunType.prototype.type = TypeKind.FUN;
+FunType.prototype.kind = TypeKind.FUN;
 
 /**
  * Variadic function types. These functions can take any number of arguments
  * of a single type: the `params` array must have length 1.
  */
 export class VariadicFunType extends BaseFunType implements BaseType {
-  public type: TypeKind.VARIADIC_FUN;
+  public kind: TypeKind.VARIADIC_FUN;
 }
-VariadicFunType.prototype.type = TypeKind.VARIADIC_FUN;
+VariadicFunType.prototype.kind = TypeKind.VARIADIC_FUN;
 
 
 /**
  * Code types.
  */
 export class CodeType implements BaseType {
-  public type: TypeKind.CODE;
+  public kind: TypeKind.CODE;
   constructor(
     public inner: Type,
     public annotation: string,
@@ -94,58 +94,58 @@ export class CodeType implements BaseType {
     public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
   ) {}
 }
-CodeType.prototype.type = TypeKind.CODE;
+CodeType.prototype.kind = TypeKind.CODE;
 
 /**
  * Type constructors: the basic element of parametricity.
  */
 export class ConstructorType implements BaseType {
-  public type: TypeKind.CONSTRUCTOR;
+  public kind: TypeKind.CONSTRUCTOR;
   constructor(public name: string) { }
   instance(arg: Type) {
     return new InstanceType(this, arg);
   }
 }
-ConstructorType.prototype.type = TypeKind.CONSTRUCTOR;
+ConstructorType.prototype.kind = TypeKind.CONSTRUCTOR;
 
 export class InstanceType implements BaseType {
-  public type: TypeKind.INSTANCE;
+  public kind: TypeKind.INSTANCE;
   constructor(public cons: ConstructorType, public arg: Type) { }
 }
-InstanceType.prototype.type = TypeKind.INSTANCE;
+InstanceType.prototype.kind = TypeKind.INSTANCE;
 
 /**
  * Slightly more general parametricity with a universal quantifier.
  */
 export class QuantifiedType implements BaseType {
-  public type: TypeKind.QUANTIFIED;
+  public kind: TypeKind.QUANTIFIED;
   constructor(public variable: TypeVariable, public inner: Type) { }
 }
-QuantifiedType.prototype.type = TypeKind.QUANTIFIED;
+QuantifiedType.prototype.kind = TypeKind.QUANTIFIED;
 
 export class VariableType implements BaseType {
-  public type: TypeKind.VARIABLE;
+  public kind: TypeKind.VARIABLE;
   constructor(public variable: TypeVariable) { }
 }
-VariableType.prototype.type = TypeKind.VARIABLE;
+VariableType.prototype.kind = TypeKind.VARIABLE;
 
 /**
  * Simple overloading.
  */
 export class OverloadedType implements BaseType {
-  public type: TypeKind.OVERLOADED;
+  public kind: TypeKind.OVERLOADED;
   constructor(public types: Type[]) { }
 }
-OverloadedType.prototype.type = TypeKind.OVERLOADED;
+OverloadedType.prototype.kind = TypeKind.OVERLOADED;
 
 /**
  * Tuple (product) types.
  */
 export class TupleType implements BaseType {
-  public type: TypeKind.TUPLE;
+  public kind: TypeKind.TUPLE;
   constructor(public components: Type[]) { }
 }
-TupleType.prototype.type = TypeKind.TUPLE;
+TupleType.prototype.kind = TypeKind.TUPLE;
 
 /**
  * The type for all types.
@@ -208,7 +208,7 @@ export interface TypeVisit<P, R> {
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
                           type: Type, param: P): R {
-  switch (type.type) {
+  switch (type.kind) {
     case TypeKind.PRIMITIVE:
       return visitor.visit_primitive(type, param);
     case TypeKind.FUN:

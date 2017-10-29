@@ -63,7 +63,7 @@ function emit_decl(qualifier: string, type: string, name: string) {
 }
 
 function emit_type(type: Type): string {
-  if (type.type === TypeKind.PRIMITIVE) {
+  if (type.kind === TypeKind.PRIMITIVE) {
     let name = TYPE_NAMES[type.name];
     if (name === undefined) {
       throw "error: primitive type " + type.name + " unsupported in GLSL";

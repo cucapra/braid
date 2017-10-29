@@ -80,7 +80,7 @@ function te_pop(env: TypeEnv, count: number = 1,
 // A utility used here, in the type checker, and also during desugaring when
 // processing macro invocations.
 export function unquantified_type(type: Type): Type {
-  if (type.type === TypeKind.QUANTIFIED) {
+  if (type.kind === TypeKind.QUANTIFIED) {
     return type.inner;
   } else {
     return type;
@@ -323,7 +323,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       if (tree.kind === "splice") {
         // The result of the escape's expression must be code, so it can be
         // spliced.
-        if (t.type === TypeKind.CODE) {
+        if (t.kind === TypeKind.CODE) {
           if (t.snippet !== null) {
             throw error(tree, "type", 'snippet quote in non-snippet splice');
           } else if (t.annotation !== env.anns[0]) {
@@ -340,7 +340,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
         return [t, env];
 
       } else if (tree.kind === "snippet") {
-        if (t.type === TypeKind.CODE) {
+        if (t.kind === TypeKind.CODE) {
           if (t.snippet === null) {
             throw error(tree, "type", "non-snippet code in snippet splice");
           } else if (t.snippet !== tree.id) {
@@ -358,7 +358,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
 
     visit_run(tree: ast.RunNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
-      if (t.type === TypeKind.CODE) {
+      if (t.kind === TypeKind.CODE) {
         if (t.snippet) {
           throw error(tree, "type", "cannot run splice quotes individually");
         }
@@ -470,8 +470,8 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       // Get the function type (we need its arguments).
       let unq_type = unquantified_type(macro_type);
       let fun_type: FunType | VariadicFunType;
-      if (unq_type.type === TypeKind.FUN ||
-        unq_type.type === TypeKind.VARIADIC_FUN) {
+      if (unq_type.kind === TypeKind.FUN ||
+        unq_type.kind === TypeKind.VARIADIC_FUN) {
         fun_type = unq_type;
       } else {
         throw error(tree, "type", `macro must be a function`);
@@ -485,7 +485,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
         // Check whether the parameter is a snippet (open code), an ordinary
         // code type, or an eager non-code value.
         let as_snippet = false;
-        if (param.type === TypeKind.CODE) {
+        if (param.kind === TypeKind.CODE) {
           // Code type, either ordinary or snippet.
           let as_snippet = !!param.snippet_var;
 
@@ -504,7 +504,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       let ret = check_call(macro_type, arg_types);
       if (typeof(ret) === 'object') {
         // Macros return code, and we splice in the result here.
-        if (ret.type === TypeKind.CODE) {
+        if (ret.kind === TypeKind.CODE) {
           return [ret.inner, env];
         } else {
           throw error(tree, "type", "macro must return code");
@@ -530,7 +530,7 @@ export let gen_check: Gen<TypeCheck> = function(check) {
     visit_tupleind(tree: ast.TupleIndexNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the tuple type.
       let [tuple_type, e] = check(tree.tuple, env);
-      if (tuple_type.type !== TypeKind.TUPLE) {
+      if (tuple_type.kind !== TypeKind.TUPLE) {
         throw error(tree.tuple, "type", "indexing non-tuple");
       }
 
@@ -569,7 +569,7 @@ function param_error(i: number, param: Type, arg: Type): string {
  * string indicating the error.
  */
 function check_call(target: Type, args: Type[]): Type | string {
-  switch (target.type) {
+  switch (target.kind) {
     // The target is a variadic function.
     case TypeKind.VARIADIC_FUN: {
       if (target.params.length !== 1) {
@@ -618,7 +618,7 @@ function check_call(target: Type, args: Type[]): Type | string {
       let snippet: number | null = null;
       let snippet_var: TypeVariable | null = null;
       for (let arg of args) {
-        if (arg.type === TypeKind.CODE) {
+        if (arg.kind === TypeKind.CODE) {
           if (arg.snippet) {
             snippet = arg.snippet;
             break;
@@ -655,8 +655,8 @@ function compatible(ltype: Type, rtype: Type): boolean {
     return true;
 
   } else if (
-    (ltype.type === TypeKind.FUN || ltype.type === TypeKind.VARIADIC_FUN) &&
-    (rtype.type === TypeKind.FUN || rtype.type === TypeKind.VARIADIC_FUN)) {
+    (ltype.kind === TypeKind.FUN || ltype.kind === TypeKind.VARIADIC_FUN) &&
+    (rtype.kind === TypeKind.FUN || rtype.kind === TypeKind.VARIADIC_FUN)) {
     if (ltype.params.length !== rtype.params.length) {
       return false;
     }
@@ -669,21 +669,21 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
     return compatible(ltype.ret, rtype.ret);  // Covariant.
 
-  } else if (ltype.type === TypeKind.INSTANCE &&
-    rtype.type === TypeKind.INSTANCE) {
+  } else if (ltype.kind === TypeKind.INSTANCE &&
+    rtype.kind === TypeKind.INSTANCE) {
     if (ltype.cons === rtype.cons) {
       // Invariant.
       return compatible(ltype.arg, rtype.arg) &&
         compatible(rtype.arg, ltype.arg);
     }
 
-  } else if (ltype.type === TypeKind.CODE && rtype.type === TypeKind.CODE) {
+  } else if (ltype.kind === TypeKind.CODE && rtype.kind === TypeKind.CODE) {
     return compatible(ltype.inner, rtype.inner) &&
       ltype.annotation === rtype.annotation &&
       ltype.snippet === rtype.snippet &&
       ltype.snippet_var === rtype.snippet_var;
 
-  } else if (ltype.type === TypeKind.TUPLE && rtype.type === TypeKind.TUPLE) {
+  } else if (ltype.kind === TypeKind.TUPLE && rtype.kind === TypeKind.TUPLE) {
     if (ltype.components.length !== rtype.components.length) {
       return false;
     }
@@ -696,7 +696,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
     return true;
 
-  } else if (ltype.type === TypeKind.OVERLOADED) {
+  } else if (ltype.kind === TypeKind.OVERLOADED) {
     for (let t of ltype.types) {
       if (compatible(t, rtype)) {
         return true;
@@ -719,7 +719,7 @@ function rectify_fun_type(type: FunType): Type {
 
   // Do the same for the return value.
   let ret = type.ret;
-  if (ret.type === TypeKind.CODE && ret.snippet_var) {
+  if (ret.kind === TypeKind.CODE && ret.snippet_var) {
     if (tvar === null) {
       tvar = ret.snippet_var;
     } else {
@@ -743,7 +743,7 @@ function rectify_fun_params(params: Type[]): TypeVariable | null {
   let tvar: TypeVariable | null = null;
 
   for (let param of params) {
-    if (param.type === TypeKind.CODE && param.snippet_var) {
+    if (param.kind === TypeKind.CODE && param.snippet_var) {
       if (tvar === null) {
         // Take the first variable found.
         tvar = param.snippet_var;
@@ -762,7 +762,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_primitive(tree: ast.PrimitiveTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t.type === TypeKind.CONSTRUCTOR) {
+      if (t.kind === TypeKind.CONSTRUCTOR) {
         throw error(tree, "type", `${tree.name} needs a parameter`);
       } else {
         return t;
@@ -796,7 +796,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_instance(tree: ast.InstanceTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t.type === TypeKind.CONSTRUCTOR) {
+      if (t.kind === TypeKind.CONSTRUCTOR) {
         let arg = get_type(tree.arg, types);
         return t.instance(arg);
       } else {
