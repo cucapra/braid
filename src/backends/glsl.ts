@@ -1,4 +1,4 @@
-import { Type, PrimitiveType, INT, FLOAT, TypeType } from '../type';
+import { Type, PrimitiveType, INT, FLOAT, TypeKind } from '../type';
 import { TypeCheck, TypeEnv } from '../type_check';
 import * as ast from '../ast';
 import { stack_lookup } from '../util';
@@ -63,7 +63,7 @@ function emit_decl(qualifier: string, type: string, name: string) {
 }
 
 function emit_type(type: Type): string {
-  if (type.type === TypeType.PRIMITIVE) {
+  if (type.type === TypeKind.PRIMITIVE) {
     let name = TYPE_NAMES[type.name];
     if (name === undefined) {
       throw "error: primitive type " + type.name + " unsupported in GLSL";

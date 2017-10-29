@@ -1,6 +1,6 @@
 import { Emitter, emit } from './emitter';
 import * as ast from '../ast';
-import { Type, FunType, OverloadedType, TypeType } from '../type';
+import { Type, FunType, OverloadedType, TypeKind } from '../type';
 import { complete_visit, ast_visit } from '../visit';
 import { Prog, Variant } from '../compile/ir';
 
@@ -282,10 +282,10 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
  */
 export function is_fun_type(type: Type): boolean {
   switch (type.type) {
-    case TypeType.FUN:
-    case TypeType.VARIADIC_FUN:
+    case TypeKind.FUN:
+    case TypeKind.VARIADIC_FUN:
       return true;
-    case TypeType.OVERLOADED:
+    case TypeKind.OVERLOADED:
       return is_fun_type(type.types[0]);
     default:
       return false;

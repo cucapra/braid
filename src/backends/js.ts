@@ -1,4 +1,4 @@
-import { Type, OverloadedType, FunType, CodeType, TypeType } from '../type';
+import { Type, OverloadedType, FunType, CodeType, TypeKind } from '../type';
 import { varsym, indent, emit_seq, emit_exprs, emit_assign, emit_lookup, emit_if,
   emit_body, paren, splicesym, persistsym, procsym, progsym,
   emit_while, variantsym, is_fun_type, check_header } from './emitutil';
@@ -250,7 +250,7 @@ export let compile_rules = {
     let progex = emit(emitter, tree.expr);
 
     let [t, _] = emitter.ir.type_table[tree.expr.id!];
-    if (t.type === TypeType.CODE) {
+    if (t.type === TypeKind.CODE) {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
       // `eval` trick for ordinary string code.

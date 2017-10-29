@@ -4,7 +4,7 @@ import * as ast from './ast';
 import { ASTTranslate, gen_translate, ast_translate_rules,
   ast_visit, compose_visit } from './visit';
 import { Gen, stack_lookup, fix, compose, zip } from './util';
-import { FunType, CodeType, TypeType } from './type';
+import { FunType, CodeType, TypeKind } from './type';
 
 // Another type test for the specific kind of node we're interested in. We'll
 // use this to follow one piece of advice from the "Scrap Your Boilerplate"
@@ -91,7 +91,7 @@ function _desugar_macros(type_table: TypeTable,
         let macro_args: ast.ExpressionNode[] = [];
         let has_snippets = false;
         for (let [param, arg] of zip(fun_type.params, tree.args)) {
-          if (param.type === TypeType.CODE) {
+          if (param.type === TypeKind.CODE) {
             // Code parameter. Wrap the argument in a quote.
             let as_snippet = !!param.snippet_var;
             has_snippets = has_snippets || as_snippet;
