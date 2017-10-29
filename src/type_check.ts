@@ -218,11 +218,13 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       // ordinary variable.
       let fun = env.externs[tree.op];
       let ret = check_call(fun, [t]);
-      if (typeof(ret) === 'object') {
-        return [ret, e];
-      } else {
+      if (typeof(ret) === 'string') {
+        // A string represents an error checking the call.
         throw error(tree, "type",
           `invalid unary operation ${tree.op} ${pretty_type(t)}`);
+      } else {
+        // Success: we have a return type.
+        return [ret, e];
       }
     },
 
@@ -634,6 +636,7 @@ function check_call(target: Type, args: Type[]): Type | string {
         return "unsupported polymorphism";
       }
     }
+    // Non-function (never legal).
     default: {
       return "call of non-function";
     }
