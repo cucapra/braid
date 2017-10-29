@@ -96,7 +96,9 @@ export class CodeType implements BaseType {
 }
 CodeType.prototype.type = TypeKind.CODE;
 
-// Type constructors: the basic element of parametricity.
+/**
+ * Type constructors: the basic element of parametricity.
+ */
 export class ConstructorType implements BaseType {
   public type: TypeKind.CONSTRUCTOR;
   constructor(public name: string) { }
@@ -112,7 +114,9 @@ export class InstanceType implements BaseType {
 }
 InstanceType.prototype.type = TypeKind.INSTANCE;
 
-// Slightly more general parametricity with a universal quantifier.
+/**
+ * Slightly more general parametricity with a universal quantifier.
+ */
 export class QuantifiedType implements BaseType {
   public type: TypeKind.QUANTIFIED;
   constructor(public variable: TypeVariable, public inner: Type) { }
@@ -125,20 +129,31 @@ export class VariableType implements BaseType {
 }
 VariableType.prototype.type = TypeKind.VARIABLE;
 
-// Simple overloading.
+/**
+ * Simple overloading.
+ */
 export class OverloadedType implements BaseType {
   public type: TypeKind.OVERLOADED;
   constructor(public types: Type[]) { }
 }
 OverloadedType.prototype.type = TypeKind.OVERLOADED;
 
-// Tuple (product) types.
+/**
+ * Tuple (product) types.
+ */
 export class TupleType implements BaseType {
   public type: TypeKind.TUPLE;
   constructor(public components: Type[]) { }
 }
 TupleType.prototype.type = TypeKind.TUPLE;
 
+/**
+ * The type for all types.
+ *
+ * Using a union here, unlike using `BaseType` itself as the type for types,
+ * lets us take advantage of TypeScript's "tagged union" functionality: for
+ * example, the type checker can help us avoid non-exhaustive matches.
+ */
 export type Type = PrimitiveType | AnyType | VoidType | FunType |
   VariadicFunType | CodeType | ConstructorType | InstanceType | QuantifiedType |
   VariableType | OverloadedType | TupleType;
