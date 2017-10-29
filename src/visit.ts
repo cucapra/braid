@@ -302,7 +302,7 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
     case "type_tuple":
       return visitor.visit_tuple(tree, param);
     default:
-      unreachable(tree, "unknown type syntax node");
+      return unreachable(tree, "unknown type syntax node");
   }
 }
 
