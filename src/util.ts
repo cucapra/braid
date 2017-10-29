@@ -127,9 +127,18 @@ export function set_union <T> (a: T[], b: T[]): T[] {
   return out;
 }
 
-// Eval inside a scope.
+/*
+ * Eval inside a scope.
+ */
 export function scope_eval(code: string): any {
   return (function () {
     return eval("'use strict'; " + code);
   })();
+}
+
+/**
+ * A TypeScript trick to assert that code is unreachable.
+ */
+export function unreachable(v: never, msg?: string): never {
+  throw msg || "unreachable case reached";
 }

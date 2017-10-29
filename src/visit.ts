@@ -1,5 +1,5 @@
 import * as ast from './ast';
-import { merge } from './util';
+import { merge, unreachable } from './util';
 
 // An interface that can handle each expression AST node type.
 export interface ASTVisit<P, R> {
@@ -301,11 +301,8 @@ export function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
       return visitor.visit_overloaded(tree, param);
     case "type_tuple":
       return visitor.visit_tuple(tree, param);
-
     default:
-      // Note: Typecast to 'any' because TypeScript does not believe this
-      // case is possible.
-      throw "error: unknown type syntax node " + (<any> tree).tag;
+      unreachable(tree, "unknown type syntax node");
   }
 }
 
