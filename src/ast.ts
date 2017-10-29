@@ -17,7 +17,8 @@ export interface Location {
 }
 
 /**
- * The base type for all nodes in the AST.
+ * The base type for all nodes in the AST, including expression and
+ * non-expression nodes.
  */
 interface BaseSyntaxNode {
   /**
@@ -42,12 +43,16 @@ interface BaseSyntaxNode {
 }
 
 /**
- * A root AST node that acts as a parent for joining several source ASTs together
+ * A root AST node that acts as a parent for joining several source ASTs.
+ * We use this to represent multiple files that are compiled
+ * together.
  */
  export interface RootNode extends BaseSyntaxNode {
    tag: "root";
    children: ExpressionNode[];
  }
+
+// Expression syntax:
 
 export interface LiteralNode extends BaseSyntaxNode {
   tag: "literal";
@@ -177,6 +182,8 @@ export interface AllocNode extends BaseSyntaxNode {
   expr: ExpressionNode;
 }
 
+// Type syntax:
+
 export interface OverloadedTypeNode extends BaseSyntaxNode {
   tag: "type_overloaded";
   types: TypeNode[];
@@ -234,7 +241,13 @@ export type ExpressionNode = LiteralNode | SeqNode | LetNode | AssignNode |
   FunNode | CallNode | ExternNode | IfNode | WhileNode | MacroCallNode |
   TypeAliasNode | TupleNode | TupleIndexNode | AllocNode | PersistNode;
 
+/**
+ * An AST node that represents the syntactic description of a type.
+ */
 export type TypeNode = OverloadedTypeNode | PrimitiveTypeNode |
   InstanceTypeNode | FunTypeNode | CodeTypeNode | TupleTypeNode;
 
+/**
+ * *Any* kind of syntax.
+ */
 export type SyntaxNode = RootNode | ExpressionNode | ParamNode | TypeNode;
