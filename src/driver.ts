@@ -96,7 +96,7 @@ export function frontend(config: Config, sources: string[],
     let filename: string | null = (filenames !== null && i < sources.length) ? filenames[i] : null;
 
     // Parse.
-    let tree: SyntaxNode;
+    let tree: ExpressionNode;
     try {
       // Give the parser the filename
       let options = { filename: filename };
@@ -116,7 +116,7 @@ export function frontend(config: Config, sources: string[],
     }
     config.log(tree);
 
-    root.children.push(<ExpressionNode> tree);
+    root.children.push(tree);
   }
 
   // Check and elaborate types.
