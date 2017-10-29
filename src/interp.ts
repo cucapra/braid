@@ -141,7 +141,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
     let [t, s, p] = quote_interp(tree.expr, level, state, []);
 
     // Wrap the resulting AST as a code value.
-    return [new Code(t, p, tree.annotation), s];
+    return [new Code(<ast.ExpressionNode> t, p, tree.annotation), s];
   },
 
   visit_escape(tree: ast.EscapeNode, state: State): [Value, State] {

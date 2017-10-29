@@ -1,6 +1,6 @@
 import { Emitter, emit } from './emitter';
 import * as ast from '../ast';
-import { Type, FunType, OverloadedType } from '../type';
+import { Type, FunType, OverloadedType, TypeType } from '../type';
 import { complete_visit, ast_visit } from '../visit';
 import { Prog, Variant } from '../compile/ir';
 
@@ -202,7 +202,7 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
       }
     }
   );
-  return ast_visit(rules, tree, null);
+  return <ast.ExpressionNode[]> ast_visit(rules, tree, null);
 }
 
 /**
@@ -281,11 +281,13 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
  * type.
  */
 export function is_fun_type(type: Type): boolean {
-  if (type instanceof FunType) {
-    return true;
-  } else if (type instanceof OverloadedType) {
-    return is_fun_type(type.types[0]);
-  } else {
-    return false;
+  switch (type.type) {
+    case TypeType.FUN:
+    case TypeType.VARIADIC_FUN:
+      return true;
+    case TypeType.OVERLOADED:
+      return is_fun_type(type.types[0]);
+    default:
+      return false;
   }
 }

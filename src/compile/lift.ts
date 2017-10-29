@@ -3,7 +3,7 @@ import { Gen, fix, set_add } from '../util';
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import { TypeTable } from '../type_elaborate';
 import { Scope, Prog, Proc, Escape, DefUseTable } from './ir';
-import { CodeType } from '../type';
+import { CodeType, TypeType } from '../type';
 
 // A simple, imperative walk that indexes *all* the syntax nodes in a tree by
 // their ID. We use this to build Procs and Progs by looking up the
@@ -54,7 +54,7 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
         if (tree.snippet) {
           ei = ei.slice(0);
           let [t] = type_table[tree.id!];
-          if (t instanceof CodeType) {
+          if (t.type === TypeType.CODE) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
             }
@@ -163,7 +163,7 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
   // And an empty "main" proc for the top-level scope.
   let main: Proc = {
     id: null,
-    body: tree,
+    body: <ast.ExpressionNode> tree,
     params: [],
 
     free: [],
