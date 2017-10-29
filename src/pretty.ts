@@ -1,6 +1,6 @@
 import * as ast from './ast';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
-import { set_in } from './util';
+import { set_in, unreachable } from './util';
 
 const TERM_TAGS = ["quote", "literal", "lookup", "escape", "run", "paren", "persist"];
 
@@ -176,22 +176,17 @@ function pretty_paren(tree: ast.SyntaxNode,
 }
 
 /**
- * The rules for pretty-printing type ASTs.
+ * Pretty-print a type AST.
  */
-let pretty_type_ast_rules: TypeASTVisit<void, string> = {
-  visit_primitive(tree: ast.PrimitiveTypeNode, param: void): string {
+function pretty_type_ast(tree: ast.TypeNode): string {
+  switch (tree.tag) {
+  case "type_primitive":
     return tree.name;
-  },
-
-  visit_fun(tree: ast.FunTypeNode, param: void): string {
-    let params = "";
-    for (let param of tree.params) {
-      params += pretty_type_paren(param) + " ";
-    }
-    return params + "-> " + pretty_type_ast(tree.ret);
-  },
-
-  visit_code(tree: ast.CodeTypeNode, param: void): string {
+  case "type_fun": {
+    let params = tree.params.map(pretty_type_paren).join(" ");
+    return `${params} -> ${pretty_type_ast(tree.ret)}`;
+  }
+  case "type_code": {
     let out = "<" + pretty_type_ast(tree.inner) + ">";
     if (tree.annotation) {
       out = tree.annotation + out;
@@ -200,26 +195,16 @@ let pretty_type_ast_rules: TypeASTVisit<void, string> = {
       out = "$" + out;
     }
     return out;
-  },
-
-  visit_instance(tree: ast.InstanceTypeNode, param: void): string {
+  }
+  case "type_instance":
     return pretty_type_paren(tree.arg) + " " + tree.name;
-  },
-
-  visit_overloaded(tree: ast.OverloadedTypeNode, param: void): string {
+  case "type_overloaded":
     return tree.types.map(pretty_type_paren).join(" | ");
-  },
-
-  visit_tuple(tree: ast.TupleTypeNode, param: void): string {
+  case "type_tuple":
     return tree.components.map(pretty_type_paren).join(" * ");
-  },
-};
-
-/**
- * Pretty-print a type AST.
- */
-function pretty_type_ast(tree: ast.TypeNode) {
-  return type_ast_visit(pretty_type_ast_rules, tree, null);
+  default:
+    return unreachable(tree, "unknown type AST kind");
+  }
 }
 
 
