@@ -13,8 +13,7 @@ const EXTENSION = '.ss';
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
-    generate: boolean, log: (...msg: any[]) => void, presplice: boolean,
-    outfile: string)
+    generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
 {
   let success = true;
   let name = path.basename(filename, EXTENSION);
@@ -162,7 +161,6 @@ async function main() {
   let test: boolean = args['t'];
   let generate: boolean = args['g'];
   let no_presplice: boolean = args['P'];
-  let outfile: string = args['o'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
@@ -174,7 +172,6 @@ async function main() {
     console.error("  -t: test mode (check for expected output)");
     console.error("  -g: dump generated code");
     console.error("  -P: do not use the presplicing optimization");
-    console.error("  -o FILE: emit result in FILE");
     process.exit(1);
   }
 
@@ -192,7 +189,7 @@ async function main() {
   await Promise.all(filenames.map(async fn => {
     let source = await read_file_or_stdin(fn);
     success = run(fn, source, webgl, compile, execute, test,
-        generate, log, !no_presplice, outfile) && success;
+        generate, log, !no_presplice) && success;
   }));
   if (!success) {
     process.exit(1);
