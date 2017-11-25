@@ -561,7 +561,7 @@ export function get_func(func: string, argTypes: Type[],
   if (funcMap[func]) {
     for (let paramsRet of funcMap[func]) {
       let ret = check_call(paramsRet.funcType, argTypes);
-      if (ret instanceof Type) {
+      if (typeof(ret) !== "string") {
         return paramsRet.ret(args);
       }
     }

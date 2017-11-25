@@ -585,6 +585,7 @@ export function check_call(target: Type, args: Type[]): Type | string {
 
       return target.ret;
     }
+
     // The target is an ordinary function.
     case TypeKind.FUN: {
       // Check that the arguments are the right type.
@@ -601,6 +602,7 @@ export function check_call(target: Type, args: Type[]): Type | string {
 
       return target.ret;
     }
+
     // An overloaded type. Try each component type.
     case TypeKind.OVERLOADED: {
       for (let sub of target.types) {
@@ -611,6 +613,7 @@ export function check_call(target: Type, args: Type[]): Type | string {
       }
       return "no overloaded type applies";
     }
+
     // Polymorphic functions.
     case TypeKind.QUANTIFIED: {
       // Special case for unifying polymorphic snippet function types with
@@ -632,18 +635,18 @@ export function check_call(target: Type, args: Type[]): Type | string {
         return check_call(apply_quantified_type(target, snippet), args);
       } else if (snippet_var !== null) {
         return check_call(apply_quantified_type(target, snippet_var), args);
+      }
+
+      // The normal case for a polymorphic functions. Perform unification to
+      // fill in the concrete type for the type variable.
+      let ret = check_quantified(target.variable, target.inner, args);
+      if (typeof(ret) === "string") {
+        return ret;
       } else {
-        // Normal case for a polymorphic function.
-        let inner = target.inner;
-        // Get the generic type of the type variable.
-        let ret = check_quantified(target.variable, inner, args);
-        if (ret instanceof Type) {
-          return check_call(apply_quantified_type(target, ret), args);
-        } else {
-          return ret;
-        }
+        return check_call(apply_quantified_type(target, ret), args);
       }
     }
+
     // Non-function (never legal).
     default: {
       return "call of non-function";
@@ -652,14 +655,19 @@ export function check_call(target: Type, args: Type[]): Type | string {
 }
 
 /**
- * Determine the type of the type variable in a quantified function call.
- * Target is the inner function of a quantified type. Return the result
- * type of the type variable or a string indicating
- * the error.
+ * Type-check a call of a quantified (polymorphic) function type and return
+ * the bound type for the type variable (or a string indicating an error).
+ *
+ * `target` is the "unwrapped" function type being called, and `tvar` is the
+ * the type variable used to quantify it. `args` are the function call
+ * arguments that we'll use to bind the type variable.
  */
-function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type | string {
+function check_quantified(tvar: TypeVariable, target: Type,
+                          args: Type[]): Type | string
+{
+  switch (target.kind) {
   // The inner function is a variadic function.
-  if (target instanceof VariadicFunType) {
+  case TypeKind.VARIADIC_FUN: {
     if (target.params.length !== 1) {
       return "variadic function with multiple argument types";
     }
@@ -670,7 +678,9 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
       // Unify one parameter type with the corresponding argument type.
       let ret = unify(tvar, param, arg);
 
-      if (ret instanceof Type) {
+      if (typeof(ret) === "boolean") {
+        return param_error(i, param, arg);
+      } else {
         // If the current result unifying type is different from the type
         // we get earlier, check whether the earlier type is compatible
         // with the current type, which means that the earlier type (vType)
@@ -682,8 +692,6 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
         } else {
           return param_error(i, param, arg);
         }
-      } else if (!ret) {
-        return param_error(i, param, arg);
       }
     }
 
@@ -692,9 +700,10 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
     } else {
       return "cannot unify the generic type";
     }
+  }
 
   // The inner function is an ordinary function.
-  } else if (target instanceof FunType) {
+  case TypeKind.FUN: {
     if (args.length !== target.params.length) {
       return "mismatched argument length";
     }
@@ -704,14 +713,16 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
       let arg = args[i];
       // Same mechanism as the variadic function above.
       let ret = unify(tvar, param, arg);
-      if (ret instanceof Type) {
+      if (typeof(ret) === "boolean") {
+        if (!ret) {
+          return param_error(i, param, arg);
+        }
+      } else {
         if (vType === null || ret === vType) {
           vType = ret;
         } else {
           return param_error(i, param, arg);
         }
-      } else if (!ret) {
-        return param_error(i, param, arg);
       }
     }
 
@@ -720,31 +731,34 @@ function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type 
     } else {
       return "cannot unify the generic type";
     }
+  }
 
   // The inner function is an overloaded type. Try each component type.
-  } else if (target instanceof OverloadedType) {
+  case TypeKind.OVERLOADED: {
     for (let sub of target.types) {
       let ret = check_quantified(tvar, sub, args);
-      if (ret instanceof Type) {
+      if (typeof(ret) !== "string") {
         return ret;
       }
     }
     return "no overloaded type applies";
+  }
 
-  // The inner funciton is a polymorphic function. Recusively call
-  // check_quantified to the determine the type variable of
-  // the inner function.
-  } else if (target instanceof QuantifiedType) {
+  // The inner funciton is *also* a polymorphic type. Recursively call
+  // check_quantified to the determine the type variable of the inner
+  // function.
+  case TypeKind.QUANTIFIED: {
     let inner = target.inner;
     let ret = check_quantified(target.variable, inner, args);
-    if (ret instanceof Type) {
-      return check_quantified(tvar, apply_quantified_type(target, ret), args);
-    } else {
+    if (typeof(ret) === "string") {
       return ret;
+    } else {
+      return check_quantified(tvar, apply_quantified_type(target, ret), args);
     }
+  }
 
-  } else {
-    return "quantified type's inner function is illegal";
+  default:
+    return "call of quantified non-function type";
   }
 }
 
