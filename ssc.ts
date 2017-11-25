@@ -41,6 +41,7 @@ function run(filename: string, source: string, webgl: boolean,
       presplice,
     };
 
+    // Run the driver.
     let sources: string[] = [source];
     let filenames: string[] = [filename];
 
@@ -57,7 +58,7 @@ function run(filename: string, source: string, webgl: boolean,
     let [tree, types] = res;
     if (compile) {
       // Compiler.
-      driver.compile(config, tree, types, (code: string) => {
+      driver.compile(config, tree, types, code => {
         if (execute) {
           driver.execute(config, code, (res) => {
             if (test) {
@@ -150,7 +151,6 @@ async function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
     boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P'],
-    string: ['o'],
   });
 
   // The flags: -v, -c, and -x.
