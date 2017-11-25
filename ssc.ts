@@ -58,7 +58,7 @@ function run(filename: string, source: string, webgl: boolean,
     let [tree, types] = res;
     if (compile) {
       // Compiler.
-      driver.compile(config, tree, types, (code) => {
+      driver.compile(config, tree, types, code => {
         if (execute) {
           driver.execute(config, code, (res) => {
             if (test) {
