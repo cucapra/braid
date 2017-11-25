@@ -14,7 +14,7 @@
     "typescript": "^2.4.1"
   },
   "bin": {
-    "ssc": "build/ssc.js"
+    "ssc": "build/cli/ssc.js"
   },
   "scripts": {
     "parser": "pegjs --cache -o parser.js src/grammar.pegjs",

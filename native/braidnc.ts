@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import * as fs from 'fs';
 import * as util from 'util';
 import * as path from 'path';
 import * as minimist from 'minimist';
@@ -8,8 +7,7 @@ import * as minimist from 'minimist';
 import * as driver from "../src/driver";
 import { Error } from "../src/error";
 import * as llvm from "./llvm";
-
-const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
+import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
 function run(filename: string, source: string) {
   let success = true;
@@ -31,7 +29,7 @@ function run(filename: string, source: string) {
   };
 
   // Run the driver.
-  let res = driver.frontend(config, [source], [filenames]);
+  let res = driver.frontend(config, [source], [filename]);
   if (res instanceof Error) {
     console.error(res.toString());
     return false;
@@ -45,32 +43,6 @@ function run(filename: string, source: string) {
   mod.free();
 
   return success;
-}
-
-// TODO Share with the main CLI tool.
-/**
- * Read code from a file or from stdin, if the filename is -.
- */
-function readCode(filename: string): Promise<string> {
-  return new Promise(function (resolve, reject) {
-    if (filename === STDIN_FILENAME) {
-      // Read from stdin.
-      let chunks: string[] = [];
-      process.stdin.on("data", function (chunk: string) {
-        chunks.push(chunk);
-      }).on("end", function () {
-        resolve(chunks.join(""));
-      }).setEncoding("utf8");
-    } else {
-      // Read from a file.
-      fs.readFile(filename, function (err: any, data: any) {
-        if (err) {
-          reject(err);
-        }
-        resolve(data.toString());
-      });
-    }
-  });
 }
 
 function main() {
@@ -102,7 +74,7 @@ function main() {
   }
 
   // Read the source and run the driver.
-  readCode(filename).then(source => {
+  readText(filename).then(source => {
     let success = run(filename, source);
     if (!success) {
       process.exit(1);

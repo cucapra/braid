@@ -5,10 +5,10 @@ import * as util from 'util';
 import * as path from 'path';
 import * as minimist from 'minimist';
 
-import * as driver from "./src/driver";
-import { Error } from "./src/error";
+import * as driver from "../src/driver";
+import { Error } from "../src/error";
+import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
-const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
 
 function run(filename: string, source: string, webgl: boolean,
@@ -122,31 +122,6 @@ function verbose_log(...msg: any[]) {
   console.log(out[0], ...out.slice(1));
 }
 
-/**
- * Read from a file or, if the filename is "-", from stdin.
- */
-function read_file_or_stdin(fn: string): Promise<string> {
-  return new Promise(function (resolve, reject) {
-    if (fn === STDIN_FILENAME) {
-      // Read from stdin.
-      let chunks: string[] = [];
-      process.stdin.on("data", (chunk: string) => {
-        chunks.push(chunk);
-      }).on("end", () => {
-        resolve(chunks.join(""));
-      }).setEncoding("utf8");
-    } else {
-      // Read from a file.
-      fs.readFile(fn, (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data.toString());
-      });
-    }
-  });
-}
-
 async function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
@@ -187,7 +162,7 @@ async function main() {
   // Read each source file and run the driver.
   let success = true;
   await Promise.all(filenames.map(async fn => {
-    let source = await read_file_or_stdin(fn);
+    let source = await readText(fn);
     success = run(fn, source, webgl, compile, execute, test,
         generate, log, !no_presplice) && success;
   }));

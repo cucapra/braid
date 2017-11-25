@@ -13,7 +13,7 @@
         ]
     },
     "files": [
-        "ssc.ts",
+        "cli/ssc.ts",
         "parser.js"
     ]
 }
