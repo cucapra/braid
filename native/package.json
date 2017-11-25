@@ -1,0 +1,10 @@
+{
+  "name": "braid-native",
+  "private": true,
+  "version": "1.0.0",
+  "main": "build/native.js",
+  "license": "MIT",
+  "dependencies": {
+    "llvmc": "^1.0.2"
+  }
+}
