@@ -9,7 +9,7 @@ import { Error } from "../src/error";
 import * as llvm from "./llvm";
 import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
-function run(filename: string, source: string) {
+function run(filename: string, source: string, outfile: string | undefined) {
   let success = true;
 
   // Configure the driver.
@@ -39,7 +39,16 @@ function run(filename: string, source: string) {
   let [tree, types] = res;
   let ir = driver.to_ir(config, tree, types);
   let mod = llvm.codegen(ir);
-  console.log(mod.toString());  // TODO Write bitcode to file.
+
+  if (outfile) {
+    // Dump bitcode to the file.
+    mod.writeBitcodeToFile(outfile);
+  } else {
+    // Print human-readable IR to stdout.
+    console.log(mod.toString());
+  }
+
+  // Free the compiled LLVM module.
   mod.free();
 
   return success;
@@ -54,14 +63,14 @@ function main() {
 
   let verbose: boolean = args['v'];
   let opengl: boolean = args['g'];
-  let outfile: string = args['o'];
+  let outfile: string | undefined = args['o'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
     console.error("usage: " + process.argv[1] + " [-vcxwtgP] [PROGRAM...]");
     console.error("  -v: verbose mode");
     console.error("  -g: graphics (OpenGL) mode");
-    console.error("  -o FILE: emit result in FILE");
+    console.error("  -o FILE: emit LLVM bitcode to FILE");
     process.exit(1);
   }
 
@@ -75,7 +84,7 @@ function main() {
 
   // Read the source and run the driver.
   readText(filename).then(source => {
-    let success = run(filename, source);
+    let success = run(filename, source, outfile);
     if (!success) {
       process.exit(1);
     }
