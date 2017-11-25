@@ -10,8 +10,6 @@ import { Error } from "../src/error";
 import * as llvm from "./llvm";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
-const EXTENSION = '.ss';
-const HEADER_FILE = 'header.ss';
 
 function run(filename: string, source: string) {
   let success = true;
@@ -33,10 +31,7 @@ function run(filename: string, source: string) {
   };
 
   // Run the driver.
-  let sources: string[] = [source];
-  let filenames: string[] = [filename];
-
-  let res = driver.frontend(config, sources, filenames);
+  let res = driver.frontend(config, [source], [filenames]);
   if (res instanceof Error) {
     console.error(res.toString());
     return false;
