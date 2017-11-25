@@ -12,7 +12,10 @@ import {
   ANY,
   VOID,
   STRING,
-  BOOLEAN
+  BOOLEAN,
+  TypeVariable,
+  QuantifiedType,
+  VariableType
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -95,6 +98,9 @@ export const TYPE_NAMES: { [_: string]: string } = {
 export const FRAG_INTRINSIC = "fragment";
 export const VTX_INTRINSIC = "vertex";
 export const SHADER_ANNOTATION = "glsl";
+// A type variable used in quantified type.
+export const TVAR = new TypeVariable("T");
+
 
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
@@ -259,20 +265,39 @@ export const INTRINSICS: TypeMap = {
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
   textureCube: new FunType([CUBE_TEXTURE, FLOAT3], FLOAT4),
 
-  // TODO: Remove this function?
-  // Buffer construction. Eventually, it would be nice to use overloading here
-  // instead of distinct names for each type.
-  float_array: new VariadicFunType([FLOAT], new InstanceType(BUFFER, FLOAT)),
-
-  // An array constructor.
-  // It would be better to use generics here.
-  array: new OverloadedType([
-    new VariadicFunType([INT], new InstanceType(ARRAY, INT)),
-    new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
-    new VariadicFunType([FLOAT2], new InstanceType(ARRAY, FLOAT2)),
-    new VariadicFunType([FLOAT3], new InstanceType(ARRAY, FLOAT3)),
-    new VariadicFunType([FLOAT4], new InstanceType(ARRAY, FLOAT4)),
-  ]),
+  // Array constructor.
+  array: new QuantifiedType(TVAR,
+    new VariadicFunType(
+      [new VariableType(TVAR)],
+      new InstanceType(ARRAY, new VariableType(TVAR))
+    )
+  ),
+  // Array getter.
+  get: new QuantifiedType(TVAR,
+    new FunType(
+      [new InstanceType(ARRAY, new VariableType(TVAR)), INT],
+      new VariableType(TVAR)
+    )
+  ),
+  // Array setter.
+  set: new QuantifiedType(TVAR,
+    new FunType(
+      [
+        new InstanceType(ARRAY, new VariableType(TVAR)),
+        INT,
+        new VariableType(TVAR)
+      ], VOID
+    )
+  ),
+  push: new QuantifiedType(TVAR,
+    new FunType(
+      [
+        new InstanceType(ARRAY, new VariableType(TVAR)),
+        new VariableType(TVAR)
+      ],
+      VOID
+    )
+  ),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

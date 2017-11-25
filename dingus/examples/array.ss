@@ -9,15 +9,19 @@ mat4.rotateY(model, model, 1.0);
 
 # Define vertex positions of this cube.
 var positionArray = array(
+  # positionArray[0] should be vec3(-1, -1,  1).
+  # positionArray[10] should be vec3(1, 1, 1)),
+  #   which is equal to positionArray[2].
+
   # front
-  vec3(-1, -1,  1), vec3(1, -1, 1),
+  vec3(1000, 1000,  1000), vec3(1, -1, 1),
   vec3(1, 1, 1), vec3(-1, 1, 1),
   # back
   vec3(-1, -1, -1), vec3(-1, 1, -1),
   vec3(1, 1, -1), vec3(1, -1, -1),
   # top
   vec3(-1, 1, -1), vec3(-1, 1, 1),
-  vec3(1, 1, 1), vec3(1, 1, -1),
+  vec3(1000, 1000, 1000), vec3(1, 1, -1),
   # bottom
   vec3(-1, -1, -1), vec3(1, -1, -1),
   vec3(1, -1, 1), vec3(-1, -1, 1),
@@ -29,8 +33,17 @@ var positionArray = array(
   vec3(-1, 1, 1), vec3(-1, 1, -1)
 );
 
+# Correct the positionArray using setter and getter.
+var pos_0 = vec3(-1, -1,  1);
+set(positionArray, 0, pos_0);
+var pos_10 = get(positionArray, 2);
+set(positionArray, 10, pos_10);
+
 # Define texture coordinates of this cube.
 var texcoordArray = array(
+  # texcoordArray's length should be 24.
+  # The last element is vec2(0, 1).
+
   # front
   vec2(0, 0), vec2(1, 0),
   vec2(1, 1), vec2(0, 1),
@@ -48,8 +61,11 @@ var texcoordArray = array(
   vec2(0, 1), vec2(0, 0),
   # left
   vec2(0, 0), vec2(1, 0),
-  vec2(1, 1), vec2(0, 1)
+  vec2(1, 1) # missing vec2(0, 1) here
 );
+
+# Correct the positionArray by appending a new value to the texcoordArray.
+push(texcoordArray, vec2(0, 1));
 
 # Define vertex indices of this cube.
 var indicesArray = array(

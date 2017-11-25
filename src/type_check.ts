@@ -568,7 +568,7 @@ function param_error(i: number, param: Type, arg: Type): string {
  * Check that a function call is well-typed. Return the result type or a
  * string indicating the error.
  */
-function check_call(target: Type, args: Type[]): Type | string {
+export function check_call(target: Type, args: Type[]): Type | string {
   switch (target.kind) {
     // The target is a variadic function.
     case TypeKind.VARIADIC_FUN: {
@@ -633,7 +633,15 @@ function check_call(target: Type, args: Type[]): Type | string {
       } else if (snippet_var !== null) {
         return check_call(apply_quantified_type(target, snippet_var), args);
       } else {
-        return "unsupported polymorphism";
+        // Normal case for a polymorphic function.
+        let inner = target.inner;
+        // Get the generic type of the type variable.
+        let ret = check_quantified(target.variable, inner, args);
+        if (ret instanceof Type) {
+          return check_call(apply_quantified_type(target, ret), args);
+        } else {
+          return ret;
+        }
       }
     }
     // Non-function (never legal).
@@ -643,8 +651,131 @@ function check_call(target: Type, args: Type[]): Type | string {
   }
 }
 
+/**
+ * Determine the type of the type variable in a quantified function call.
+ * Target is the inner function of a quantified type. Return the result
+ * type of the type variable or a string indicating
+ * the error.
+ */
+function check_quantified(tvar: TypeVariable, target: Type, args: Type[]): Type | string {
+  // The inner function is a variadic function.
+  if (target instanceof VariadicFunType) {
+    if (target.params.length !== 1) {
+      return "variadic function with multiple argument types";
+    }
+    let param = target.params[0];
+    let vType: Type | null = null;
+    for (let i = 0; i < args.length; ++i) {
+      let arg = args[i];
+      // Unify one parameter type with the corresponding argument type.
+      let ret = unify(tvar, param, arg);
+
+      if (ret instanceof Type) {
+        // If the current result unifying type is different from the type
+        // we get earlier, check whether the earlier type is compatible
+        // with the current type, which means that the earlier type (vType)
+        // is at right hand side and the current type (ret) is at left
+        // hand side. If it is compatible, we can choose the current type
+        // to be our generic type of the type variable.
+        if (vType === null || ret === vType) {
+          vType = ret;
+        } else {
+          return param_error(i, param, arg);
+        }
+      } else if (!ret) {
+        return param_error(i, param, arg);
+      }
+    }
+
+    if (vType) {
+      return vType;
+    } else {
+      return "cannot unify the generic type";
+    }
+
+  // The inner function is an ordinary function.
+  } else if (target instanceof FunType) {
+    if (args.length !== target.params.length) {
+      return "mismatched argument length";
+    }
+    let vType: Type | null = null;
+    for (let i = 0; i < args.length; ++i) {
+      let param = target.params[i];
+      let arg = args[i];
+      // Same mechanism as the variadic function above.
+      let ret = unify(tvar, param, arg);
+      if (ret instanceof Type) {
+        if (vType === null || ret === vType) {
+          vType = ret;
+        } else {
+          return param_error(i, param, arg);
+        }
+      } else if (!ret) {
+        return param_error(i, param, arg);
+      }
+    }
+
+    if (vType) {
+      return vType;
+    } else {
+      return "cannot unify the generic type";
+    }
+
+  // The inner function is an overloaded type. Try each component type.
+  } else if (target instanceof OverloadedType) {
+    for (let sub of target.types) {
+      let ret = check_quantified(tvar, sub, args);
+      if (ret instanceof Type) {
+        return ret;
+      }
+    }
+    return "no overloaded type applies";
+
+  // The inner funciton is a polymorphic function. Recusively call
+  // check_quantified to the determine the type variable of
+  // the inner function.
+  } else if (target instanceof QuantifiedType) {
+    let inner = target.inner;
+    let ret = check_quantified(target.variable, inner, args);
+    if (ret instanceof Type) {
+      return check_quantified(tvar, apply_quantified_type(target, ret), args);
+    } else {
+      return ret;
+    }
+
+  } else {
+    return "quantified type's inner function is illegal";
+  }
+}
+
+/**
+ * Unify a polymorphic function parameter type with the corresponding
+ * argument type to determine the type of the type variable.
+ */
+function unify(tvar: TypeVariable, param: Type, arg: Type): boolean | Type {
+  if (param instanceof VariableType) {
+      if (tvar === param.variable) {
+        return arg;
+
+      // If the type variable in the variable type is not the one we want
+      // to determine, treat it as ANY.
+      } else {
+        return true;
+      }
+
+  } else if (param instanceof InstanceType &&
+     arg instanceof InstanceType && param.cons === arg.cons) {
+    return unify(tvar, param.arg, arg.arg);
+
+  // If no variable type is found, fall back to the normal compatible
+  // check.
+  } else {
+    return compatible(param, arg);
+  }
+}
+
 // Check type compatibility.
-function compatible(ltype: Type, rtype: Type): boolean {
+function compatible(ltype: Type, rtype: Type): boolean | Type {
   if (ltype === rtype) {
     return true;
 
@@ -706,6 +837,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
 
   return false;
 }
+
 
 /**
  * To make these polymorphic snippet code types possible to write down, we
@@ -867,7 +999,11 @@ function apply_type(type: Type, tvar: TypeVariable, targ: any): Type {
       params.push(apply_type(param, tvar, targ));
     }
     let ret = apply_type(type.ret, tvar, targ);
-    return new FunType(params, ret);
+    if (type.kind === TypeKind.VARIADIC_FUN) {
+      return new VariadicFunType(params, ret);
+    } else {
+      return new FunType(params, ret);
+    }
   }
   case TypeKind.ANY:
     return type;

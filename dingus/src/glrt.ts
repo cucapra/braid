@@ -449,7 +449,7 @@ function framebufferTexture(gl: WebGLRenderingContext,
     cubemapTargets(gl)[target];
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, glTextureType,
                           tex, 0);
-  gl.clearColor(0,0,0,1);
+  gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
@@ -610,14 +610,14 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      */
     texture(img: HTMLImageElement) {
       if (arguments.length === 0) {
-        return texture(gl, [], gl.TEXTURE_2D)
+        return texture(gl, [], gl.TEXTURE_2D);
       } else {
         return texture(gl, [img], gl.TEXTURE_2D);
       }
     },
 
     cubeTexture(...imgs: HTMLImageElement[]) {
-      return texture(gl, imgs, gl.TEXTURE_CUBE_MAP)
+      return texture(gl, imgs, gl.TEXTURE_CUBE_MAP);
     },
 
     /**
