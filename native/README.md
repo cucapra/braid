@@ -21,3 +21,4 @@ By default, `braidnc` writes LLVM IR to stdout. To dump bitcode to a file, use t
 Then, an easy way to compile this to native code is using clang:
 
     $ clang program.bc
+    % ./a.out
