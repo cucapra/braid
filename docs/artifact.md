@@ -49,27 +49,25 @@ Command Line
 
 You should be able to run the command-line tool like this:
 
-    $ node build/ssc.js --help
+    $ node build/cli/braid.js --help
 
-To make the `ssc` command available with less typing, you can run `npm link`. This will place the program in a directory you can find by typing `npm bin -g`. If you put that on your `$PATH`, then things get a little easier:
+To make the `braid` command available with less typing, you can run `npm link`. This will place the program in a directory you can find by typing `npm bin -g`. If you put that on your `$PATH`, then things get a little easier:
 
-    $ ssc --help
-
-(If you're curious, SSC stands for "Static Staging Compiler," which is from a time before Braid got a real name.)
+    $ braid --help
 
 Let's run a Braid program. There are lots of programs in the `test/` directory:
 
-    $ ssc test/basic/print.ss
+    $ braid test/basic/print.ss
     42
 
-By default, the tool runs in interpreter mode. Switch to compiler mode by using `ssc -cx`:
+By default, the tool runs in interpreter mode. Switch to compiler mode by using `braid -cx`:
 
-    $ ssc -cx test/basic/print.ss
+    $ braid -cx test/basic/print.ss
     42
 
 The result should always be the same (modulo pretty-printing). To see the JavaScript code that gets compiled from the Braid source, you can leave off the `-x`, which stands for *execute:*
 
-    $ ssc -c test/basic/print.ss
+    $ braid -c test/basic/print.ss
     (function () {
       function main() {
         return 42;
@@ -85,7 +83,7 @@ The Tests
 
 You can check that Braid supports all the language features that it should by running its test suite. Each file in `test/` has a special `# ->` comment that indicates its expected output. The `-t` flag tests that each program's output matches the expectation:
 
-    $ ssc -t test/basic/*.ss
+    $ braid -t test/basic/*.ss
     add ✓
     annotation-ok ✓
     assoc ✓
@@ -260,7 +258,7 @@ If you're interested, you can have a look around the TypeScript source code for 
         * `glsl.ts`: Similarly, the code generation rules for producing GLSL soruce.
         * `webgl.ts`: An extended version of the JavaScript backend with a bunch of intrinsics for writing WebGL.
         * `gl.ts`: Shared resources for both the shader and host side of WebGL programs. This includes new type definitions for vectors and matrices, for example.
-* `ssc.ts`: The entry point for the command-line tool.
+* `cli/braid.ts`: The entry point for the command-line tool.
 * `dingus/`:  The Web dingus source and assets.
     * `src/`: The TypeScript source for the dingus.
     * `examples/`: All the example programs that show up in the dingus pop-up menu.

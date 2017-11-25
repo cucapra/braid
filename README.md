@@ -26,11 +26,11 @@ The latter produces the parser and compiles the source code with [TypeScript][]'
 
     $ npm link
 
-to install an alias to the `ssc` command. Then, type:
+to install an alias to the `braid` command. Then, type:
 
-    $ ssc --help
+    $ braid --help
 
-to see some options. In particular, run `ssc example.ss` to interpret programs; run `ssc -c example.ss` to compile programs to JavaScript; and run `ssc -cx example.ss` to compile programs and then execute the resulting JavaScript.
+to see some options. In particular, run `braid example.ss` to interpret programs; run `braid -c example.ss` to compile programs to JavaScript; and run `braid -cx example.ss` to compile programs and then execute the resulting JavaScript.
 
 ## Credits
 

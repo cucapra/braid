@@ -13,7 +13,7 @@
         ]
     },
     "files": [
-        "cli/ssc.ts",
+        "cli/braid.ts",
         "parser.js"
     ]
 }

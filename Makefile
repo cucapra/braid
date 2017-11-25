@@ -1,5 +1,5 @@
-CLI_JS := build/ssc.js
-CLI_TS := cli/ssc.ts
+CLI_JS := build/cli/braid.js
+CLI_TS := cli/braid.ts
 
 .PHONY: cli dingus all
 cli: $(CLI_JS)
