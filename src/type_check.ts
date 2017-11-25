@@ -661,6 +661,8 @@ export function check_call(target: Type, args: Type[]): Type | string {
  * `target` is the "unwrapped" function type being called, and `tvar` is the
  * the type variable used to quantify it. `args` are the function call
  * arguments that we'll use to bind the type variable.
+ *
+ * Eventually, this should merge with `check_call` itself.
  */
 function check_quantified(tvar: TypeVariable, target: Type,
                           args: Type[]): Type | string
@@ -672,21 +674,20 @@ function check_quantified(tvar: TypeVariable, target: Type,
       return "variadic function with multiple argument types";
     }
     let param = target.params[0];
-    let vType: Type | null = null;
+    let vType: Type | null = null;  // The type for the type variable.
     for (let i = 0; i < args.length; ++i) {
       let arg = args[i];
       // Unify one parameter type with the corresponding argument type.
       let ret = unify(tvar, param, arg);
 
       if (typeof(ret) === "boolean") {
-        return param_error(i, param, arg);
+        if (!ret) {
+          return param_error(i, param, arg);
+        }
       } else {
-        // If the current result unifying type is different from the type
-        // we get earlier, check whether the earlier type is compatible
-        // with the current type, which means that the earlier type (vType)
-        // is at right hand side and the current type (ret) is at left
-        // hand side. If it is compatible, we can choose the current type
-        // to be our generic type of the type variable.
+        // If this unification produced a new type for our type variable,
+        // make sure that either this is the first time we've gotten a
+        // type for it or it's equal to the old type.
         if (vType === null || ret === vType) {
           vType = ret;
         } else {
@@ -708,9 +709,11 @@ function check_quantified(tvar: TypeVariable, target: Type,
       return "mismatched argument length";
     }
     let vType: Type | null = null;
+
     for (let i = 0; i < args.length; ++i) {
       let param = target.params[i];
       let arg = args[i];
+
       // Same mechanism as the variadic function above.
       let ret = unify(tvar, param, arg);
       if (typeof(ret) === "boolean") {
@@ -763,33 +766,43 @@ function check_quantified(tvar: TypeVariable, target: Type,
 }
 
 /**
- * Unify a polymorphic function parameter type with the corresponding
- * argument type to determine the type of the type variable.
+ * Try to unify two types, the left of which may be polymorphic, so that
+ * they are compatible. If this is possible, return either true
+ * (indicating no particular binding for the type variable) or a type
+ * (which is the type for the type variable). Otherwise, return false.
+ *
+ * Eventually, this should "merge" with `compatible`, below.
  */
-function unify(tvar: TypeVariable, param: Type, arg: Type): boolean | Type {
-  if (param instanceof VariableType) {
-      if (tvar === param.variable) {
-        return arg;
+function unify(tvar: TypeVariable, ltype: Type, rtype: Type): Type | boolean {
+  // If this is the type variable we're trying to unify, return the
+  // right-hand type.
+  if (ltype.kind === TypeKind.VARIABLE) {
+    if (tvar === ltype.variable) {
+      return rtype;
+    } else {
+      // Some other type variable. Eventually, we should support
+      // unification of multiple type variables.
+      return true;
+    }
 
-      // If the type variable in the variable type is not the one we want
-      // to determine, treat it as ANY.
-      } else {
-        return true;
-      }
-
-  } else if (param instanceof InstanceType &&
-     arg instanceof InstanceType && param.cons === arg.cons) {
-    return unify(tvar, param.arg, arg.arg);
+  // Recurse through type constructors.
+  } else if (ltype.kind === TypeKind.INSTANCE &&
+     rtype.kind === TypeKind.INSTANCE && ltype.cons === rtype.cons) {
+    return unify(tvar, ltype.arg, rtype.arg);
 
   // If no variable type is found, fall back to the normal compatible
   // check.
   } else {
-    return compatible(param, arg);
+    return compatible(ltype, rtype);
   }
 }
 
-// Check type compatibility.
-function compatible(ltype: Type, rtype: Type): boolean | Type {
+/**
+ * Check whether two types are compatible: namely, whether values of type
+ * rtype can be assigned into variables of type ltype. In other words,
+ * return true iff rtype is a subtype of ltype.
+ */
+function compatible(ltype: Type, rtype: Type): boolean {
   if (ltype === rtype) {
     return true;
 
@@ -851,7 +864,6 @@ function compatible(ltype: Type, rtype: Type): boolean | Type {
 
   return false;
 }
-
 
 /**
  * To make these polymorphic snippet code types possible to write down, we
