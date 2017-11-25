@@ -1,3 +1,5 @@
+import { unreachable } from './util';
+
 /**
  * The tags for each kind of Type defined here.
  */
@@ -206,94 +208,69 @@ export interface TypeVisit<P, R> {
   visit_tuple(type: TupleType, param: P): R;
 }
 
-export function type_visit<P, R>(visitor: TypeVisit<P, R>,
-                          type: Type, param: P): R {
+export function pretty_type(type: Type): string {
   switch (type.kind) {
     case TypeKind.PRIMITIVE:
-      return visitor.visit_primitive(type, param);
-    case TypeKind.FUN:
-      return visitor.visit_fun(type, param);
-    case TypeKind.CODE:
-      return visitor.visit_code(type, param);
-    case TypeKind.ANY:
-      return visitor.visit_any(type, param);
-    case TypeKind.VOID:
-      return visitor.visit_void(type, param);
-    case TypeKind.CONSTRUCTOR:
-      return visitor.visit_constructor(type, param);
-    case TypeKind.INSTANCE:
-      return visitor.visit_instance(type, param);
-    case TypeKind.QUANTIFIED:
-      return visitor.visit_quantified(type, param);
-    case TypeKind.VARIABLE:
-      return visitor.visit_variable(type, param);
-    case TypeKind.OVERLOADED:
-      return visitor.visit_overloaded(type, param);
-    case TypeKind.TUPLE:
-      return visitor.visit_tuple(type, param);
-    default:
-      throw "error: unknown type kind " + typeof(type);
-  }
-}
+      return type.name;
 
-// Format a type as a string.
-let pretty_type_rules: TypeVisit<void, string> = {
-  visit_primitive(type: PrimitiveType, param: void): string {
-    return type.name;
-  },
-  visit_fun(type: FunType, param: void): string {
-    let s = "";
-    for (let pt of type.params) {
-      s += pretty_type(pt) + " ";
-    }
-    s += "-> " + pretty_type(type.ret);
-    return s;
-  },
-  visit_code(type: CodeType, param: void): string {
-    let out = "<" + pretty_type(type.inner) + ">";
-    if (type.annotation) {
-      out = type.annotation + out;
-    }
-    if (type.snippet) {
-      out = "$" + type.snippet + out;
-    } else if (type.snippet_var) {
-      out = "$" + type.snippet_var.name + out;
-    }
-    return out;
-  },
-  visit_any(type: AnyType, param: void): string {
-    return "Any";
-  },
-  visit_void(type: VoidType, param: void): string {
-    return "Void";
-  },
-  visit_constructor(type: ConstructorType, param: void): string {
-    return type.name;
-  },
-  visit_instance(type: InstanceType, param: void): string {
-    return pretty_type(type.arg) + " " + type.cons.name;
-  },
-  visit_quantified(type: QuantifiedType, param: void): string {
-    return pretty_type(type.inner);
-  },
-  visit_variable(type: VariableType, param: void): string {
-    return type.variable.name;
-  },
-  visit_overloaded(type: OverloadedType, param: void): string {
-    let out = "";
-    for (let i = 0; i < type.types.length; i++) {
-      out += pretty_type(type.types[i]);
-      if (i !== type.types.length - 1) {
-        out += " | ";
+    case TypeKind.FUN: {
+      let s = "";
+      for (let pt of type.params) {
+        s += pretty_type(pt) + " ";
       }
+      s += "-> " + pretty_type(type.ret);
+      return s;
     }
-    return out;
-  },
-  visit_tuple(type: TupleType, param: void): string {
-    return type.components.map(pretty_type).join(" * ");
-  },
-};
 
-export function pretty_type(type: Type) {
-  return type_visit(pretty_type_rules, type, null);
+    case TypeKind.VARIADIC_FUN:
+      return "(variadic function)";  // No syntax yet.
+
+    case TypeKind.CODE: {
+      let out = "<" + pretty_type(type.inner) + ">";
+      if (type.annotation) {
+        out = type.annotation + out;
+      }
+      if (type.snippet) {
+        out = "$" + type.snippet + out;
+      } else if (type.snippet_var) {
+        out = "$" + type.snippet_var.name + out;
+      }
+      return out;
+    }
+
+    case TypeKind.ANY:
+      return "Any";
+
+    case TypeKind.VOID:
+      return "Void";
+
+    case TypeKind.CONSTRUCTOR:
+      return type.name;
+
+    case TypeKind.INSTANCE:
+      return pretty_type(type.arg) + " " + type.cons.name;
+
+    case TypeKind.QUANTIFIED:
+      return pretty_type(type.inner);
+
+    case TypeKind.VARIABLE:
+      return type.variable.name;
+
+    case TypeKind.OVERLOADED: {
+      let out = "";
+      for (let i = 0; i < type.types.length; i++) {
+        out += pretty_type(type.types[i]);
+        if (i !== type.types.length - 1) {
+          out += " | ";
+        }
+      }
+      return out;
+    }
+
+    case TypeKind.TUPLE:
+      return type.components.map(pretty_type).join(" * ");
+
+    default:
+      return unreachable(type, "unknown type kind");
+  }
 }

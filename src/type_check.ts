@@ -1,11 +1,11 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
   QuantifiedType, TupleType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN,
-  pretty_type, TypeVisit, TypeVariable, type_visit,
+  pretty_type, TypeVisit, TypeVariable,
   VariadicFunType, TypeKind } from './type';
 import * as ast from './ast';
 import { Gen, merge, hd, tl, cons, stack_lookup, zip,
-  head_merge } from './util';
+  head_merge, unreachable } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 import { error } from './error';
 
@@ -825,19 +825,21 @@ function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
   return type_ast_visit(get_type_rules, ttree, types);
 }
 
-// Fill in a parameterized type.
-const apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
+/**
+ * Fill in a parameterized type.
+ */
+function apply_type(type: Type, tvar: TypeVariable, targ: any): Type {
+  switch (type.kind) {
   // Replace a type variable (used as a type) with the provided type.
-  visit_variable(type: VariableType, [tvar, targ]: [TypeVariable, any]): Type {
+  case TypeKind.VARIABLE:
     if (type.variable === tvar) {
       return targ;
     } else {
       return new VariableType(type.variable);
     }
-  },
 
   // In code types, variables can appear in the snippet.
-  visit_code(type: CodeType, [tvar, targ]: [TypeVariable, any]): Type {
+  case TypeKind.CODE:
     if (type.snippet_var && type.snippet_var === tvar) {
       // A match!
       if (targ instanceof TypeVariable) {
@@ -854,60 +856,39 @@ const apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
       return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
           type.snippet, type.snippet_var);
     }
-  },
 
   // The remaining rules are just boring boilerplate: `map` for types.
-  visit_primitive(type: PrimitiveType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.PRIMITIVE:
     return type;
-  },
-  visit_fun(type: FunType, [tvar, targ]: [TypeVariable, any]): Type {
+  case TypeKind.FUN:
+  case TypeKind.VARIADIC_FUN: {
     let params: Type[] = [];
     for (let param of type.params) {
       params.push(apply_type(param, tvar, targ));
     }
     let ret = apply_type(type.ret, tvar, targ);
     return new FunType(params, ret);
-  },
-  visit_any(type: AnyType, [tvar, targ]: [TypeVariable, any]): Type {
+  }
+  case TypeKind.ANY:
     return type;
-  },
-  visit_void(type: VoidType, [tvar, targ]: [TypeVariable, any]): Type {
+  case TypeKind.VOID:
     return type;
-  },
-  visit_constructor(type: ConstructorType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.CONSTRUCTOR:
     return type;
-  },
-  visit_instance(type: InstanceType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.INSTANCE:
     return new InstanceType(type.cons, apply_type(type.arg, tvar, targ));
-  },
-  visit_quantified(type: QuantifiedType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.QUANTIFIED:
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
-  },
-  visit_overloaded(type: OverloadedType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.OVERLOADED:
     return type;
-  },
-  visit_tuple(type: TupleType,
-      [tvar, targ]: [TypeVariable, any]): Type
-  {
+  case TypeKind.TUPLE:
     return new TupleType(
       type.components.map(t => apply_type(t, tvar, targ))
     );
-  },
-};
-
-function apply_type(type: Type, tvar: TypeVariable, targ: any): Type {
-  return type_visit(apply_type_rules, type, [tvar, targ]);
+  default:
+    return unreachable(type, "unknown type kind");
+  }
 }
 
 function apply_quantified_type(type: QuantifiedType, arg: any): Type {
