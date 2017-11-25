@@ -4,6 +4,7 @@
         "outDir": "build"
     },
     "files": [
-        "braidnc.ts"
+        "braidnc.ts",
+        "../parser.js"
     ]
 }
