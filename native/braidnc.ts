@@ -7,6 +7,7 @@ import * as minimist from 'minimist';
 
 import * as driver from "../src/driver";
 import { Error } from "../src/error";
+import * as llvm from "./llvm";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';

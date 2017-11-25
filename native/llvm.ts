@@ -1,9 +1,10 @@
-import * as ast from '../ast';
-import { ASTVisit, ast_visit, complete_visit } from '../visit';
-import { INT, FLOAT, Type, OverloadedType, FunType } from '../type';
-import { Proc, Prog, Variant, Scope, CompilerIR } from '../compile/ir'
+import * as ast from '../src/ast';
+import { ASTVisit, ast_visit, complete_visit } from '../src/visit';
+import { INT, FLOAT, Type, OverloadedType, FunType } from '../src/type';
+import { Proc, Prog, Variant, Scope, CompilerIR } from '../src/compile/ir'
 import * as llvm from 'llvmc';
-import { varsym, persistsym, procsym, is_fun_type, useful_pred } from './emitutil';
+import { varsym, persistsym, procsym, is_fun_type,
+  useful_pred } from '../src/backends/emitutil';
 
 /**
  * Export the LLVM Module type, which is the result of LLVM compilation.
