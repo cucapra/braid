@@ -9,7 +9,6 @@ import * as webgl from './backends/webgl';
 import * as gl from './backends/gl';
 import * as glsl from './backends/glsl';
 import * as js from './backends/js';
-import * as llvm from './backends/llvm';
 import { CompilerIR } from './compile/ir';
 import { semantically_analyze } from './compile/compile';
 import parser = require('../parser');
@@ -33,7 +32,6 @@ import * as error from './error';
  */
 export interface Config {
   webgl: boolean;
-  native: boolean;
 
   // Expect the program to produce a code value, and just produce the
   // read-to-execute generated code.
@@ -143,8 +141,7 @@ export function frontend(config: Config, sources: string[],
 }
 
 export function compile(config: Config, tree: SyntaxNode,
-    type_table: TypeTable, compiled: (code: string) => void,
-    compiled_native: (mod: llvm.Module) => void)
+    type_table: TypeTable, compiled: (code: string) => void)
 {
   // Desugar macros.
   let sugarfree = desugar_macros(tree, type_table, _check(config));
@@ -165,10 +162,6 @@ export function compile(config: Config, tree: SyntaxNode,
   try {
     if (config.webgl) {
       compiled(webgl.codegen(ir));
-    } else if (config.native) {
-      let mod = llvm.codegen(ir);
-      compiled_native(mod);
-      mod.free();
     } else {
       compiled(js.codegen(ir));
     }

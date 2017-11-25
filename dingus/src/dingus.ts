@@ -36,7 +36,6 @@ function ssc_run(code: string, mode: string):
   let type: string | null = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
-    native: false,
     generate: false,
 
     log(...msg: any[]) {

@@ -7,7 +7,6 @@ import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
 import { Error } from "./src/error";
-import * as llvm from 'llvmc';
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
@@ -15,7 +14,7 @@ const EXTENSION = '.ss';
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
     generate: boolean, log: (...msg: any[]) => void, presplice: boolean,
-    native: boolean, outfile: string)
+    outfile: string)
 {
   let success = true;
   let name = path.basename(filename, EXTENSION);
@@ -25,7 +24,6 @@ function run(filename: string, source: string, webgl: boolean,
     // Configure the driver.
     let config: driver.Config = {
       webgl: webgl,
-      native: native,
       generate: generate,
 
       log: log,
@@ -59,8 +57,8 @@ function run(filename: string, source: string, webgl: boolean,
 
     let [tree, types] = res;
     if (compile) {
-
-      let if_to_js = (code: string) => {
+      // Compiler.
+      driver.compile(config, tree, types, (code: string) => {
         if (execute) {
           driver.execute(config, code, (res) => {
             if (test) {
@@ -72,14 +70,7 @@ function run(filename: string, source: string, webgl: boolean,
         } else {
           console.log(code);
         }
-      }
-
-      let if_to_native = (mod: llvm.Module) => {
-        console.log(mod.toString());
-      }
-
-      // Compiler.
-      driver.compile(config, tree, types, if_to_js, if_to_native);
+      });
 
     } else {
       // Interpreter.
@@ -159,7 +150,7 @@ function read_file_or_stdin(fn: string): Promise<string> {
 async function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P', 'n'],
+    boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P'],
     string: ['o'],
   });
 
@@ -171,7 +162,6 @@ async function main() {
   let test: boolean = args['t'];
   let generate: boolean = args['g'];
   let no_presplice: boolean = args['P'];
-  let native: boolean = args['n'];
   let outfile: string = args['o'];
 
   // Help.
@@ -184,7 +174,6 @@ async function main() {
     console.error("  -t: test mode (check for expected output)");
     console.error("  -g: dump generated code");
     console.error("  -P: do not use the presplicing optimization");
-    console.error("  -n: use native (LLVM) backend");
     console.error("  -o FILE: emit result in FILE");
     process.exit(1);
   }
@@ -203,7 +192,7 @@ async function main() {
   await Promise.all(filenames.map(async fn => {
     let source = await read_file_or_stdin(fn);
     success = run(fn, source, webgl, compile, execute, test,
-        generate, log, !no_presplice, native, outfile) && success;
+        generate, log, !no_presplice, outfile) && success;
   }));
   if (!success) {
     process.exit(1);
