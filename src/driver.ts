@@ -140,15 +140,14 @@ export function frontend(config: Config, sources: string[],
   return [elaborated, type_table];
 }
 
-export function compile(config: Config, tree: SyntaxNode,
-    type_table: TypeTable, compiled: (code: string) => void)
+export function to_ir(config: Config, tree: SyntaxNode,
+  type_table: TypeTable): CompilerIR
 {
   // Desugar macros.
   let sugarfree = desugar_macros(tree, type_table, _check(config));
 
-  let ir: CompilerIR;
-  ir = semantically_analyze(sugarfree, type_table, _intrinsics(config),
-                            config.presplice);
+  let ir: CompilerIR = semantically_analyze(sugarfree, type_table,
+    _intrinsics(config), config.presplice);
 
   // Log some intermediates.
   config.log('def/use', ir.defuse);
@@ -156,6 +155,14 @@ export function compile(config: Config, tree: SyntaxNode,
   config.log('procs', ir.procs);
   config.log('main', ir.main);
   config.log('variants', ir.presplice_variants);
+
+  return ir;
+}
+
+export function compile(config: Config, tree: SyntaxNode,
+    type_table: TypeTable, compiled: (code: string) => void)
+{
+  let ir = to_ir(config, tree, type_table);
 
   // Compile.
   let jscode: string;

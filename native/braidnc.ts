@@ -12,16 +12,6 @@ const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
 const EXTENSION = '.ss';
 const HEADER_FILE = 'header.ss';
 
-function read_string(filename: string, f: (s: string) => void) {
-  fs.readFile(filename, function (err: any, data: any) {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    f(data.toString());
-  });
-}
-
 function run(filename: string, source: string) {
   let success = true;
 
@@ -51,14 +41,17 @@ function run(filename: string, source: string) {
     return false;
   }
 
+  // Compile to an LLVM module.
   let [tree, types] = res;
-  driver.compile(config, tree, types, (code) => {
-    console.log(code);
-  });
+  let ir = driver.to_ir(config, tree, types);
+  let mod = llvm.codegen(ir);
+  console.log(mod.toString());  // TODO Write bitcode to file.
+  mod.free();
 
   return success;
 }
 
+// TODO Share with the main CLI tool.
 /**
  * Read code from a file or from stdin, if the filename is -.
  */
