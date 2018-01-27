@@ -55,263 +55,263 @@ let funcMap: FuncMap = {
       ret: (args) => `(${args[0]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.add(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.add(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.add(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.add(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.add(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.add(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.add(mat3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat3.add(rt.mat3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.add(mat4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat4.add(rt.mat4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT], FLOAT2),
-      ret: (args) => `vec2.add(vec2.create(), ${args[0]}, vec2.fromValues(${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec2.add(rt.vec2.create(), ${args[0]}, rt.vec2.fromValues(${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.add(vec2.create(), vec2.fromValues(${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec2.add(rt.vec2.create(), rt.vec2.fromValues(${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT], FLOAT3),
-      ret: (args) => `vec3.add(vec3.create(), ${args[0]}, vec3.fromValues(${args[1]}, ${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec3.add(rt.vec3.create(), ${args[0]}, rt.vec3.fromValues(${args[1]}, ${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.add(vec3.create(), vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec3.add(rt.vec3.create(), rt.vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT], FLOAT4),
-      ret: (args) => `vec4.add(vec4.create(), ${args[0]}, vec4.fromValues(${args[1]}, ${args[1]}, ${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec4.add(rt.vec4.create(), ${args[0]}, rt.vec4.fromValues(${args[1]}, ${args[1]}, ${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.add(vec4.create(), vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec4.add(rt.vec4.create(), rt.vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
-      ret: (args) => `mat3.add(mat3.create(), ${args[0]}, mat3fromOneValue(${args[1]}))`,
+      ret: (args) => `rt.mat3.add(rt.mat3.create(), ${args[0]}, rt.mat3fromOneValue(${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.add(mat3.create(), mat3fromOneValue(${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.mat3.add(rt.mat3.create(), rt.mat3fromOneValue(${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
-      ret: (args) => `mat4.add(mat4.create(), ${args[0]}, mat4fromOneValue(${args[1]}))`,
+      ret: (args) => `rt.mat4.add(rt.mat4.create(), ${args[0]}, rt.mat4fromOneValue(${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.add(mat4.create(), mat4fromOneValue(${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.mat4.add(rt.mat4.create(), rt.mat4fromOneValue(${args[0]}), ${args[1]})`,
     },
   ], "-": [
     {
       funcType: new FunType([FLOAT2], FLOAT2),
-      ret: (args) => `vec2.negate(vec2.create(), ${args[0]})`,
+      ret: (args) => `rt.vec2.negate(rt.vec2.create(), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3], FLOAT3),
-      ret: (args) => `vec3.negate(vec3.create(), ${args[0]})`,
+      ret: (args) => `rt.vec3.negate(rt.vec3.create(), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4], FLOAT4),
-      ret: (args) => `vec4.negate(vec4.create(), ${args[0]})`,
+      ret: (args) => `rt.vec4.negate(rt.vec4.create(), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.multiplyScalar(mat3.create(), ${args[0]}, -1.0)`,
+      ret: (args) => `rt.mat3.multiplyScalar(rt.mat3.create(), ${args[0]}, -1.0)`,
     }, {
       funcType: new FunType([FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.multiplyScalar(mat4.create(), ${args[0]}, -1.0)`,
+      ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), ${args[0]}, -1.0)`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.subtract(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.subtract(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.subtract(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.subtract(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.subtract(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.subtract(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.subtract(mat3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat3.subtract(rt.mat3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.subtract(mat4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat4.subtract(rt.mat4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT], FLOAT2),
-      ret: (args) => `vec2.subtract(vec2.create(), ${args[0]}, vec2.fromValues(${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec2.subtract(rt.vec2.create(), ${args[0]}, rt.vec2.fromValues(${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.subtract(vec2.create(), vec2.fromValues(${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec2.subtract(rt.vec2.create(), rt.vec2.fromValues(${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT], FLOAT3),
-      ret: (args) => `vec3.subtract(vec3.create(), ${args[0]}, vec3.fromValues(${args[1]}, ${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec3.subtract(rt.vec3.create(), ${args[0]}, rt.vec3.fromValues(${args[1]}, ${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.subtract(vec3.create(), vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec3.subtract(rt.vec3.create(), rt.vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT], FLOAT4),
-      ret: (args) => `vec4.subtract(vec4.create(), ${args[0]}, vec4.fromValues(${args[1]}, ${args[1]}, ${args[1]}, ${args[1]}))`,
+      ret: (args) => `rt.vec4.subtract(rt.vec4.create(), ${args[0]}, rt.vec4.fromValues(${args[1]}, ${args[1]}, ${args[1]}, ${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.subtract(vec4.create(), vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.vec4.subtract(rt.vec4.create(), rt.vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
-      ret: (args) => `mat3.subtract(mat3.create(), ${args[0]}, mat3fromOneValue(${args[1]}))`,
+      ret: (args) => `rt.mat3.subtract(rt.mat3.create(), ${args[0]}, rt.mat3fromOneValue(${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.subtract(mat3.create(), mat3fromOneValue(${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.mat3.subtract(rt.mat3.create(), rt.mat3fromOneValue(${args[0]}), ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
-      ret: (args) => `mat4.subtract(mat4.create(), ${args[0]}, mat4fromOneValue(${args[1]}))`,
+      ret: (args) => `rt.mat4.subtract(rt.mat4.create(), ${args[0]}, rt.mat4fromOneValue(${args[1]}))`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.subtract(mat4.create(), mat4fromOneValue(${args[0]}), ${args[1]})`,
+      ret: (args) => `rt.mat4.subtract(rt.mat4.create(), rt.mat4fromOneValue(${args[0]}), ${args[1]})`,
     },
   ], "*": [
     {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.multiply(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.multiply(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.multiply(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.multiply(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.multiply(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.multiply(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.multiply(mat3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat3.multiply(rt.mat3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.multiply(mat4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat4.multiply(rt.mat4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT], FLOAT2),
-      ret: (args) => `vec2.scale(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.scale(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.scale(vec2.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec2.scale(rt.vec2.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT], FLOAT3),
-      ret: (args) => `vec3.scale(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.scale(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.scale(vec3.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec3.scale(rt.vec3.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT], FLOAT4),
-      ret: (args) => `vec4.scale(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.scale(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.scale(vec4.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec4.scale(rt.vec4.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
-      ret: (args) => `mat3.multiplyScalar(mat3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat3.multiplyScalar(rt.mat3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.multiplyScalar(mat3.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.mat3.multiplyScalar(rt.mat3.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
-      ret: (args) => `mat4.multiplyScalar(mat4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.multiplyScalar(mat4.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3], FLOAT3),
-      ret: (args) => `vec4.transformMat4(vec4.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec4.transformMat4(rt.vec4.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4], FLOAT4),
-      ret: (args) => `vec3.transformMat3(vec3.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec3.transformMat3(rt.vec3.create(), ${args[1]}, ${args[0]})`,
     },
   ], "/": [
     {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.div(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.div(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.div(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.div(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.div(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.div(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3div(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat3div(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4div(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.mat4div(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT], FLOAT2),
-      ret: (args) => `vec2.scale(vec2.create(), ${args[0]}, 1.0/${args[1]})`,
+      ret: (args) => `rt.vec2.scale(rt.vec2.create(), ${args[0]}, 1.0/${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.scale(vec2.create(), vec2.inverse(vec2.create(), ${args[1]}), ${args[0]})`,
+      ret: (args) => `rt.vec2.scale(rt.vec2.create(), rt.vec2.inverse(rt.vec2.create(), ${args[1]}), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT], FLOAT3),
-      ret: (args) => `vec3.scale(vec3.create(), ${args[0]}, 1.0/${args[1]})`,
+      ret: (args) => `rt.vec3.scale(rt.vec3.create(), ${args[0]}, 1.0/${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.scale(vec3.create(), vec3.inverse(vec3.create(), ${args[1]}), ${args[0]})`,
+      ret: (args) => `rt.vec3.scale(rt.vec3.create(), rt.vec3.inverse(rt.vec3.create(), ${args[1]}), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT], FLOAT4),
-      ret: (args) => `vec4.scale(vec4.create(), ${args[0]}, 1.0/${args[1]})`,
+      ret: (args) => `rt.vec4.scale(rt.vec4.create(), ${args[0]}, 1.0/${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.scale(vec4.create(), vec4.inverse(vec4.create(), ${args[1]}), ${args[0]})`,
+      ret: (args) => `rt.vec4.scale(rt.vec4.create(), rt.vec4.inverse(rt.vec4.create(), ${args[1]}), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT], FLOAT3X3),
-      ret: (args) => `mat3.multiplyScalar(mat3.create(), ${args[0]}, 1.0/${args[1]})`,
+      ret: (args) => `rt.mat3.multiplyScalar(rt.mat3.create(), ${args[0]}, 1.0/${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT3X3], FLOAT3X3),
-      ret: (args) => `mat3.multiplyScalar(mat3.create(), mat3div(mat3fromOneValue(1.0), ${args[1]}), ${args[0]})`,
+      ret: (args) => `rt.mat3.multiplyScalar(rt.mat3.create(), rt.mat3div(rt.mat3fromOneValue(1.0), ${args[1]}), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT], FLOAT4X4),
-      ret: (args) => `mat4.multiplyScalar(mat4.create(), ${args[0]}, 1.0/${args[1]})`,
+      ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), ${args[0]}, 1.0/${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT4X4], FLOAT4X4),
-      ret: (args) => `mat4.multiplyScalar(mat4.create(), mat4div(mat4fromOneValue(1.0), ${args[1]}), ${args[0]})`,
+      ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), rt.mat4div(rt.mat4fromOneValue(1.0), ${args[1]}), ${args[0]})`,
     },
   ], "vec4": [
     {
       funcType: new FunType([], FLOAT4),
-      ret: (args) => `vec4.create()`,
+      ret: (args) => `rt.vec4.create()`,
     },
     {
       funcType: new FunType([FLOAT3, FLOAT], FLOAT4),
-      ret: (args) => `vec4fromvec3(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4fromvec3(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
-      ret: (args) => `vec4.fromValues(${args[0]}, ${args[1]}, ${args[2]}, ${args[3]})`,
+      ret: (args) => `rt.vec4.fromValues(${args[0]}, ${args[1]}, ${args[2]}, ${args[3]})`,
     }, {
       funcType: new FunType([FLOAT], FLOAT4),
-      ret: (args) => `vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]})`,
+      ret: (args) => `rt.vec4.fromValues(${args[0]}, ${args[0]}, ${args[0]}, ${args[0]})`,
     },
   ], "vec3": [
     {
       funcType: new FunType([], FLOAT3),
-      ret: (args) => `vec3.create()`,
+      ret: (args) => `rt.vec3.create()`,
     },
     {
       funcType: new FunType([FLOAT4], FLOAT3),
-      ret: (args) => `vec3fromvec4(${args[0]})`,
+      ret: (args) => `rt.vec3fromvec4(${args[0]})`,
     }, {
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
-      ret: (args) => `vec3.fromValues(${args[0]}, ${args[1]}, ${args[2]})`,
+      ret: (args) => `rt.vec3.fromValues(${args[0]}, ${args[1]}, ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT], FLOAT3),
-      ret: (args) => `vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]})`,
+      ret: (args) => `rt.vec3.fromValues(${args[0]}, ${args[0]}, ${args[0]})`,
     }
   ], "vec2": [
     {
       funcType: new FunType([], FLOAT2),
-      ret: (args) => `vec2.create()`,
+      ret: (args) => `rt.vec2.create()`,
     },
     {
       funcType: new FunType([FLOAT, FLOAT], FLOAT2),
-      ret: (args) => `vec2.fromValues(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.fromValues(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT], FLOAT2),
-      ret: (args) => `vec2.fromValues(${args[0]}, ${args[0]})`,
+      ret: (args) => `rt.vec2.fromValues(${args[0]}, ${args[0]})`,
     },
   ], "mat3": [
     {
       funcType: new FunType([], FLOAT3X3),
-      ret: (args) => `mat3.create()`,
+      ret: (args) => `rt.mat3.create()`,
     },
   ], "mat4": [
     {
       funcType: new FunType([], FLOAT4X4),
-      ret: (args) => `mat4.create()`,
+      ret: (args) => `rt.mat4.create()`,
     },
   ], "abs": [
     {
@@ -333,13 +333,13 @@ let funcMap: FuncMap = {
       ret: (args) => `normalizeScalar(${args[0]})`,
     }, {
       funcType: new FunType([FLOAT2], FLOAT2),
-      ret: (args) => `vec2.normalize(vec2.create(), ${args[0]})`,
+      ret: (args) => `rt.vec2.normalize(rt.vec2.create(), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3], FLOAT3),
-      ret: (args) => `vec3.normalize(vec3.create(), ${args[0]})`,
+      ret: (args) => `rt.vec3.normalize(rt.vec3.create(), ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4], FLOAT4),
-      ret: (args) => `vec4.normalize(vec4.create(), ${args[0]})`,
+      ret: (args) => `rt.vec4.normalize(rt.vec4.create(), ${args[0]})`,
     },
   ], "pow": [
     {
@@ -373,24 +373,24 @@ let funcMap: FuncMap = {
   ], "reflect": [
     {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.subtract(vec2.create(), ${args[0]}, vec2.scale(vec2.create(), ${args[1]}, 2.0 * vec2.dot(${args[1]}, ${args[0]})))`,
+      ret: (args) => `rt.vec2.subtract(rt.vec2.create(), ${args[0]}, rt.vec2.scale(rt.vec2.create(), ${args[1]}, 2.0 * rt.vec2.dot(${args[1]}, ${args[0]})))`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.subtract(vec3.create(), ${args[0]}, vec3.scale(vec3.create(), ${args[1]}, 2.0 * vec3.dot(${args[1]}, ${args[0]})))`,
+      ret: (args) => `rt.vec3.subtract(rt.vec3.create(), ${args[0]}, rt.vec3.scale(rt.vec3.create(), ${args[1]}, 2.0 * rt.vec3.dot(${args[1]}, ${args[0]})))`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.subtract(vec4.create(), ${args[0]}, vec4.scale(vec4.create(), ${args[1]}, 2.0 * vec4.dot(${args[1]}, ${args[0]})))`,
+      ret: (args) => `rt.vec4.subtract(rt.vec4.create(), ${args[0]}, rt.vec4.scale(rt.vec4.create(), ${args[1]}, 2.0 * rt.vec4.dot(${args[1]}, ${args[0]})))`,
     },
   ], "dot": [
     {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT),
-      ret: (args) => `vec2.dot(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.dot(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT),
-      ret: (args) => `vec3.dot(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.dot(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT),
-      ret: (args) => `vec4.dot(${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.dot(${args[0]}, ${args[1]})`,
     },
   ], "min": [
     {
@@ -398,13 +398,13 @@ let funcMap: FuncMap = {
       ret: (args) => `Math.min(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.min(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.min(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.min(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.min(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.min(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.min(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
       ret: (args) => `${args[0]}.map((val, idx) => (Math.min(val, ${args[1]}[idx])))`,
@@ -427,13 +427,13 @@ let funcMap: FuncMap = {
       ret: (args) => `Math.max(${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.max(vec2.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec2.max(rt.vec2.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.max(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.max(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.max(vec4.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec4.max(rt.vec4.create(), ${args[0]}, ${args[1]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
       ret: (args) => `${args[0]}.map((val, idx) => (Math.max(val, ${args[1]}[idx])))`,
@@ -465,13 +465,13 @@ let funcMap: FuncMap = {
       ret: (args) => `${args[0]}.map((ele) => (Math.min(Math.max(ele, ${args[1]}), ${args[2]})))`,
     }, {
       funcType: new FunType([FLOAT2, FLOAT2, FLOAT2], FLOAT2),
-      ret: (args) => `vec2.min(vec2.max(${args[0]}, ${args[1]}), ${args[2]})`,
+      ret: (args) => `rt.vec2.min(rt.vec2.max(${args[0]}, ${args[1]}), ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.min(vec3.max(${args[0]}, ${args[1]}), ${args[2]})`,
+      ret: (args) => `rt.vec3.min(rt.vec3.max(${args[0]}, ${args[1]}), ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT4, FLOAT4, FLOAT4], FLOAT4),
-      ret: (args) => `vec4.min(vec4.max(${args[0]}, ${args[1]}), ${args[2]})`,
+      ret: (args) => `rt.vec4.min(rt.vec4.max(${args[0]}, ${args[1]}), ${args[2]})`,
     },
   ], "exp2": [
     {
@@ -481,7 +481,7 @@ let funcMap: FuncMap = {
   ], "cross": [
     {
       funcType: new FunType([FLOAT3, FLOAT3], FLOAT3),
-      ret: (args) => `vec3.cross(vec3.create(), ${args[0]}, ${args[1]})`,
+      ret: (args) => `rt.vec3.cross(rt.vec3.create(), ${args[0]}, ${args[1]})`,
     },
   ], "mix": [
     {
@@ -489,10 +489,10 @@ let funcMap: FuncMap = {
       ret: (args) => `${args[0]} * (1.0 - ${args[2]}) + ${args[1]} * ${args[2]}`,
     }, {
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
-      ret: (args) => `vec2.lerp(vec2.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
+      ret: (args) => `rt.vec2.lerp(rt.vec2.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
-      ret: (args) => `vec3.lerp(vec3.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
+      ret: (args) => `rt.vec3.lerp(rt.vec3.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     },
   ], "array": [ // variadic function
     {
