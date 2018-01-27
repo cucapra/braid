@@ -13,25 +13,9 @@ declare function require(name: string): any;
 
 import * as glrt from './glrt';
 import { mat4 } from 'gl-matrix';
+import { scope_eval } from '../../src/util';
 
 const canvasOrbitCamera = require('canvas-orbit-camera');
-
-/**
- * Evaluate the compiled JavaScript code with `eval` in the context of the
- * runtime library, `glrt`. Also include a `dingus` object containing some
- * dingus-specific matrices.
- */
-function shfl_eval(code: string, projection: mat4, view: mat4) {
-  // Add our projection and view matrices.
-  let dingus = {
-    projection,
-    view,
-  };
-
-  return (function () {
-    return eval(code);
-  })();
-}
 
 /**
  * Compute a projection matrix (placed in the `out` matrix allocation) given
@@ -190,12 +174,17 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     fit();
 
     if (shfl_code) {
-      // Execute the compiled SHFL code in context. This produces a function
-      // that expects a runtime object.
-      let shfl_program = shfl_eval(shfl_code, projection, view);
+      // Eval the compiled SHFL code. This produces a function that expects a
+      // runtime object.
+      let shfl_program = scope_eval(shfl_code);
 
       // Load a runtime object.
       let rt = glrt.runtime(gl, assets, drawtime);
+
+      // Expose the dingus-specific projection and view matrices. Currently,
+      // we expose these through an ad-hoc field on the `rt` object, which is
+      // a bit messy.
+      (rt as any).dingus = { projection, view };
 
       // Invoke the setup stage. The setup stage returns a function to invoke
       // for the render stage. It's asynchronous because we might need to load

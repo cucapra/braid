@@ -2,9 +2,11 @@
 # provided by the `glrt` runtime library. It also includes some
 # dingus-specific matrices from the `dingus` map.
 
-# Externs for the dingus parameter matrices.
-extern dingus.projection: Mat4;
-extern dingus.view: Mat4;
+# Externs for the dingus parameter matrices. This is currently a little weird
+# because it's dingus-specific, and yet we currently place it on the general
+# `rt` namespace.
+extern dingus.projection: Mat4 = "rt.dingus.projection";
+extern dingus.view: Mat4 = "rt.dingus.view";
 
 # And local bindings, to make them non-pervasive.
 var projection = dingus.projection;
