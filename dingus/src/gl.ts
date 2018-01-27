@@ -34,17 +34,8 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: mat4,
     view,
   };
 
-  // Construct variable bindings for everything in `rt`. This is essentially a
-  // replacement for JavaScript's deprecated `with` statement.
-  let bindings: string[] = [];
-  for (let name in rt) {
-    bindings.push(`var ${name} = rt.${name};`);
-  }
-  let bindings_js = bindings.join('\n');
-
-  // Evaluate the code, but wrap it in a function to avoid scope pollution.
   return (function () {
-    return eval(bindings_js + code);
+    return eval(code);
   })();
 }
 
