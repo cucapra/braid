@@ -851,3 +851,5 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     random: new Random(),
   };
 }
+
+export default runtime;
