@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "main": "build/glrt.js",
+  "types": "build/glrt.d.ts",
   "scripts": {
     "compile": "tsc"
   },
