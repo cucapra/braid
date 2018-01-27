@@ -493,6 +493,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       return program;
     },
 
+    // Expose the OpenGL context. (The generated code also uses this.)
+    gl,
+
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
     mesh_indices(obj: Mesh) {

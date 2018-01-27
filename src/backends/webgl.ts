@@ -385,5 +385,6 @@ export function codegen(ir: CompilerIR): string {
   // Wrap up the setup code with the main function(s). Wrap it in a
   // scope-containing function that accepts a runtime object as an argument.
   let code = emit_main(emitter);
+  code = 'var gl = rt.gl;\n' + code;  // Shortcut to gl object for codegen.
   return js.emit_main_wrapper(code, false, ['rt']);
 }

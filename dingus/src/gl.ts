@@ -21,11 +21,7 @@ const canvasOrbitCamera = require('canvas-orbit-camera');
  * runtime library, `glrt`. Also include a `dingus` object containing some
  * dingus-specific matrices.
  */
-function shfl_eval(code: string, gl: WebGLRenderingContext, projection: mat4,
-                   view: mat4, assets: glrt.Assets,
-                   drawtime: (ms: number) => void)
-{
-
+function shfl_eval(code: string, projection: mat4, view: mat4) {
   // Add our projection and view matrices.
   let dingus = {
     projection,
@@ -196,8 +192,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     if (shfl_code) {
       // Execute the compiled SHFL code in context. This produces a function
       // that expects a runtime object.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
-                                   drawtime);
+      let shfl_program = shfl_eval(shfl_code, projection, view);
 
       // Load a runtime object.
       let rt = glrt.runtime(gl, assets, drawtime);
