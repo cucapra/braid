@@ -11,7 +11,7 @@
 // definition file.
 declare function require(name: string): any;
 
-import * as glrt from './glrt';
+import * as glrt from '../../glrt/glrt';
 import { mat4 } from 'gl-matrix';
 import { scope_eval } from '../../src/util';
 
