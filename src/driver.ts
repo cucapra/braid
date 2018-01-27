@@ -58,9 +58,6 @@ function _intrinsics(config: Config): TypeMap {
 
 function _runtime(config: Config): string {
   let runtime = js.RUNTIME + "\n";
-  if (config.webgl) {
-    runtime += webgl.RUNTIME + "\n";
-  }
   return runtime;
 }
 
@@ -204,7 +201,7 @@ export function interpret(config: Config, tree: SyntaxNode,
  * code.
  */
 export function full_code(config: Config, jscode: string): string {
-  return _runtime(config) + jscode;
+  return js.RUNTIME + "\n" + jscode;
 }
 
 /**
@@ -224,7 +221,7 @@ export function execute(config: Config, jscode: string,
       if (res.persist.length) {
         throw "error: code has persists";
       } else {
-        executed(_runtime(config) + res.prog);
+        executed(js.RUNTIME + "\n" + res.prog);
       }
     } else {
       throw "error: program did not produce code";

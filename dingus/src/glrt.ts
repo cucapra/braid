@@ -453,6 +453,20 @@ function framebufferTexture(gl: WebGLRenderingContext,
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
+/*
+ * Compile a GLSL program.
+ */
+function compile_glsl(gl: WebGLRenderingContext, type: number, src: string) {
+  let shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    let errLog = gl.getShaderInfoLog(shader);
+    console.error("error: compiling shader:", errLog);
+  }
+  return shader;
+}
+
 /**
  * Get the run-time values to expose to WebGL programs.
  *
@@ -463,6 +477,22 @@ function framebufferTexture(gl: WebGLRenderingContext,
 export function runtime(gl: WebGLRenderingContext, assets: Assets,
                         drawtime: (ms: number) => void) {
   return {
+    // Compile two shaders and link them together, producing a WebGL shader
+    // program. (This is called by generated code.)
+    get_shader(vertex_source: string, fragment_source: string) {
+      let vert = compile_glsl(gl, gl.VERTEX_SHADER, vertex_source);
+      let frag = compile_glsl(gl, gl.FRAGMENT_SHADER, fragment_source);
+      let program = gl.createProgram();
+      gl.attachShader(program, vert);
+      gl.attachShader(program, frag);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        let errLog = gl.getProgramInfoLog(program);
+        console.error("error linking program:", errLog);
+      }
+      return program;
+    },
+
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
     mesh_indices(obj: Mesh) {
