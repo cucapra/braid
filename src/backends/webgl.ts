@@ -103,7 +103,7 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   let out = js.emit_var(
     name,
-    `get_shader(${vtx_code}, ${frag_code})`
+    `rt.get_shader(${vtx_code}, ${frag_code})`
   ) + "\n";
 
   // Get the variable locations, for both explicit persists and for free
