@@ -25,8 +25,6 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: mat4,
                    view: mat4, assets: glrt.Assets,
                    drawtime: (ms: number) => void)
 {
-  // Get the runtime functions.
-  let rt = glrt.runtime(gl, assets, drawtime);
 
   // Add our projection and view matrices.
   let dingus = {
@@ -196,15 +194,19 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     fit();
 
     if (shfl_code) {
-      // Execute the compiled SHFL code in context.
+      // Execute the compiled SHFL code in context. This produces a function
+      // that expects a runtime object.
       let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
-                                  drawtime);
+                                   drawtime);
+
+      // Load a runtime object.
+      let rt = glrt.runtime(gl, assets, drawtime);
 
       // Invoke the setup stage. The setup stage returns a function to invoke
       // for the render stage. It's asynchronous because we might need to load
       // assets before we get the render code; our promise resolves when we're
       // ready to render.
-      return glrt.load_and_run<any>(shfl_program).then((func) => {
+      return glrt.load_and_run<any>(() => shfl_program(rt)).then((func) => {
         shfl_render = func;
       });
     } else {

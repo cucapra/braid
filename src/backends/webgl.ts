@@ -382,6 +382,8 @@ export function codegen(ir: CompilerIR): string {
     variant: null,
   };
 
-  // Wrap up the setup code with the main function(s).
-  return js.emit_main_wrapper(emit_main(emitter), false);
+  // Wrap up the setup code with the main function(s). Wrap it in a
+  // scope-containing function that accepts a runtime object as an argument.
+  let code = emit_main(emitter);
+  return js.emit_main_wrapper(code, false, ['rt']);
 }
