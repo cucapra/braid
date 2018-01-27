@@ -19,13 +19,13 @@ const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
 
-type Vec3Array = [number, number, number][];
-type Vec2Array = [number, number][];
+export type Vec3Array = [number, number, number][];
+export type Vec2Array = [number, number][];
 
 /**
  * The type of the sample meshes we use.
  */
-interface Mesh {
+export interface Mesh {
   positions: Vec3Array;
   cells?: Vec3Array;
   texcoords?: Vec2Array;
@@ -240,7 +240,7 @@ export function load_and_run<T>(func: () => T): Promise<T> {
 /**
  * A little stateful wrapper for `seedrandom`.
  */
-class Random {
+export class Random {
   rng: any;
 
   constructor() {

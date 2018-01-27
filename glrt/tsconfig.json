@@ -2,7 +2,9 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "outDir": "build",
-        "module": "commonjs"
+        "module": "commonjs",
+        "declaration": true,
+        "allowJs": false
     },
     "files": [
         "glrt.ts"

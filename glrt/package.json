@@ -2,6 +2,7 @@
   "name": "braid-glrt",
   "version": "1.0.0",
   "private": true,
+  "main": "build/glrt.js",
   "scripts": {
     "compile": "tsc"
   },
