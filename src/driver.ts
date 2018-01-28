@@ -165,9 +165,9 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      compiled(webgl.codegen(ir));
+      jscode = webgl.codegen(ir);
     } else {
-      compiled(js.codegen(ir));
+      jscode = js.codegen(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {
@@ -175,7 +175,10 @@ export function compile(config: Config, tree: SyntaxNode,
     } else {
       throw e;
     }
+    return;
   }
+
+  compiled(jscode);
 }
 
 export function interpret(config: Config, tree: SyntaxNode,
@@ -197,20 +200,13 @@ export function interpret(config: Config, tree: SyntaxNode,
 }
 
 /**
- * Get the complete, `eval`-able JavaScript program, including the runtime
- * code.
- */
-export function full_code(config: Config, jscode: string): string {
-  return js.RUNTIME + "\n" + jscode;
-}
-
-/**
  * Run compiled JavaScript code.
  */
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
-  let res = scope_eval(full_code(config, jscode));
+  let full_code = js.RUNTIME + "\n" + jscode;
+  let res = scope_eval(full_code);
   if (config.webgl) {
     throw "error: driver can't execute WebGL programs";
   }
