@@ -1,4 +1,5 @@
 import glrt from 'braid-glrt';
+import braid_func from './render';
 
 function example(canvas: HTMLCanvasElement) {
   // Get the WebGL context.
@@ -10,7 +11,7 @@ function example(canvas: HTMLCanvasElement) {
   let rt = glrt(gl, assets, (n) => {});
 
   // Get the compiled Braid code's render function.
-  let braid_render = x;
+  let braid_render = braid_func(rt);
 
   // The main render loop.
   function render() {

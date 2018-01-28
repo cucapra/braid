@@ -8,6 +8,7 @@
     "braid-glrt": "../glrt"
   },
   "devDependencies": {
+    "typescript": "^2.6.2",
     "webpack": "^3.10.0"
   }
 }
