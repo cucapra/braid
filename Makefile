@@ -5,6 +5,7 @@ CLI_TS := cli/braid.ts
 cli: $(CLI_JS)
 all: cli dingus
 dingus:
+	make -C glrt
 	make -C dingus
 
 .PHONY: clean
