@@ -56,10 +56,12 @@ function ssc_run(code: string, mode: string):
     presplice: true,
   };
 
-  // Add the preamble, if this is WebGL mode.
+  // Add the preambles, if this is WebGL mode.
   let code_pieces = [code];
   if (mode === "webgl") {
-    code_pieces.unshift(PREAMBLES[0]['body']);
+    for (let p of PREAMBLES) {
+      code_pieces.unshift(p['body']);
+    }
   }
 
   // Run the driver.

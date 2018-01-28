@@ -55,6 +55,6 @@ examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@
 	node $< $(EXAMPLE_FILES) >> $@
 
-preambles.js: $(MUNGE) ../glrt/preamble.braid
+preambles.js: $(MUNGE) ../glrt/preamble.braid preamble.braid
 	printf "module.exports = " > $@
-	node $< ../glrt/preamble.braid >> $@
+	node $< ../glrt/preamble.braid preamble.braid >> $@
