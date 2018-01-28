@@ -54,6 +54,7 @@ function ssc_run(code: string, mode: string):
     },
 
     presplice: true,
+    module: false,
   };
 
   // Add the preambles, if this is WebGL mode.

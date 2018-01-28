@@ -46,6 +46,11 @@ export interface Config {
    * Whether to use the "presplicing" compiler optimization.
    */
   presplice: boolean;
+
+  /**
+   * Produce an importable ES6 module.
+   */
+  module: boolean;
 }
 
 function _intrinsics(config: Config): TypeMap {
@@ -176,6 +181,12 @@ export function compile(config: Config, tree: SyntaxNode,
       throw e;
     }
     return;
+  }
+
+  // Compose as an importable module.
+  if (config.module) {
+    jscode = js.RUNTIME + '\n' +
+      'export default ' + jscode;
   }
 
   compiled(jscode);
