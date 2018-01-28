@@ -3,7 +3,7 @@ example.bundle.js: build/example.js
 
 render.js: render.braid
 	echo 'export default' > $@
-	cat ../dingus/gl_preamble.ss $^ | braid -cgw >> $@
+	cat ../glrt/preamble.braid $^ | braid -cgw >> $@
 
 build/example.js: $(wildcard *.ts) render.js
 	yarn run tsc
