@@ -1,5 +1,15 @@
 import glrt from 'braid-glrt';
 import braid_func from './render';
+import { mat4 } from 'gl-matrix';
+
+function projection_matrix(out: mat4, width: number, height: number) {
+  let aspectRatio = width / height;
+  let fieldOfView = Math.PI / 4;
+  let near = 0.01;
+  let far  = 1000;
+
+  mat4.perspective(out, fieldOfView, aspectRatio, near, far);
+}
 
 function example(canvas: HTMLCanvasElement) {
   // Get the WebGL context.
@@ -10,6 +20,10 @@ function example(canvas: HTMLCanvasElement) {
   let assets = {};
   let rt = glrt(gl, assets, (n) => {});
 
+  // A projection matrix.
+  let projection = mat4.create();
+  (rt as any).projection = projection;
+
   // Get the compiled Braid code's render function.
   let braid_render = braid_func(rt);
 
@@ -19,6 +33,9 @@ function example(canvas: HTMLCanvasElement) {
     let width = gl.drawingBufferWidth;
     let height = gl.drawingBufferHeight;
     gl.viewport(0, 0, width, height);
+
+    // Update projection matrix.
+    projection_matrix(projection, width, height);
 
     // Rendering flags.
     gl.depthFunc(gl.LESS);

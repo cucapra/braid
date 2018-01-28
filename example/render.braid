@@ -1,3 +1,6 @@
+extern rt.projection: Mat4;
+var projection = rt.projection;
+
 # Position the model.
 var model = mat4.create();
 mat4.scale(model, model, vec3(10.0, 10.0, 10.0));
@@ -80,7 +83,7 @@ var indices = element_buffer(indicesArray);
 
 render js<
   vertex glsl<
-    gl_Position = model * vec4(position, 1.0);
+    gl_Position = projection * model * vec4(position, 1.0);
     fragment glsl<
       gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     >
