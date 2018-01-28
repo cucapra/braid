@@ -1,2 +1,2 @@
 render.js: render.braid
-	braid -cgw $^ > $@
+	cat ../dingus/gl_preamble.ss $^ | braid -cgw > $@
