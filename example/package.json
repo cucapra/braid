@@ -1,0 +1,13 @@
+{
+  "name": "braid-example",
+  "version": "1.0.0",
+  "main": "build/example.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "braid-glrt": "../glrt"
+  },
+  "devDependencies": {
+    "webpack": "^3.10.0"
+  }
+}

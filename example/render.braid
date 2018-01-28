@@ -1,0 +1,22 @@
+# Load buffers and parameters for the model.
+var mesh = load_obj("teapot.obj");
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+
+# Position the model.
+var model = mat4.create();
+mat4.translate(model, model, vec3(0.0, -4.0, 0.0));
+mat4.scale(model, model, vec3(0.9, 0.9, 0.9));
+mat4.rotateX(model, model, -0.7);
+
+render js<
+  vertex glsl<
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    fragment glsl<
+      gl_FragColor = vec4(abs(normal), 1.0);
+    >
+  >;
+  draw_mesh(indices, size);
+>
