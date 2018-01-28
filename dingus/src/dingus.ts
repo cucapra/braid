@@ -89,7 +89,7 @@ function ssc_run(code: string, mode: string):
     driver.compile(config, tree, types, function (code) {
       jscode = code;
       if (mode === "webgl") {
-        glcode = driver.full_code(config, jscode);
+        glcode = driver.full_code(jscode);
       } else {
         driver.execute(config, code, function (r) {
           res = r;

@@ -211,13 +211,20 @@ export function interpret(config: Config, tree: SyntaxNode,
 }
 
 /**
+ * Get the complete, `eval`-able JavaScript program, including the runtime
+ * code.
+ */
+export function full_code(jscode: string): string {
+  return js.RUNTIME + "\n" + jscode;
+}
+
+/**
  * Run compiled JavaScript code.
  */
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
-  let full_code = js.RUNTIME + "\n" + jscode;
-  let res = scope_eval(full_code);
+  let res = scope_eval(full_code(jscode));
   if (config.webgl) {
     throw "error: driver can't execute WebGL programs";
   }
@@ -228,7 +235,7 @@ export function execute(config: Config, jscode: string,
       if (res.persist.length) {
         throw "error: code has persists";
       } else {
-        executed(js.RUNTIME + "\n" + res.prog);
+        executed(full_code(res.prog));
       }
     } else {
       throw "error: program did not produce code";
