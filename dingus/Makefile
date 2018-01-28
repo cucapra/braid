@@ -55,6 +55,6 @@ examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@
 	node $< $(EXAMPLE_FILES) >> $@
 
-preambles.js: $(MUNGE) gl_preamble.ss
+preambles.js: $(MUNGE) ../glrt/preamble.braid
 	printf "module.exports = " > $@
-	node $< gl_preamble.ss >> $@
+	node $< ../glrt/preamble.braid >> $@
