@@ -8,14 +8,10 @@
     "build": "tsc && webpack"
   },
   "dependencies": {
-    "angle-normals": "^1.0.0",
+    "braid-glrt": "../glrt",
     "canvas-orbit-camera": "^1.0.0",
     "codemirror": "^5.27.4",
-    "d3": "^3.5.16",
-    "eye-vector": "^1.0.0",
-    "gl-matrix": "^2.3.2",
-    "seedrandom": "^2.4.3",
-    "webgl-obj-loader": "^0.1.1"
+    "d3": "^3.5.16"
   },
   "devDependencies": {
     "@types/codemirror": "^0.0.41",
