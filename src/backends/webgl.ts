@@ -12,36 +12,6 @@ import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import * as ast from '../ast';
 import { get_func } from './webglfunc';
 
-// Run-time functions invoked by generated code. These could eventually be
-// moved to the `glrt` library.
-export const RUNTIME = `
-// Shader management.
-function compile_glsl(gl, type, src) {
-  var shader = gl.createShader(type);
-  gl.shaderSource(shader, src);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    var errLog = gl.getShaderInfoLog(shader);
-    console.error("error: compiling shader:", errLog);
-  }
-  return shader;
-}
-
-function get_shader(gl, vertex_source, fragment_source) {
-  var vert = compile_glsl(gl, gl.VERTEX_SHADER, vertex_source);
-  var frag = compile_glsl(gl, gl.FRAGMENT_SHADER, fragment_source);
-  var program = gl.createProgram();
-  gl.attachShader(program, vert);
-  gl.attachShader(program, frag);
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    var errLog = gl.getProgramInfoLog(program);
-    console.error("error linking program:", errLog);
-  }
-  return program;
-}
-`.trim();
-
 /**
  * The WebGL functions for binding uniforms.
  */
@@ -133,7 +103,7 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   let out = js.emit_var(
     name,
-    `get_shader(gl, ${vtx_code}, ${frag_code})`
+    `rt.get_shader(${vtx_code}, ${frag_code})`
   ) + "\n";
 
   // Get the variable locations, for both explicit persists and for free
@@ -412,6 +382,9 @@ export function codegen(ir: CompilerIR): string {
     variant: null,
   };
 
-  // Wrap up the setup code with the main function(s).
-  return js.emit_main_wrapper(emit_main(emitter), false);
+  // Wrap up the setup code with the main function(s). Wrap it in a
+  // scope-containing function that accepts a runtime object as an argument.
+  let code = emit_main(emitter);
+  code = 'var gl = rt.gl;\n' + code;  // Shortcut to gl object for codegen.
+  return js.emit_main_wrapper(code, false, ['rt']);
 }

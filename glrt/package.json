@@ -1,0 +1,22 @@
+{
+  "name": "braid-glrt",
+  "version": "1.0.0",
+  "private": true,
+  "main": "build/glrt.js",
+  "types": "build/glrt.d.ts",
+  "scripts": {
+    "compile": "tsc"
+  },
+  "dependencies": {
+    "angle-normals": "^1.0.0",
+    "eye-vector": "^1.0.0",
+    "gl-matrix": "^2.3.2",
+    "seedrandom": "^2.4.3",
+    "webgl-obj-loader": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/gl-matrix": "^2.2.34",
+    "pegjs": "^0.10.0",
+    "typescript": "^2.4.1"
+  }
+}

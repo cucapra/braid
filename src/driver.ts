@@ -46,6 +46,11 @@ export interface Config {
    * Whether to use the "presplicing" compiler optimization.
    */
   presplice: boolean;
+
+  /**
+   * Produce an importable ES6 module.
+   */
+  module: boolean;
 }
 
 function _intrinsics(config: Config): TypeMap {
@@ -58,9 +63,6 @@ function _intrinsics(config: Config): TypeMap {
 
 function _runtime(config: Config): string {
   let runtime = js.RUNTIME + "\n";
-  if (config.webgl) {
-    runtime += webgl.RUNTIME + "\n";
-  }
   return runtime;
 }
 
@@ -168,9 +170,9 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      compiled(webgl.codegen(ir));
+      jscode = webgl.codegen(ir);
     } else {
-      compiled(js.codegen(ir));
+      jscode = js.codegen(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {
@@ -178,7 +180,16 @@ export function compile(config: Config, tree: SyntaxNode,
     } else {
       throw e;
     }
+    return;
   }
+
+  // Compose as an importable module.
+  if (config.module) {
+    jscode = js.RUNTIME + '\n' +
+      'export default ' + jscode;
+  }
+
+  compiled(jscode);
 }
 
 export function interpret(config: Config, tree: SyntaxNode,
@@ -203,8 +214,8 @@ export function interpret(config: Config, tree: SyntaxNode,
  * Get the complete, `eval`-able JavaScript program, including the runtime
  * code.
  */
-export function full_code(config: Config, jscode: string): string {
-  return _runtime(config) + jscode;
+export function full_code(jscode: string): string {
+  return js.RUNTIME + "\n" + jscode;
 }
 
 /**
@@ -213,7 +224,7 @@ export function full_code(config: Config, jscode: string): string {
 export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
-  let res = scope_eval(full_code(config, jscode));
+  let res = scope_eval(full_code(jscode));
   if (config.webgl) {
     throw "error: driver can't execute WebGL programs";
   }
@@ -224,7 +235,7 @@ export function execute(config: Config, jscode: string,
       if (res.persist.length) {
         throw "error: code has persists";
       } else {
-        executed(_runtime(config) + res.prog);
+        executed(full_code(res.prog));
       }
     } else {
       throw "error: program did not produce code";

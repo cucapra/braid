@@ -18,6 +18,7 @@ function run(filename: string, source: string, outfile: string | undefined,
     webgl: false,
     generate: false,
     presplice: false,
+    module: false,
 
     log: log,
     error: e => {

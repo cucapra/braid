@@ -1,0 +1,9 @@
+# Externs for the dingus parameter matrices. This is currently a little weird
+# because it's dingus-specific, and yet we currently place it on the general
+# `rt` namespace.
+extern dingus.projection: Mat4 = "rt.dingus.projection";
+extern dingus.view: Mat4 = "rt.dingus.view";
+
+# And local bindings, to make them non-pervasive.
+var projection = dingus.projection;
+var view = dingus.view;

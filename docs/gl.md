@@ -63,7 +63,7 @@ BraidGL gives you access to parts of the [WebGL API][webgl] for host-side code a
 
 [preamble]: https://github.com/cucapra/braid/blob/master/dingus/gl_preamble.ss
 
-* `teapot`, `bunny`, and `snowden`: `Mesh`. Sample object assets.
+* `teapot` and `bunny`: `Mesh`. Sample object assets.
 * `mesh_positions`: `Mesh -> Float3 Buffer`. Get the vertex positions from a mesh. Under the hood, a `Float3 Buffer` is implemented as a WebGL buffer.
 * `mesh_indices`: `Mesh -> Int3 Buffer`. Get the triangle vertex indices for a mesh.
 * `mesh_size`: `Mesh -> Int`. Get the size (in triangles) of a mesh.

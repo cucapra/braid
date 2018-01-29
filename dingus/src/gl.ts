@@ -11,42 +11,11 @@
 // definition file.
 declare function require(name: string): any;
 
-import * as glrt from './glrt';
+import * as glrt from 'braid-glrt';
 import { mat4 } from 'gl-matrix';
+import { scope_eval } from '../../src/util';
 
 const canvasOrbitCamera = require('canvas-orbit-camera');
-
-/**
- * Evaluate the compiled JavaScript code with `eval` in the context of the
- * runtime library, `glrt`. Also include a `dingus` object containing some
- * dingus-specific matrices.
- */
-function shfl_eval(code: string, gl: WebGLRenderingContext, projection: mat4,
-                   view: mat4, assets: glrt.Assets,
-                   drawtime: (ms: number) => void)
-{
-  // Get the runtime functions.
-  let rt = glrt.runtime(gl, assets, drawtime);
-
-  // Add our projection and view matrices.
-  let dingus = {
-    projection,
-    view,
-  };
-
-  // Construct variable bindings for everything in `rt`. This is essentially a
-  // replacement for JavaScript's deprecated `with` statement.
-  let bindings: string[] = [];
-  for (let name in rt) {
-    bindings.push(`var ${name} = rt.${name};`);
-  }
-  let bindings_js = bindings.join('\n');
-
-  // Evaluate the code, but wrap it in a function to avoid scope pollution.
-  return (function () {
-    return eval(bindings_js + code);
-  })();
-}
 
 /**
  * Compute a projection matrix (placed in the `out` matrix allocation) given
@@ -205,15 +174,23 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     fit();
 
     if (shfl_code) {
-      // Execute the compiled SHFL code in context.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
-                                  drawtime);
+      // Eval the compiled SHFL code. This produces a function that expects a
+      // runtime object.
+      let shfl_program = scope_eval(shfl_code);
+
+      // Load a runtime object.
+      let rt = glrt.runtime(gl, assets, drawtime);
+
+      // Expose the dingus-specific projection and view matrices. Currently,
+      // we expose these through an ad-hoc field on the `rt` object, which is
+      // a bit messy.
+      (rt as any).dingus = { projection, view };
 
       // Invoke the setup stage. The setup stage returns a function to invoke
       // for the render stage. It's asynchronous because we might need to load
       // assets before we get the render code; our promise resolves when we're
       // ready to render.
-      return glrt.load_and_run<any>(shfl_program).then((func) => {
+      return glrt.load_and_run<any>(() => shfl_program(rt)).then((func) => {
         shfl_render = func;
       });
     } else {

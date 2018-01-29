@@ -13,7 +13,8 @@ const EXTENSION = '.ss';
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
-    generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
+    generate: boolean, log: (...msg: any[]) => void, presplice: boolean,
+    module: boolean)
 {
   let success = true;
   let name = path.basename(filename, EXTENSION);
@@ -39,6 +40,7 @@ function run(filename: string, source: string, webgl: boolean,
       typed: (_ => void 0),
 
       presplice,
+      module,
     };
 
     // Run the driver.
@@ -136,6 +138,7 @@ async function main() {
   let test: boolean = args['t'];
   let generate: boolean = args['g'];
   let no_presplice: boolean = args['P'];
+  let module: boolean = args['m'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
@@ -147,6 +150,7 @@ async function main() {
     console.error("  -t: test mode (check for expected output)");
     console.error("  -g: dump generated code");
     console.error("  -P: do not use the presplicing optimization");
+    console.error("  -m: compile an importable ES6 module");
     process.exit(1);
   }
 
@@ -164,7 +168,7 @@ async function main() {
   await Promise.all(filenames.map(async fn => {
     let source = await readText(fn);
     success = run(fn, source, webgl, compile, execute, test,
-        generate, log, !no_presplice) && success;
+        generate, log, !no_presplice, module) && success;
   }));
   if (!success) {
     process.exit(1);

@@ -19,13 +19,13 @@ const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 const seedrandom = require('seedrandom');
 
-type Vec3Array = [number, number, number][];
-type Vec2Array = [number, number][];
+export type Vec3Array = [number, number, number][];
+export type Vec2Array = [number, number][];
 
 /**
  * The type of the sample meshes we use.
  */
-interface Mesh {
+export interface Mesh {
   positions: Vec3Array;
   cells?: Vec3Array;
   texcoords?: Vec2Array;
@@ -240,7 +240,7 @@ export function load_and_run<T>(func: () => T): Promise<T> {
 /**
  * A little stateful wrapper for `seedrandom`.
  */
-class Random {
+export class Random {
   rng: any;
 
   constructor() {
@@ -453,6 +453,20 @@ function framebufferTexture(gl: WebGLRenderingContext,
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
+/*
+ * Compile a GLSL program.
+ */
+function compile_glsl(gl: WebGLRenderingContext, type: number, src: string) {
+  let shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    let errLog = gl.getShaderInfoLog(shader);
+    console.error("error: compiling shader:", errLog);
+  }
+  return shader;
+}
+
 /**
  * Get the run-time values to expose to WebGL programs.
  *
@@ -463,6 +477,25 @@ function framebufferTexture(gl: WebGLRenderingContext,
 export function runtime(gl: WebGLRenderingContext, assets: Assets,
                         drawtime: (ms: number) => void) {
   return {
+    // Compile two shaders and link them together, producing a WebGL shader
+    // program. (This is called by generated code.)
+    get_shader(vertex_source: string, fragment_source: string) {
+      let vert = compile_glsl(gl, gl.VERTEX_SHADER, vertex_source);
+      let frag = compile_glsl(gl, gl.FRAGMENT_SHADER, fragment_source);
+      let program = gl.createProgram();
+      gl.attachShader(program, vert);
+      gl.attachShader(program, frag);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        let errLog = gl.getProgramInfoLog(program);
+        console.error("error linking program:", errLog);
+      }
+      return program;
+    },
+
+    // Expose the OpenGL context. (The generated code also uses this.)
+    gl,
+
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
     mesh_indices(obj: Mesh) {
@@ -818,3 +851,5 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     random: new Random(),
   };
 }
+
+export default runtime;
