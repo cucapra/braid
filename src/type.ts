@@ -29,7 +29,7 @@ interface BaseType {
  * Primitive types. Each primitive type is a (shared) instance of this class.
  */
 export class PrimitiveType implements BaseType {
-  public kind: TypeKind.PRIMITIVE;
+  public kind!: TypeKind.PRIMITIVE;
   constructor(public name: string) { }
 }
 PrimitiveType.prototype.kind = TypeKind.PRIMITIVE;
@@ -38,7 +38,7 @@ PrimitiveType.prototype.kind = TypeKind.PRIMITIVE;
  * A "top" type: a supertype of everything.
  */
 export class AnyType implements BaseType {
-  public kind: TypeKind.ANY;
+  public kind!: TypeKind.ANY;
 }
 AnyType.prototype.kind = TypeKind.ANY;
 export const ANY = new AnyType();
@@ -47,7 +47,7 @@ export const ANY = new AnyType();
  * A "bottom" type: a subtype of everything.
  */
 export class VoidType implements BaseType {
-  public kind: TypeKind.VOID;
+  public kind!: TypeKind.VOID;
 }
 VoidType.prototype.kind = TypeKind.VOID;
 export const VOID = new VoidType();
@@ -70,7 +70,7 @@ abstract class BaseFunType {
  * Function types.
  */
 export class FunType extends BaseFunType implements BaseType {
-  public kind: TypeKind.FUN;
+  public kind!: TypeKind.FUN;
 }
 FunType.prototype.kind = TypeKind.FUN;
 
@@ -79,7 +79,7 @@ FunType.prototype.kind = TypeKind.FUN;
  * of a single type: the `params` array must have length 1.
  */
 export class VariadicFunType extends BaseFunType implements BaseType {
-  public kind: TypeKind.VARIADIC_FUN;
+  public kind!: TypeKind.VARIADIC_FUN;
 }
 VariadicFunType.prototype.kind = TypeKind.VARIADIC_FUN;
 
@@ -88,7 +88,7 @@ VariadicFunType.prototype.kind = TypeKind.VARIADIC_FUN;
  * Code types.
  */
 export class CodeType implements BaseType {
-  public kind: TypeKind.CODE;
+  public kind!: TypeKind.CODE;
   constructor(
     public inner: Type,
     public annotation: string,
@@ -102,7 +102,7 @@ CodeType.prototype.kind = TypeKind.CODE;
  * Type constructors: the basic element of parametricity.
  */
 export class ConstructorType implements BaseType {
-  public kind: TypeKind.CONSTRUCTOR;
+  public kind!: TypeKind.CONSTRUCTOR;
   constructor(public name: string) { }
   instance(arg: Type) {
     return new InstanceType(this, arg);
@@ -111,7 +111,7 @@ export class ConstructorType implements BaseType {
 ConstructorType.prototype.kind = TypeKind.CONSTRUCTOR;
 
 export class InstanceType implements BaseType {
-  public kind: TypeKind.INSTANCE;
+  public kind!: TypeKind.INSTANCE;
   constructor(public cons: ConstructorType, public arg: Type) { }
 }
 InstanceType.prototype.kind = TypeKind.INSTANCE;
@@ -120,13 +120,13 @@ InstanceType.prototype.kind = TypeKind.INSTANCE;
  * Slightly more general parametricity with a universal quantifier.
  */
 export class QuantifiedType implements BaseType {
-  public kind: TypeKind.QUANTIFIED;
+  public kind!: TypeKind.QUANTIFIED;
   constructor(public variable: TypeVariable, public inner: Type) { }
 }
 QuantifiedType.prototype.kind = TypeKind.QUANTIFIED;
 
 export class VariableType implements BaseType {
-  public kind: TypeKind.VARIABLE;
+  public kind!: TypeKind.VARIABLE;
   constructor(public variable: TypeVariable) { }
 }
 VariableType.prototype.kind = TypeKind.VARIABLE;
@@ -135,7 +135,7 @@ VariableType.prototype.kind = TypeKind.VARIABLE;
  * Simple overloading.
  */
 export class OverloadedType implements BaseType {
-  public kind: TypeKind.OVERLOADED;
+  public kind!: TypeKind.OVERLOADED;
   constructor(public types: Type[]) { }
 }
 OverloadedType.prototype.kind = TypeKind.OVERLOADED;
@@ -144,7 +144,7 @@ OverloadedType.prototype.kind = TypeKind.OVERLOADED;
  * Tuple (product) types.
  */
 export class TupleType implements BaseType {
-  public kind: TypeKind.TUPLE;
+  public kind!: TypeKind.TUPLE;
   constructor(public components: Type[]) { }
 }
 TupleType.prototype.kind = TypeKind.TUPLE;
