@@ -11,7 +11,7 @@
     "@types/minimist": "^1.1.29",
     "@types/node": "^8.0.8",
     "pegjs": "^0.10.0",
-    "typescript": "^2.4.1"
+    "typescript": "^2.7.1"
   },
   "bin": {
     "braid": "build/cli/braid.js"

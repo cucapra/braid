@@ -617,7 +617,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
         cells: group_array(mesh.indices, 3) as Vec3Array,
 
         // This name I invented -- it's not in the StackGL models.
-        texcoords: group_array(mesh.textures, 2) as Vec3Array,
+        texcoords: group_array(mesh.textures, 2) as Vec2Array,
       };
 
       // .obj files can have normals, but if they don't, this parser library
