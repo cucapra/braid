@@ -9,7 +9,8 @@ import { Error } from "../src/error";
 import * as llvm from "./llvm";
 import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
-function run(filename: string, source: string, outfile: string | undefined) {
+function run(filename: string, source: string, outfile: string | undefined,
+            log: (...msg: any[]) => void) {
   let success = true;
 
   // Configure the driver.
@@ -19,7 +20,7 @@ function run(filename: string, source: string, outfile: string | undefined) {
     presplice: false,
     module: false,
 
-    log: (() => void 0),
+    log: log,
     error: e => {
       console.error(e.toString());
       success = false;
@@ -55,6 +56,28 @@ function run(filename: string, source: string, outfile: string | undefined) {
   return success;
 }
 
+/**
+ * Dump a lot of debugging information using Node's `util.inspect`.
+ */
+function verbose_log(...msg: any[]) {
+  let out: string[] = [];
+  for (let m of msg) {
+    if (typeof(m) === "string") {
+      out.push(m);
+    } else if (m instanceof Array) {
+      for (let i = 0; i < m.length; ++i) {
+        out.push("\n" + i + ": " +
+            util.inspect(m[i], { depth: undefined, colors: true }));
+      }
+    } else {
+      out.push(util.inspect(m, { depth: undefined, colors: true }));
+    }
+  }
+  // Work around a TypeScript limitation:
+  // https://github.com/Microsoft/TypeScript/issues/4755
+  console.log(out[0], ...out.slice(1));
+}
+
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
@@ -83,9 +106,11 @@ function main() {
     filename = STDIN_FILENAME;
   }
 
+  let log = verbose ? verbose_log : (() => void 0);
+
   // Read the source and run the driver.
   readText(filename).then(source => {
-    let success = run(filename, source, outfile);
+    let success = run(filename, source, outfile, log);
     if (!success) {
       process.exit(1);
     }
