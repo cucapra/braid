@@ -62,6 +62,7 @@ GLuint get_shader(const char *vert_src, const char *frag_src) {
 
 char *read_file(const char *file) {
   FILE *f = fopen(file, "rb");
+  if (f == NULL) return NULL;
   fseek(f, 0, SEEK_END);
   long fsize = ftell(f);
   fseek(f, 0, SEEK_SET);  //same as rewind(f);
@@ -132,21 +133,29 @@ void print_mesh(tinyobj_attrib_t mesh) {
   }
 }
 
-tinyobj_attrib_t load_obj(const char *file) {
+tinyobj_attrib_t load_obj(const char *file, int *failure_flag) {
   tinyobj_attrib_t attrib;
   tinyobj_shape_t *shapes = NULL;
   size_t num_shapes;
   tinyobj_material_t *materials = NULL;
   size_t num_materials;
   char *data = read_file(file);
+  if (data == NULL) {
+    *failure_flag = 1;
+    return attrib;
+  }
   int data_len = strlen(data);
   unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
   int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials, &num_materials, data, data_len, flags);
+  if (ret == TINYOBJ_SUCCESS) {
+    *failure_flag = 0;
+  }
+  else {
+    *failure_flag = 1;
+    return attrib;
+  }
   tinyobj_shapes_free(shapes, num_shapes);
   tinyobj_materials_free(materials, num_materials);
-  if (ret == TINYOBJ_SUCCESS) printf("success!\n");
-  else printf("failure!\n");
-  //print_mesh(attrib);
   return attrib;
 }
 

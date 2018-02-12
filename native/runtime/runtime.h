@@ -44,6 +44,6 @@ GLuint gl_buffer(GLenum mode, void *data, int data_len);
 
 void detect_error();
 
-tinyobj_attrib_t load_obj(const char *file);
+tinyobj_attrib_t load_obj(const char *file, int *failed);
 
 GLFWwindow *create_window();

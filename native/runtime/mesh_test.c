@@ -70,7 +70,7 @@ int main() {
   graphene_matrix_init_perspective(&projection_g, 90.0, 1.0, 0.01, 1000.0);
 
   graphene_vec3_t eye, center, up;
-  graphene_vec3_init(&eye, 0.0, 0.0, 10.0);
+  graphene_vec3_init(&eye, 0.0, 0.0, 5.0);
   graphene_vec3_init(&center, 0.0, 0.0, 0.0);
   graphene_vec3_init(&up, 0.0, 1.0, 0.0);
   graphene_matrix_t view_g;
@@ -83,7 +83,12 @@ int main() {
   graphene_matrix_to_float(&projection_g, projection);
   graphene_matrix_to_float(&view_g, view);
 
-  tinyobj_attrib_t mesh = load_obj("bunny.obj");
+  int failed;
+  tinyobj_attrib_t mesh = load_obj("assets/bunny.obj", &failed);
+  if (failed) {
+    printf("Could not find mesh file.\n");
+    exit(1);
+  }
   print_mesh(mesh);
   GLuint positions = mesh_positions(mesh);
   GLuint normals = mesh_normals(mesh);
