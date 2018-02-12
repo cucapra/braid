@@ -84,7 +84,7 @@ int main() {
   graphene_matrix_to_float(&view_g, view);
 
   int failed;
-  tinyobj_attrib_t mesh = load_obj("assets/bunny.obj", &failed);
+  tinyobj_attrib_t *mesh = load_obj("assets/bunny.obj", &failed);
   if (failed) {
     printf("Could not find mesh file.\n");
     exit(1);
@@ -94,7 +94,7 @@ int main() {
   GLuint normals = mesh_normals(mesh);
   GLuint indices = mesh_indices(mesh);
 
-  int mesh_size = mesh.num_faces;
+  int mesh_size = mesh->num_faces;
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();

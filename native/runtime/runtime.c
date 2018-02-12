@@ -80,23 +80,23 @@ void draw_mesh(GLuint indices, int mesh_size) {
   glDrawElements(GL_TRIANGLES, mesh_size, GL_UNSIGNED_INT, 0);
 }
 
-GLuint mesh_indices(tinyobj_attrib_t mesh) {
-  int *indices = malloc(mesh.num_faces * sizeof(int));
-  for (int i = 0; i < mesh.num_faces; i++) {
-    indices[i] = mesh.faces[i].v_idx;
+GLuint mesh_indices(tinyobj_attrib_t *mesh) {
+  int *indices = malloc(mesh->num_faces * sizeof(int));
+  for (int i = 0; i < mesh->num_faces; i++) {
+    indices[i] = mesh->faces[i].v_idx;
   }
 
-  GLuint buf = gl_buffer(GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(int) * mesh.num_faces);
+  GLuint buf = gl_buffer(GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(int) * mesh->num_faces);
   free(indices);
   return buf;
 }
 
-GLuint mesh_positions(tinyobj_attrib_t mesh) {
-  return gl_buffer(GL_ARRAY_BUFFER, mesh.vertices, sizeof(float) * mesh.num_vertices * 3);
+GLuint mesh_positions(tinyobj_attrib_t *mesh) {
+  return gl_buffer(GL_ARRAY_BUFFER, mesh->vertices, sizeof(float) * mesh->num_vertices * 3);
 }
 
-GLuint mesh_normals(tinyobj_attrib_t mesh) {
-  return gl_buffer(GL_ARRAY_BUFFER, mesh.normals, sizeof(float) * mesh.num_normals * 3);
+GLuint mesh_normals(tinyobj_attrib_t *mesh) {
+  return gl_buffer(GL_ARRAY_BUFFER, mesh->normals, sizeof(float) * mesh->num_normals * 3);
 }
 
 GLuint gl_buffer(GLenum mode, void *data, int data_len) {
@@ -107,25 +107,25 @@ GLuint gl_buffer(GLenum mode, void *data, int data_len) {
   return buffer_id;
 }
 
-void print_mesh(tinyobj_attrib_t mesh) {
-  printf("num_vertices = %d\n", mesh.num_vertices);
-  for (int i = 0; i < 3 * mesh.num_vertices; i += 3) {
-    printf("(%f, %f, %f)\n", mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2]);
+void print_mesh(tinyobj_attrib_t *mesh) {
+  printf("num_vertices = %d\n", mesh->num_vertices);
+  for (int i = 0; i < 3 * mesh->num_vertices; i += 3) {
+    printf("(%f, %f, %f)\n", mesh->vertices[i], mesh->vertices[i + 1], mesh->vertices[i + 2]);
   }
-  printf("num_normals = %d\n", mesh.num_normals);
-  for (int i = 0; i < 3 * mesh.num_normals; i += 3) {
-    printf("(%f, %f, %f)\n", mesh.normals[i], mesh.normals[i + 1], mesh.normals[i + 2]);
+  printf("num_normals = %d\n", mesh->num_normals);
+  for (int i = 0; i < 3 * mesh->num_normals; i += 3) {
+    printf("(%f, %f, %f)\n", mesh->normals[i], mesh->normals[i + 1], mesh->normals[i + 2]);
   }
-  printf("num_texcoords = %d\n", mesh.num_texcoords);
-  for (int i = 0; i < 2 * mesh.num_texcoords; i += 2) {
-    printf("(%f, %f)\n", mesh.texcoords[i], mesh.texcoords[i + 1]);
+  printf("num_texcoords = %d\n", mesh->num_texcoords);
+  for (int i = 0; i < 2 * mesh->num_texcoords; i += 2) {
+    printf("(%f, %f)\n", mesh->texcoords[i], mesh->texcoords[i + 1]);
   }
-  printf("num_faces = %d\n", mesh.num_faces);
-  printf("num_face_num_verts = %d\n", mesh.num_face_num_verts);
+  printf("num_faces = %d\n", mesh->num_faces);
+  printf("num_face_num_verts = %d\n", mesh->num_face_num_verts);
   int face_ptr_offset = 0;
-  for (int i = 0; i < mesh.num_face_num_verts; i++) {
-    for (int j = 0; j < mesh.face_num_verts[i]; j++) {
-      tinyobj_vertex_index_t vi = mesh.faces[face_ptr_offset];
+  for (int i = 0; i < mesh->num_face_num_verts; i++) {
+    for (int j = 0; j < mesh->face_num_verts[i]; j++) {
+      tinyobj_vertex_index_t vi = mesh->faces[face_ptr_offset];
       printf("%d/%d/%d ", vi.v_idx, vi.vt_idx, vi.vn_idx);
       face_ptr_offset++;
     }
@@ -133,8 +133,8 @@ void print_mesh(tinyobj_attrib_t mesh) {
   }
 }
 
-tinyobj_attrib_t load_obj(const char *file, int *failure_flag) {
-  tinyobj_attrib_t attrib;
+tinyobj_attrib_t *load_obj(const char *file, int *failure_flag) {
+  tinyobj_attrib_t *attrib = malloc(sizeof(tinyobj_attrib_t));
   tinyobj_shape_t *shapes = NULL;
   size_t num_shapes;
   tinyobj_material_t *materials = NULL;
@@ -146,7 +146,7 @@ tinyobj_attrib_t load_obj(const char *file, int *failure_flag) {
   }
   int data_len = strlen(data);
   unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-  int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials, &num_materials, data, data_len, flags);
+  int ret = tinyobj_parse_obj(attrib, &shapes, &num_shapes, &materials, &num_materials, data, data_len, flags);
   if (ret == TINYOBJ_SUCCESS) {
     *failure_flag = 0;
   }

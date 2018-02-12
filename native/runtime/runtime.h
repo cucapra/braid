@@ -10,13 +10,13 @@
 
 /* a mesh has a bunch of triangles; this returns a pointer to an opengl buffer
  * that has loaded the vertex indices for a mesh's triangles */
-GLuint mesh_indices(tinyobj_attrib_t mesh);
+GLuint mesh_indices(tinyobj_attrib_t *mesh);
 
 /* loads vertex positions into an opengl buffer */
-GLuint mesh_positions(tinyobj_attrib_t mesh);
+GLuint mesh_positions(tinyobj_attrib_t *mesh);
 
 /* loads vertex normals into an opengl buffer */
-GLuint mesh_normals(tinyobj_attrib_t mesh);
+GLuint mesh_normals(tinyobj_attrib_t *mesh);
 
 /* compiles and returns an opengl shader program given the program source */
 GLuint get_shader(const char *vert_src, const char *frag_src);
@@ -30,7 +30,7 @@ GLuint get_shader(const char *vert_src, const char *frag_src);
 void draw_mesh(GLuint indices, int mesh_size);
 
 /* prints a mesh stored in the tinyobj_loader format */
-void print_mesh(tinyobj_attrib_t mesh);
+void print_mesh(tinyobj_attrib_t *mesh);
 
 /* loads [data] onto a buffer. [data_len] is the size of [data] in bytes */
 GLuint gl_buffer(GLenum mode, void *data, int data_len);
@@ -40,7 +40,7 @@ void detect_error();
 
 /* loads a .obj file that contains a mesh. [failed] is set to 1 if something
  * goes wrong in this process, or 0 if all is well */
-tinyobj_attrib_t load_obj(const char *file, int *failed);
+tinyobj_attrib_t *load_obj(const char *file, int *failed);
 
 /* returns a window to draw onto */
 GLFWwindow *create_window();
