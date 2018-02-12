@@ -19,4 +19,4 @@ mesh_test: $(MESH_TEST_SOURCE)
 
 .PHONY: clean
 clean:
-	rm -f test mesh_test
+	rm -r test mesh_test test.dSYM mesh_test.dSYM *.o
