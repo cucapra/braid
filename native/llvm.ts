@@ -494,6 +494,72 @@ function get_func_type(emitter: LLVMEmitter, ret_id: number, arg_ids: number[]):
   return [ret_type, arg_types];
 }
 
+let ptr_t: llvm.Type = llvm.PointerType.create(llvm.IntType.int8(), 0);
+let int_t: llvm.Type = llvm.IntType.int32();
+let void_t: llvm.Type = llvm.VoidType.create();
+
+/**                           name     return        args */
+const runtime_declarations: [string, llvm.Type, llvm.Type[]][] =
+[
+  ["mesh_indices", int_t, [ptr_t]],
+  ["mesh_positions", int_t, [ptr_t]],
+  ["mesh_normals", int_t, [ptr_t]],
+  ["get_shader", int_t, [ptr_t, ptr_t]],
+  ["draw_mesh", void_t, [int_t, int_t]],
+  ["print_mesh", void_t, [ptr_t]],
+  ["gl_buffer", int_t, [int_t, ptr_t, ptr_t]],
+  ["detect_error", void_t, []],
+  ["load_obj", ptr_t, [ptr_t, ptr_t]],
+  ["create_window", ptr_t, []]
+];
+
+function emit_runtime_declaration(emitter: LLVMEmitter) {
+  for (let [name, ret_type, arg_types] of runtime_declarations) {
+    let func_type = llvm.FunctionType.create(ret_type, arg_types);
+
+    /* although calls to runtime functions don't take an environment pointer,
+     * we wrap them so that they do (in order to have consistent function
+     * calling semantics) */
+    let dummy_args: llvm.Type[] = [];
+    for (let t of arg_types) {
+      dummy_args.push(t);
+    }
+    // environment ptr is last argument
+    dummy_args.push(ptr_t);
+
+    let dummy_func_type = llvm.FunctionType.create(ret_type, dummy_args);
+    let actual_func_type = llvm.FunctionType.create(ret_type, arg_types);
+    // declare actual runtime function
+    let decl_func = emitter.mod.getOrInsertFunction(name, actual_func_type);
+    // emit wrapper
+    let wrapper_func = emitter.mod.addFunction(name + "_wrapper", dummy_func_type);
+    let bb: llvm.BasicBlock = wrapper_func.appendBasicBlock("entry");
+    let new_builder: llvm.Builder = llvm.Builder.create();
+    new_builder.positionAtEnd(bb);
+
+    /* generate code for the wrapper: first make space for args on the stack
+     * and then call the declared runtime function */
+
+    let pass_on_args: llvm.Value[] = [];
+    for (let i = 0; i < dummy_args.length - 1; i++) {
+      pass_on_args[i] = wrapper_func.getParam(i);
+      /*
+      let arg_t = dummy_args[i];
+      let ptr = new_builder.buildAlloca(arg_t, "arg");
+      new_builder.buildStore(wrapper_func.getParam(i), ptr);
+      allocas.push(ptr);
+      */
+    }
+
+    let call = new_builder.buildCall(decl_func, pass_on_args, "");
+    if (ret_type != void_t) {
+      new_builder.ret(call);
+    } else {
+      llvm.LLVM.LLVMBuildRetVoid(new_builder.ref);
+    }
+  }
+}
+
 /**
  * Store a val in the ptr location to which emitter maps the provided id
  */
@@ -529,6 +595,7 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_root(tree: ast.RootNode, emitter: LLVMEmitter): llvm.Value {
+    emit_runtime_declaration(emitter);
     return emit(emitter, tree.children[0]);
   },
 
