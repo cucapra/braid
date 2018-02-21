@@ -1,7 +1,6 @@
 {
   "name": "braid-glrt",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.0.0",
   "main": "build/glrt.js",
   "types": "build/glrt.d.ts",
   "scripts": {
