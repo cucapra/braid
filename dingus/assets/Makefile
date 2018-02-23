@@ -25,14 +25,14 @@ bump-lowRes.png: head.zip
 	unzip $^ $@
 	touch $@
 head.zip:
-	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
+	curl -L -o $@ "https://casual-effects.com/g3d/data10/research/model/lpshead/lpshead.zip"
 
 # Cube.
 default.png: cube.zip
 	unzip $^ $@
 	touch $@
 cube.zip:
-	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
+	curl -LO "https://casual-effects.com/g3d/data10/common/model/cube/$@"
 
 # Bunny.
 bunny.obj:
