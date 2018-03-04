@@ -23,6 +23,19 @@ export function progsym(progid: number) {
   return "q" + progid;
 }
 
+// Get an index variable name for a for loop,
+// (i.e., i in for (int i = 0; i < 5 i++) {stmts}).
+export let condsym = (() => {
+  let count = 0;
+  return () => {
+    return "c" + count++;
+  };
+}) ();
+
+// The maximum iterations limit in glsl while loop.
+// This limit prevents the shader from crashing the whole system.
+export const WHILE_MAX_ITER = 999;
+
 // Get a *placeholder token* for a splice escape. This will be used with find
 // & replace to substitute in code into an expression.
 // TODO Eventually, a better implementation of this idea would just
