@@ -10,12 +10,12 @@ import * as llvm from "./llvm";
 import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
 function run(filename: string, source: string, outfile: string | undefined,
-            log: (...msg: any[]) => void) {
+            log: (...msg: any[]) => void, opengl: boolean) {
   let success = true;
 
   // Configure the driver.
   let config: driver.Config = {
-    webgl: false,
+    webgl: opengl,
     generate: false,
     presplice: false,
     module: false,
@@ -32,6 +32,7 @@ function run(filename: string, source: string, outfile: string | undefined,
 
   // Run the driver.
   let res = driver.frontend(config, [source], [filename]);
+
   if (res instanceof Error) {
     console.error(res.toString());
     return false;
@@ -40,7 +41,7 @@ function run(filename: string, source: string, outfile: string | undefined,
   // Compile to an LLVM module.
   let [tree, types] = res;
   let ir = driver.to_ir(config, tree, types);
-  let mod = llvm.codegen(ir);
+  let mod = llvm.codegen(ir, config);
 
   if (outfile) {
     // Dump bitcode to the file.
@@ -110,7 +111,7 @@ function main() {
 
   // Read the source and run the driver.
   readText(filename).then(source => {
-    let success = run(filename, source, outfile, log);
+    let success = run(filename, source, outfile, log, opengl);
     if (!success) {
       process.exit(1);
     }
