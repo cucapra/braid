@@ -8,7 +8,7 @@ import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   SHADER_ANNOTATION, emit_glue, is_intrinsic_call } from './gl';
 import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
-  emit_while, emit_body, paren, splicesym, condsym, WHILE_MAX_ITER } from './emitutil';
+  emit_while, emit_body, paren, splicesym, WHILE_MAX_ITER } from './emitutil';
 import { CompilerIR, nearest_quote, Variant } from '../compile/ir';
 
 // Type checking for uniforms, which are automatically demoted from arrays to
@@ -237,7 +237,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
   visit_while(tree: ast.WhileNode, emitter: Emitter): string {
     let cond = emit(emitter, tree.cond);
     let body = emit_body(emitter, tree.body, "");
-    let i = condsym();
+    let i = varsym(tree.id!);
     return `for (int ${i} = 0; ${i} < ${WHILE_MAX_ITER}; ${i}++){\n${indent(`if(!${paren(cond)}) break;\n${body}`, true)}\n}`;
   },
 
