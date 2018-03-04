@@ -9,7 +9,9 @@ import { Error } from "../src/error";
 import * as llvm from "./llvm";
 import { readText, STDIN_FILENAME } from "../cli/cli_util";
 
-function run(filename: string, source: string, outfile: string | undefined,
+const PREAMBLE_FILENAME = "../glrt/preamble.braid";
+
+async function run(filename: string, source: string, outfile: string | undefined,
             log: (...msg: any[]) => void, opengl: boolean) {
   let success = true;
 
@@ -30,31 +32,35 @@ function run(filename: string, source: string, outfile: string | undefined,
     typed: (_ => void 0),
   };
 
-  // Run the driver.
-  let res = driver.frontend(config, [source], [filename]);
+  let res = readText(PREAMBLE_FILENAME).then(preamble_src => {
+    // Run the driver.
+    let res = driver.frontend(config, [preamble_src, source], [PREAMBLE_FILENAME, filename]);
 
-  if (res instanceof Error) {
-    console.error(res.toString());
-    return false;
-  }
+    if (res instanceof Error) {
+      console.error(res.toString());
+      return false;
+    }
 
-  // Compile to an LLVM module.
-  let [tree, types] = res;
-  let ir = driver.to_ir(config, tree, types);
-  let mod = llvm.codegen(ir, config);
+    // Compile to an LLVM module.
+    let [tree, types] = res;
+    let ir = driver.to_ir(config, tree, types);
+    let mod = llvm.codegen(ir, config);
 
-  if (outfile) {
-    // Dump bitcode to the file.
-    mod.writeBitcodeToFile(outfile);
-  } else {
-    // Print human-readable IR to stdout.
-    console.log(mod.toString());
-  }
+    if (outfile) {
+      // Dump bitcode to the file.
+      mod.writeBitcodeToFile(outfile);
+    } else {
+      // Print human-readable IR to stdout.
+      console.log(mod.toString());
+    }
 
-  // Free the compiled LLVM module.
-  mod.free();
+    // Free the compiled LLVM module.
+    mod.free();
 
-  return success;
+    return success;
+
+  });
+  await res;
 }
 
 /**
