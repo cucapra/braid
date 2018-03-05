@@ -227,11 +227,11 @@ function emit_extern(name: string, type: Type): llvm.Value {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     // TODO
-    throw "not implemented"
+    throw "extern not implemented"
   } else {
     // An ordinary value. Just look it up by name.
     // TODO
-    throw "not implemented"
+    throw "extern not implemented"
   }
 }
 
@@ -549,7 +549,11 @@ export let compile_rules: ASTVisit<LLVMEmitter, llvm.Value> = {
   },
 
   visit_root(tree: ast.RootNode, emitter: LLVMEmitter): llvm.Value {
-    return emit(emitter, tree.children[0]);
+    let last: llvm.Value | null = null;
+    for (let child of tree.children) {
+      last = emit(emitter, child);
+    }
+    return last!;
   },
 
   visit_typealias(tree: ast.TypeAliasNode, emitter: LLVMEmitter): llvm.Value {
