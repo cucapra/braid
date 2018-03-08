@@ -209,10 +209,10 @@ let funcMap: FuncMap = {
       ret: (args) => `rt.mat4.multiplyScalar(rt.mat4.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT3X3, FLOAT3], FLOAT3),
-      ret: (args) => `rt.vec4.transformMat4(rt.vec4.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec4.transformMat3(rt.vec4.create(), ${args[1]}, ${args[0]})`,
     }, {
       funcType: new FunType([FLOAT4X4, FLOAT4], FLOAT4),
-      ret: (args) => `rt.vec3.transformMat3(rt.vec3.create(), ${args[1]}, ${args[0]})`,
+      ret: (args) => `rt.vec3.transformMat4(rt.vec3.create(), ${args[1]}, ${args[0]})`,
     },
   ], "/": [
     {
