@@ -1,3 +1,7 @@
 _web/
 native/
 glrt/
+
+# Include built files.
+# https://github.com/yarnpkg/yarn/issues/2986#issuecomment-331737276
+!build/
