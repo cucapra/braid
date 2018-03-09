@@ -1,6 +1,6 @@
 {
   "name": "braid-lang",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Adrian Sampson <asampson@cs.cornell.edu>",
   "license": "MIT",
   "dependencies": {
