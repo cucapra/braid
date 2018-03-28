@@ -22,6 +22,17 @@
       return loc({tag: "binary", lhs: lhs, rhs: rhs, op: last[2]});
     }
   }
+
+  function buildTuple(lhs, rhss) {
+    if (rhss.length === 0) {
+      return loc(lhs);
+    } else {
+      var first = rhss[0];
+      var rest = rhss.slice(1, rhss.length);
+      var rhs = buildTuple(first[3], rest);
+      return loc({tag: "tuple", exprs: [lhs, rhs]});
+    }
+  }
 }
 
 Program
@@ -232,8 +243,9 @@ TypeAlias
 
 // Tuples are just pairs for now.
 Tuple
-  = e1:TermExpr _ comma _ e2:TermExpr
-  { return loc({tag: "tuple", exprs: [e1, e2]}); }
+  // = lhss:(e:MulBinary _ op:addbinop _)* rhs:MulBinary
+  = e1:TermExpr e2:(_ comma _ TermExpr)+
+  { return buildTuple(e1, e2); }
 
 TupleIndex
   = t:TermExpr _ dot _ i:int
