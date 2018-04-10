@@ -43,7 +43,7 @@ class Extern {
 }
 
 // Tuple values.
-interface Tuple { values: Value[] };
+interface Tuple { values: Value[]; }
 
 function unwrap_extern(v: Value): Value {
   if (v instanceof Extern) {
