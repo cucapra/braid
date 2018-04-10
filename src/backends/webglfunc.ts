@@ -4,7 +4,7 @@
  * and intrinsic functions in host-side code.
  */
 import { FLOAT4X4, FLOAT3X3, FLOAT4, FLOAT3, FLOAT2, ARRAY, TVAR, INTRINSICS } from './gl';
-import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID } from '../type';
+import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID, TypeKind } from '../type';
 import { check_call } from "../type_check";
 
 // The following two interfaces define the type of the function map below.
@@ -576,8 +576,10 @@ export function get_func(func: string, argTypes: Type[],
       let ret = check_call(paramsRet.funcType, argTypes);
       if (typeof(ret) !== "string") {
         return paramsRet.ret(args);
-      } else if (args.length == 0) {
-        paramsRet
+      } else if (args.length === 0
+        && paramsRet.funcType.kind === TypeKind.QUANTIFIED
+        && paramsRet.funcType.inner.kind === TypeKind.VARIADIC_FUN) {
+        return paramsRet.ret(args);
       }
     }
     return null;
