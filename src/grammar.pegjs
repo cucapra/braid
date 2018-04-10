@@ -23,16 +23,12 @@
     }
   }
 
-  function buildList(lhs, rhss, tag) {
-    if (rhss.length === 0) {
-      return loc(lhs);
-    } else {
-      let expr_list = [loc(lhs)];
-      for (let rhs of rhss) {
-        expr_list.push(loc(rhs[3]));
-      }
-      return loc({tag: tag, exprs: expr_list});
+  function buildList(lhs, rhss, expr_index) {
+    let expr_list = [loc(lhs)];
+    for (let rhs of rhss) {
+      expr_list.push(loc(rhs[expr_index]));
     }
+    return expr_list;
   }
 }
 
