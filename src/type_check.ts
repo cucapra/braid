@@ -411,7 +411,12 @@ export let gen_check: Gen<TypeCheck> = function(check) {
       }
 
       // Check the call itself.
-      let ret = check_call(target_type, arg_types);
+      let ret: Type | string | null = null;
+      if (tree.type) {
+        ret = check_call(target_type, arg_types, get_type(tree.type, env.named));
+      } else {
+        ret = check_call(target_type, arg_types);
+      }
       if (typeof(ret) === 'object') {
         return [ret, e];
       } else {
@@ -568,7 +573,7 @@ function param_error(i: number, param: Type, arg: Type): string {
  * Check that a function call is well-typed. Return the result type or a
  * string indicating the error.
  */
-export function check_call(target: Type, args: Type[]): Type | string {
+export function check_call(target: Type, args: Type[], type?: Type): Type | string {
   switch (target.kind) {
     // The target is a variadic function.
     case TypeKind.VARIADIC_FUN: {
@@ -582,7 +587,6 @@ export function check_call(target: Type, args: Type[]): Type | string {
           return param_error(i, param, arg);
         }
       }
-
       return target.ret;
     }
 
@@ -639,7 +643,13 @@ export function check_call(target: Type, args: Type[]): Type | string {
 
       // The normal case for a polymorphic functions. Perform unification to
       // fill in the concrete type for the type variable.
-      let ret = check_quantified(target.variable, target.inner, args);
+      let ret : Type | string | null = null;
+      if (type) {
+        ret = check_quantified(target.variable, target.inner, args, type));
+      }
+      else {
+        ret = check_quantified(target.variable, target.inner, args));
+      }
       if (typeof(ret) === "string") {
         return ret;
       } else {
@@ -665,7 +675,7 @@ export function check_call(target: Type, args: Type[]): Type | string {
  * Eventually, this should merge with `check_call` itself.
  */
 function check_quantified(tvar: TypeVariable, target: Type,
-                          args: Type[]): Type | string
+                          args: Type[], annot_type?:Type): Type | string
 {
   switch (target.kind) {
   // The inner function is a variadic function.
@@ -694,6 +704,9 @@ function check_quantified(tvar: TypeVariable, target: Type,
           return param_error(i, param, arg);
         }
       }
+    }
+    if (args.length == 0 && annot_type) {
+      vType = annot_type;
     }
 
     if (vType) {
