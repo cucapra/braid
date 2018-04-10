@@ -568,11 +568,16 @@ let funcMap: FuncMap = {
  * @return The compiled JavaScript function including arguments.
  */
 export function get_func(func: string, argTypes: Type[],
-                        args: string[]): string | null
+                        args: string[], type?: Type): string | null
 {
   if (funcMap[func]) {
     for (let paramsRet of funcMap[func]) {
-      let ret = check_call(paramsRet.funcType, argTypes);
+      let ret : Type | string | null = null;
+      if (type) {
+        ret = check_call(paramsRet.funcType, argTypes, type);
+      } else {
+        ret = check_call(paramsRet.funcType, argTypes);
+      }
       if (typeof(ret) !== "string") {
         return paramsRet.ret(args);
       }
