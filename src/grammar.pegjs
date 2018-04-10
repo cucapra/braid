@@ -189,15 +189,17 @@ Arg
   { return e; }
 
 CCall
-  = i:Lookup paren_open _ as:CArgList? _ paren_close
-  { return loc({tag: "call", fun: i, args: as || []}); }
+  = i:Lookup type_param:TypeParam? paren_open _ as:CArgList? _ paren_close
+  { return loc({tag: "call", fun: i, args: as || [], type: type_param || undefined}); }
 CArgList
   = first:CArgument rest:CArgMore*
   { return [first].concat(rest); }
 CArgMore
   = _ comma _ e:CArgument
   { return e; }
-
+TypeParam
+  = brace_open _ t:NonOverloadedType _ brace_close
+  { return t; }
 MacroCall
   = macromark i:ident _ as:Arg+
   { return loc({tag: "macrocall", macro: i, args: as}); }
@@ -382,6 +384,12 @@ paren_open
 
 paren_close
   = ")"
+
+brace_open
+  = "{"
+
+brace_close
+  = "}"
 
 pipe_operator
   = "|"
