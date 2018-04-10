@@ -27,10 +27,11 @@
     if (rhss.length === 0) {
       return loc(lhs);
     } else {
-      var first = rhss[0];
-      var rest = rhss.slice(1, rhss.length);
-      var rhs = buildTuple(first[3], rest);
-      return loc({tag: "tuple", exprs: [lhs, rhs]});
+      let expr_list = [loc(lhs)];
+      for (let rhs of rhss) {
+        expr_list.push(loc(rhs[3]));
+      }
+      return loc({tag: "tuple", exprs: expr_list});
     }
   }
 }
