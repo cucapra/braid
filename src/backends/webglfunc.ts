@@ -488,6 +488,7 @@ let funcMap: FuncMap = {
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
       ret: (args) => `${args[0]} * (1.0 - ${args[2]}) + ${args[1]} * ${args[2]}`,
     }, {
+      // TODO: bugs here
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
       ret: (args) => `rt.vec2.lerp(rt.vec2.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     }, {
@@ -572,7 +573,7 @@ export function get_func(func: string, argTypes: Type[],
 {
   if (funcMap[func]) {
     for (let paramsRet of funcMap[func]) {
-      let ret : Type | string | null = null;
+      let ret: Type | string | null = null;
       if (type) {
         ret = check_call(paramsRet.funcType, argTypes, type);
       } else {
