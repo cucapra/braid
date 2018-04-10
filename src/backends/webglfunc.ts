@@ -488,8 +488,7 @@ let funcMap: FuncMap = {
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
       ret: (args) => `${args[0]} * (1.0 - ${args[2]}) + ${args[1]} * ${args[2]}`,
     }, {
-      // TODO: bugs here
-      funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+      funcType: new FunType([FLOAT2, FLOAT2, FLOAT2], FLOAT2),
       ret: (args) => `rt.vec2.lerp(rt.vec2.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
