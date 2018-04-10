@@ -23,7 +23,7 @@
     }
   }
 
-  function buildTuple(lhs, rhss) {
+  function buildList(lhs, rhss, tag) {
     if (rhss.length === 0) {
       return loc(lhs);
     } else {
@@ -31,7 +31,7 @@
       for (let rhs of rhss) {
         expr_list.push(loc(rhs[3]));
       }
-      return loc({tag: "tuple", exprs: expr_list});
+      return loc({tag: tag, exprs: expr_list});
     }
   }
 }
@@ -248,7 +248,7 @@ TypeAlias
 Tuple
   // = lhss:(e:MulBinary _ op:addbinop _)* rhs:MulBinary
   = e1:TermExpr e2:(_ comma _ TermExpr)+
-  { return buildTuple(e1, e2); }
+  { return buildList(e1, e2, "tuple"); }
 
 TupleIndex
   = t:TermExpr _ dot _ i:int
