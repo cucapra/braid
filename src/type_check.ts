@@ -643,12 +643,12 @@ export function check_call(target: Type, args: Type[], type?: Type): Type | stri
 
       // The normal case for a polymorphic functions. Perform unification to
       // fill in the concrete type for the type variable.
-      let ret : Type | string | null = null;
+      let ret: Type | string | null = null;
       if (type) {
-        ret = check_quantified(target.variable, target.inner, args, type));
+        ret = check_quantified(target.variable, target.inner, args, type);
       }
       else {
-        ret = check_quantified(target.variable, target.inner, args));
+        ret = check_quantified(target.variable, target.inner, args);
       }
       if (typeof(ret) === "string") {
         return ret;
@@ -675,7 +675,7 @@ export function check_call(target: Type, args: Type[], type?: Type): Type | stri
  * Eventually, this should merge with `check_call` itself.
  */
 function check_quantified(tvar: TypeVariable, target: Type,
-                          args: Type[], annot_type?:Type): Type | string
+                          args: Type[], annot_type?: Type): Type | string
 {
   switch (target.kind) {
   // The inner function is a variadic function.
@@ -705,7 +705,7 @@ function check_quantified(tvar: TypeVariable, target: Type,
         }
       }
     }
-    if (args.length == 0 && annot_type) {
+    if (args.length === 0 && annot_type) {
       vType = annot_type;
     }
 
