@@ -240,11 +240,9 @@ TypeAlias
   = type _ i:ident _ eq _ t:Type
   { return loc({tag: "type_alias", ident:i, type:t}); }
 
-// Tuples are just pairs for now.
 Tuple
-  // = lhss:(e:MulBinary _ op:addbinop _)* rhs:MulBinary
   = e1:TermExpr e2:(_ comma _ TermExpr)+
-  { return buildList(e1, e2, "tuple"); }
+  { return loc({tag: "tuple", exprs: buildList(e1, e2, 3)}); }
 
 TupleIndex
   = t:TermExpr _ dot _ i:int
@@ -295,11 +293,9 @@ OverloadedTypeElement
   = _ pipe_operator _ t:NonOverloadedType
   { return t; }
 
-// As above, only 2-ary tuples.
 TupleType
-  = t1:TermType _ star _ t2:TermType
-  { return loc({tag: "type_tuple", components: [t1, t2]}); }
-
+  = t1:TermType t2:(_ star _ TermType)+
+  { return loc({tag: "type_tuple", components: buildList(t1, t2, 3)}); }
 
 // Tokens.
 
