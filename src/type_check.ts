@@ -734,10 +734,11 @@ function check_quantified(tvar: TypeVariable, target: Type,
           return param_error(i, param, arg);
         }
       } else {
-        if (vType === null || ret === vType) {
+        if (vType === null || compatible(ret, vType)) {
+          // TODO: we should find the most upper type of all arguments instead.
           vType = ret;
         } else {
-          return param_error(i, param, arg);
+          return param_error(i, vType, arg);
         }
       }
     }
