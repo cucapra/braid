@@ -306,6 +306,9 @@ export const INTRINSICS: TypeMap = {
       INT
     )
   ),
+  equal: new OverloadedType([
+    new FunType([STRING, STRING], BOOLEAN)
+  ]),
 
   // Vector "swizzling" in GLSL code for destructuring vectors. This is the
   // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is

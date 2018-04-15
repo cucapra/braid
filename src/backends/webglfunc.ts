@@ -4,7 +4,7 @@
  * and intrinsic functions in host-side code.
  */
 import { FLOAT4X4, FLOAT3X3, FLOAT4, FLOAT3, FLOAT2, ARRAY, TVAR, INTRINSICS } from './gl';
-import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID, TypeKind } from '../type';
+import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID, TypeKind, STRING, BOOLEAN } from '../type';
 import { check_call } from "../type_check";
 
 // The following two interfaces define the type of the function map below.
@@ -551,6 +551,11 @@ let funcMap: FuncMap = {
         )
       ),
       ret: (args) => `${args[0]}.length`,
+    },
+  ], "equal": [
+    {
+      funcType: new FunType([STRING, STRING], BOOLEAN),
+      ret: (args) => `${args[0]} === ${args[1]}`,
     },
   ],
 };
