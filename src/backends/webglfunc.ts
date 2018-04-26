@@ -4,7 +4,7 @@
  * and intrinsic functions in host-side code.
  */
 import { FLOAT4X4, FLOAT3X3, FLOAT4, FLOAT3, FLOAT2, ARRAY, TVAR, INTRINSICS } from './gl';
-import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID } from '../type';
+import { Type, PrimitiveType, FLOAT, INT, VariableType, TypeVariable, InstanceType, QuantifiedType, VariadicFunType, OverloadedType, FunType, VOID, TypeKind, STRING, BOOLEAN } from '../type';
 import { check_call } from "../type_check";
 
 // The following two interfaces define the type of the function map below.
@@ -488,7 +488,7 @@ let funcMap: FuncMap = {
       funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
       ret: (args) => `${args[0]} * (1.0 - ${args[2]}) + ${args[1]} * ${args[2]}`,
     }, {
-      funcType: new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+      funcType: new FunType([FLOAT2, FLOAT2, FLOAT2], FLOAT2),
       ret: (args) => `rt.vec2.lerp(rt.vec2.create(), ${args[0]}, ${args[1]}, ${args[2]})`,
     }, {
       funcType: new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
@@ -540,6 +540,23 @@ let funcMap: FuncMap = {
       ),
       ret: (args) => `${args[0]}.push(${args[1]})`,
     },
+  ], "length": [
+    {
+      funcType: new QuantifiedType(TVAR,
+        new FunType(
+          [
+            new InstanceType(ARRAY, new VariableType(TVAR)),
+          ],
+          INT
+        )
+      ),
+      ret: (args) => `${args[0]}.length`,
+    },
+  ], "equal": [
+    {
+      funcType: new FunType([STRING, STRING], BOOLEAN),
+      ret: (args) => `${args[0]} === ${args[1]}`,
+    },
   ],
 };
 
@@ -562,6 +579,10 @@ export function get_func(func: string, argTypes: Type[],
     for (let paramsRet of funcMap[func]) {
       let ret = check_call(paramsRet.funcType, argTypes);
       if (typeof(ret) !== "string") {
+        return paramsRet.ret(args);
+      } else if (args.length === 0
+        && paramsRet.funcType.kind === TypeKind.QUANTIFIED
+        && paramsRet.funcType.inner.kind === TypeKind.VARIADIC_FUN) {
         return paramsRet.ret(args);
       }
     }

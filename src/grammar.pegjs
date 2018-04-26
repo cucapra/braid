@@ -22,6 +22,14 @@
       return loc({tag: "binary", lhs: lhs, rhs: rhs, op: last[2]});
     }
   }
+
+  function buildList(lhs, rhss, expr_index) {
+    let expr_list = [loc(lhs)];
+    for (let rhs of rhss) {
+      expr_list.push(loc(rhs[expr_index]));
+    }
+    return expr_list;
+  }
 }
 
 Program
@@ -178,15 +186,17 @@ Arg
   { return e; }
 
 CCall
-  = i:Lookup paren_open _ as:CArgList? _ paren_close
-  { return loc({tag: "call", fun: i, args: as || []}); }
+  = i:Lookup type_param:TypeParam? paren_open _ as:CArgList? _ paren_close
+  { return loc({tag: "call", fun: i, args: as || [], type: type_param || undefined}); }
 CArgList
   = first:CArgument rest:CArgMore*
   { return [first].concat(rest); }
 CArgMore
   = _ comma _ e:CArgument
   { return e; }
-
+TypeParam
+  = brace_open _ t:NonOverloadedType _ brace_close
+  { return t; }
 MacroCall
   = macromark i:ident _ as:Arg+
   { return loc({tag: "macrocall", macro: i, args: as}); }
@@ -230,10 +240,9 @@ TypeAlias
   = type _ i:ident _ eq _ t:Type
   { return loc({tag: "type_alias", ident:i, type:t}); }
 
-// Tuples are just pairs for now.
 Tuple
-  = e1:TermExpr _ comma _ e2:TermExpr
-  { return loc({tag: "tuple", exprs: [e1, e2]}); }
+  = e1:TermExpr e2:(_ comma _ TermExpr)+
+  { return loc({tag: "tuple", exprs: buildList(e1, e2, 3)}); }
 
 TupleIndex
   = t:TermExpr _ dot _ i:int
@@ -284,11 +293,9 @@ OverloadedTypeElement
   = _ pipe_operator _ t:NonOverloadedType
   { return t; }
 
-// As above, only 2-ary tuples.
 TupleType
-  = t1:TermType _ star _ t2:TermType
-  { return loc({tag: "type_tuple", components: [t1, t2]}); }
-
+  = t1:TermType t2:(_ star _ TermType)+
+  { return loc({tag: "type_tuple", components: buildList(t1, t2, 3)}); }
 
 // Tokens.
 
@@ -370,6 +377,12 @@ paren_open
 
 paren_close
   = ")"
+
+brace_open
+  = "{"
+
+brace_close
+  = "}"
 
 pipe_operator
   = "|"

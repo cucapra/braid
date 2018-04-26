@@ -131,6 +131,7 @@ export interface CallNode extends BaseSyntaxNode {
   tag: "call";
   fun: ExpressionNode;
   args: ExpressionNode[];
+  type?: TypeNode;
 }
 
 export interface ExternNode extends BaseSyntaxNode {
