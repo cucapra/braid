@@ -54,6 +54,8 @@ There are also tuples (product types), which use Rust-like constructor and destr
     var questions = 42, "the question";
     first(questions)
 
+Braid has basic polymorphism for some built-in functions, but the surface syntax cannot yet define polymorphic functions. It also only has basic (i.e., not full Hindley--Milner) type inference. Use the syntax `func{type}(...)` to provide a type argument explicitly when necessary.
+
 ## Interoperation via `extern` {#extern}
 
 The language can also interoperate with JavaScript. Use `extern` to declare something from JavaScript land:
