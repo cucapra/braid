@@ -16,7 +16,7 @@
     "@types/codemirror": "^0.0.41",
     "@types/d3": "^3.5.36",
     "pegjs": "^0.10.0",
-    "typescript": "^2.7.1",
+    "typescript": "^2.9.2",
     "webpack": "^3.0.0"
   }
 }

@@ -16,6 +16,6 @@
   "devDependencies": {
     "@types/gl-matrix": "^2.2.34",
     "pegjs": "^0.10.0",
-    "typescript": "^2.7.1"
+    "typescript": "^2.9.2"
   }
 }
