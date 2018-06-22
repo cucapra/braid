@@ -8,7 +8,7 @@ import { get_children, get_name } from './astsumm';
 import d3 = require('d3');
 
 import { start_gl, PerfHandler } from './gl';
-import EXAMPLES = require('../examples');
+import EXAMPLES = require('../examples.json');
 import PREAMBLES = require('../preambles');
 
 import CodeMirror = require('codemirror');

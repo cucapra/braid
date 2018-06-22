@@ -2,7 +2,8 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "outDir": "build",
-        "module": "commonjs"
+        "module": "commonjs",
+        "resolveJsonModule": true
     },
     "files": [
         "src/dingus.ts",

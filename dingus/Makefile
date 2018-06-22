@@ -1,5 +1,5 @@
 DINGUS_JS := build/dingus/src/dingus.js
-GENERATED := examples.js preambles.js ssc.bundle.js codemirror.css dingus.css
+GENERATED := examples.json preambles.js ssc.bundle.js codemirror.css dingus.css
 
 .PHONY: all clean
 all: ssc.bundle.js codemirror.css dingus.css
@@ -14,7 +14,7 @@ include ../ts.mk
 TS_SRC := $(shell find ../src/ -type f -name '*.ts') \
 	$(shell find ./src/ -type f -name '*.ts') \
 	$(shell find ../glrt/ -type f -name '*.ts')
-JS_SRC := examples.js preambles.js ../parser.js
+JS_SRC := examples.json preambles.js ../parser.js
 $(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TSC)
 	$(TSC)
 
@@ -51,9 +51,8 @@ EXAMPLES := basics splice persist progfunc extern \
 	presplice macro normcolor objects phong texture head \
 	couch environment shadow dynamic multitexture array
 EXAMPLE_FILES := $(EXAMPLES:%=examples/%.ss)
-examples.js: $(MUNGE) $(EXAMPLE_FILES)
-	printf "module.exports = " > $@
-	node $< $(EXAMPLE_FILES) >> $@
+examples.json: $(MUNGE) $(EXAMPLE_FILES)
+	node $< $(EXAMPLE_FILES) > $@
 
 preambles.js: $(MUNGE) ../glrt/preamble.braid preamble.braid
 	printf "module.exports = " > $@

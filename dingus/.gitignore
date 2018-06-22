@@ -2,6 +2,6 @@ build/
 ssc.bundle.js
 dingus.css
 
-examples.js
+examples.json
 preambles.js
 codemirror.css
