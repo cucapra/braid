@@ -16,7 +16,7 @@ declare function require(name: string): any;
 const eye = require('eye-vector');
 import { vec2, vec3, vec4, mat3, mat4 } from 'gl-matrix';
 const angle_normals = require('angle-normals');
-const obj_loader = require('webgl-obj-loader');
+import * as obj_loader from 'webgl-obj-loader';
 import * as seedrandom from 'seedrandom';
 
 export type Vec3Array = [number, number, number][];
@@ -608,6 +608,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     // Load a mesh from an OBJ file.
     load_obj(name: string) {
       let obj_src = get_asset(assets, name);
+      if (typeof obj_src !== "string") {
+        throw "obj source must be a string";
+      }
       let mesh = new obj_loader.Mesh(obj_src);
 
       // Match the interface we're using for Mesh objects that come from

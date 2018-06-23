@@ -7,6 +7,7 @@
         "allowJs": false
     },
     "files": [
-        "glrt.ts"
+        "glrt.ts",
+        "webgl-obj-loader.d.ts"
     ]
 }
