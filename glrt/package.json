@@ -7,6 +7,8 @@
     "compile": "tsc"
   },
   "dependencies": {
+    "@types/gl-matrix": "^2.2.34",
+    "@types/seedrandom": "^2.4.27",
     "angle-normals": "^1.0.0",
     "eye-vector": "^1.0.0",
     "gl-matrix": "^2.3.2",
@@ -14,7 +16,6 @@
     "webgl-obj-loader": "^0.1.1"
   },
   "devDependencies": {
-    "@types/gl-matrix": "^2.2.34",
     "pegjs": "^0.10.0",
     "typescript": "^2.9.2"
   }

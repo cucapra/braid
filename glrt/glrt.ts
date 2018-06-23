@@ -17,7 +17,7 @@ const eye = require('eye-vector');
 import { vec2, vec3, vec4, mat3, mat4 } from 'gl-matrix';
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
-const seedrandom = require('seedrandom');
+import * as seedrandom from 'seedrandom';
 
 export type Vec3Array = [number, number, number][];
 export type Vec2Array = [number, number][];
