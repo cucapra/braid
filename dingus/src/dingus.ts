@@ -9,7 +9,7 @@ import d3 = require('d3');
 
 import { start_gl, PerfHandler } from './gl';
 import EXAMPLES = require('../examples.json');
-import PREAMBLES = require('../preambles');
+import PREAMBLES = require('../preambles.json');
 
 import CodeMirror = require('codemirror');
 import mode from './mode';

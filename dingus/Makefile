@@ -1,5 +1,6 @@
 DINGUS_JS := build/dingus/src/dingus.js
-GENERATED := examples.json preambles.js ssc.bundle.js codemirror.css dingus.css
+GENERATED := examples.json preambles.json ssc.bundle.js \
+	codemirror.css dingus.css
 
 .PHONY: all clean
 all: ssc.bundle.js codemirror.css dingus.css
@@ -14,7 +15,7 @@ include ../ts.mk
 TS_SRC := $(shell find ../src/ -type f -name '*.ts') \
 	$(shell find ./src/ -type f -name '*.ts') \
 	$(shell find ../glrt/ -type f -name '*.ts')
-JS_SRC := examples.json preambles.js ../parser.js
+JS_SRC := examples.json preambles.json ../parser.js
 $(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TSC)
 	$(TSC)
 
@@ -54,6 +55,5 @@ EXAMPLE_FILES := $(EXAMPLES:%=examples/%.ss)
 examples.json: $(MUNGE) $(EXAMPLE_FILES)
 	node $< $(EXAMPLE_FILES) > $@
 
-preambles.js: $(MUNGE) ../glrt/preamble.braid preamble.braid
-	printf "module.exports = " > $@
-	node $< ../glrt/preamble.braid preamble.braid >> $@
+preambles.json: $(MUNGE) ../glrt/preamble.braid preamble.braid
+	node $< ../glrt/preamble.braid preamble.braid > $@
